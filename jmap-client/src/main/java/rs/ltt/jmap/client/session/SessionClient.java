@@ -18,6 +18,9 @@ package rs.ltt.jmap.client.session;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import okhttp3.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import rs.ltt.jmap.client.api.EndpointNotFoundException;
 import rs.ltt.jmap.client.api.UnauthorizedException;
 import rs.ltt.jmap.client.http.HttpAuthentication;
@@ -25,13 +28,15 @@ import rs.ltt.jmap.client.util.WellKnownUtil;
 import rs.ltt.jmap.common.SessionResource;
 import rs.ltt.jmap.gson.JmapAdapters;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
 import java.net.URL;
 
 public class SessionClient {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(SessionClient.class);
+
+    private static final OkHttpClient OK_HTTP_CLIENT = new OkHttpClient();
 
     private final URL sessionResource;
     private HttpAuthentication httpAuthentication;
@@ -69,7 +74,7 @@ public class SessionClient {
             Session session = cache != null ? cache.load(username, resource) : null;
 
             if (session == null) {
-                session = fetchSession(resource, 3);
+                session = fetchSession(resource);
                 if (cache != null) {
                     cache.store(username, resource, session);
                 }
@@ -81,40 +86,37 @@ public class SessionClient {
         return currentSession;
     }
 
-    public void setSessionCache(SessionCache sessionCache) {
-        this.sessionCache = sessionCache;
+    private Session fetchSession(final URL base) throws Exception {
+        final Request.Builder requestBuilder = new Request.Builder();
+        requestBuilder.url(base);
+        httpAuthentication.authenticate(requestBuilder);
+
+        final Response response = OK_HTTP_CLIENT.newCall(requestBuilder.build()).execute();
+        final int code = response.code();
+        if (code == 200 || code == 201) {
+            final ResponseBody body = response.body();
+            if (body == null) {
+                throw new EndpointNotFoundException("Unable to fetch session object. Response body was empty.");
+            }
+            final InputStream inputStream = body.byteStream();
+            final GsonBuilder builder = new GsonBuilder();
+            JmapAdapters.register(builder);
+            final Gson gson = builder.create();
+            final SessionResource sessionResource = gson.fromJson(new InputStreamReader(inputStream), SessionResource.class);
+            final HttpUrl currentBaseUrl = response.request().url();
+            if (!base.equals(currentBaseUrl.url())) {
+                LOGGER.info(String.format("Processed new base URL %s", currentBaseUrl.url()));
+            }
+            return new Session(currentBaseUrl.url(), sessionResource);
+        } else if (code == 401) {
+            throw new UnauthorizedException(String.format("Session object(%s) was unauthorized", base.toString()));
+        } else {
+            throw new EndpointNotFoundException(String.format("Unable to fetch session object(%s)", base.toString()));
+        }
     }
 
-    private Session fetchSession(URL base, int remainingRedirects) throws Exception {
-        final HttpURLConnection connection = (HttpURLConnection) base.openConnection();
-        connection.setRequestMethod("GET");
-        connection.setInstanceFollowRedirects(false);
-        httpAuthentication.authenticate(connection);
-        connection.connect();
-        final int code = connection.getResponseCode();
-        if (code == 200 || code == 201) {
-            InputStream inputStream = connection.getInputStream();
-            GsonBuilder builder = new GsonBuilder();
-            JmapAdapters.register(builder);
-            Gson gson = builder.create();
-            final SessionResource sessionResource = gson.fromJson(new InputStreamReader(inputStream), SessionResource.class);
-            return new Session(base, sessionResource);
-        } else if (code == 301 || code == 302) {
-            if (remainingRedirects > 0) {
-                final String location = connection.getHeaderField("Location");
-                if (location == null) {
-                    throw new IOException("Unable to parse redirect location while resolving base url");
-                }
-                URL redirectTo = new URL(base, location);
-                return fetchSession(redirectTo, remainingRedirects - 1);
-            } else {
-                throw new IOException("Too many redirects");
-            }
-        } else if (code == 401) {
-            throw new UnauthorizedException(String.format("Session object(%s) was unauthorized", connection.getURL()));
-        } else {
-            throw new EndpointNotFoundException(String.format("Unable to fetch session object(%s)", connection.getURL()));
-        }
+    public void setSessionCache(SessionCache sessionCache) {
+        this.sessionCache = sessionCache;
     }
 
 }

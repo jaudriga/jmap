@@ -52,8 +52,8 @@ public abstract class AbstractJmapApiClient implements JmapApiClient {
     public void execute(final JmapRequest jmapRequest) {
         try {
             final Gson gson = gsonBuilder.create();
-            InputStream inputStream = send(gson.toJson(jmapRequest.getRequest()));
-            GenericResponse genericResponse = gson.fromJson(new InputStreamReader(inputStream), GenericResponse.class);
+            final InputStream inputStream = send(gson.toJson(jmapRequest.getRequest()));
+            final GenericResponse genericResponse = gson.fromJson(new InputStreamReader(inputStream), GenericResponse.class);
             if (genericResponse instanceof ErrorResponse) {
                 jmapRequest.setException(new ErrorResponseException((ErrorResponse) genericResponse));
             } else if (genericResponse instanceof Response) {

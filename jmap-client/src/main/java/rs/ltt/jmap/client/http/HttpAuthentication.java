@@ -16,11 +16,11 @@
 
 package rs.ltt.jmap.client.http;
 
-import java.net.HttpURLConnection;
+import okhttp3.Request;
 
 public interface HttpAuthentication {
 
-    void authenticate(HttpURLConnection connection);
+    void authenticate(Request.Builder builder);
 
     String getUsername();
 }

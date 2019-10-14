@@ -17,19 +17,23 @@
 package rs.ltt.jmap.client.api;
 
 
+import okhttp3.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rs.ltt.jmap.client.http.BasicAuthHttpAuthentication;
 import rs.ltt.jmap.client.http.HttpAuthentication;
 
-import java.io.*;
-import java.net.HttpURLConnection;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 
 public class HttpJmapApiClient extends AbstractJmapApiClient {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HttpJmapApiClient.class);
+
+    private static MediaType MEDIA_TYPE_JSON = MediaType.get("application/json");
+
+    private static final OkHttpClient OK_HTTP_CLIENT = new OkHttpClient();
 
     private final URL apiUrl;
     private final HttpAuthentication httpAuthentication;
@@ -44,33 +48,30 @@ public class HttpJmapApiClient extends AbstractJmapApiClient {
     }
 
     @Override
-    void onSessionStateRetrieved(String sessionState) {
-        //System.out.println("sessionState="+sessionState);
+    void onSessionStateRetrieved(final String sessionState) {
+        LOGGER.debug(String.format("Notified of session state='%s'", sessionState));
     }
 
     @Override
     InputStream send(String out) throws IOException, JmapApiException {
-        LOGGER.info(out);
-        final HttpURLConnection connection = (HttpURLConnection) this.apiUrl.openConnection();
-        connection.setRequestMethod("POST");
-        connection.setRequestProperty("Content-Type", "application/json");
-        this.httpAuthentication.authenticate(connection);
-        connection.setDoOutput(true);
-        OutputStream os = connection.getOutputStream();
-        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(os, StandardCharsets.UTF_8));
-        writer.write(out);
-        writer.flush();
-        writer.close();
-        os.close();
-        final int code = connection.getResponseCode();
-        LOGGER.debug(connection.getURL().toString()+" returned code="+code);
+        Request.Builder requestBuilder = new Request.Builder();
+        requestBuilder.url(apiUrl);
+        this.httpAuthentication.authenticate(requestBuilder);
+        requestBuilder.post(RequestBody.create(MEDIA_TYPE_JSON, out));
+        final Response response = OK_HTTP_CLIENT.newCall(requestBuilder.build()).execute();
+        final int code = response.code();
         if (code == 404) {
-            throw new EndpointNotFoundException(String.format("API URL(%s) not found", connection.getURL()));
+            throw new EndpointNotFoundException(String.format("API URL(%s) not found", apiUrl));
         }
         if (code == 401) {
             throw new UnauthorizedException(String.format("API URL(%s) was unauthorized", apiUrl));
         }
+
         //TODO: code 500+ should probably just throw internal server error exception
-        return code >= 200 && code < 300 ? connection.getInputStream() : connection.getErrorStream();
+        final ResponseBody body = response.body();
+        if (body == null) {
+            throw new IllegalStateException("response body was empty");
+        }
+        return body.byteStream();
     }
 }

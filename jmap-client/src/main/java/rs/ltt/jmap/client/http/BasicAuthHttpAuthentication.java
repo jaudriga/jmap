@@ -16,9 +16,8 @@
 
 package rs.ltt.jmap.client.http;
 
-import com.google.common.io.BaseEncoding;
-
-import java.net.HttpURLConnection;
+import okhttp3.Credentials;
+import okhttp3.Request;
 
 public class BasicAuthHttpAuthentication implements HttpAuthentication {
 
@@ -31,8 +30,8 @@ public class BasicAuthHttpAuthentication implements HttpAuthentication {
     }
 
     @Override
-    public void authenticate(final HttpURLConnection connection) {
-        connection.setRequestProperty("Authorization", "Basic " + BaseEncoding.base64().encode(String.format("%s:%s",username,password).getBytes()));
+    public void authenticate(Request.Builder builder) {
+        builder.header("Authorization", Credentials.basic(username,password));
     }
 
     @Override
