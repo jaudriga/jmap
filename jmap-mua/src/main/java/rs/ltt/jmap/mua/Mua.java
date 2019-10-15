@@ -1340,6 +1340,10 @@ public class Mua {
             return this;
         }
 
+        public Builder queryPageSize(int queryPageSize) {
+            return queryPageSize((long) queryPageSize);
+        }
+
         public Builder sessionCache(SessionCache sessionCache) {
             this.sessionCache = sessionCache;
             return this;
