@@ -1,0 +1,184 @@
+﻿{
+  "methodResponses": [
+    [
+      "Mailbox/get",
+      {
+        "state": "4011",
+        "list": [
+          {
+            "id": "46b9c2ce-7a7c-4736-9711-02a22491a02b",
+            "name": "Inbox",
+            "parentId": null,
+            "myRights": {
+              "mayReadItems": true,
+              "mayAddItems": true,
+              "mayRemoveItems": true,
+              "mayCreateChild": true,
+              "mayDelete": false,
+              "maySubmit": true,
+              "maySetSeen": true,
+              "maySetKeywords": true,
+              "mayAdmin": true,
+              "mayRename": false
+            },
+            "role": "inbox",
+            "totalEmails": 238,
+            "unreadEmails": 6,
+            "totalThreads": 80,
+            "unreadThreads": 4,
+            "sortOrder": 1,
+            "isSubscribed": false
+          },
+          {
+            "id": "4d1f6d21-3e57-4284-85c5-a7cd8ae8b9da",
+            "name": "Archive",
+            "parentId": null,
+            "myRights": {
+              "mayReadItems": true,
+              "mayAddItems": true,
+              "mayRemoveItems": true,
+              "mayCreateChild": true,
+              "mayDelete": true,
+              "maySubmit": true,
+              "maySetSeen": true,
+              "maySetKeywords": true,
+              "mayAdmin": true,
+              "mayRename": true
+            },
+            "role": "archive",
+            "totalEmails": 295,
+            "unreadEmails": 36,
+            "totalThreads": 136,
+            "unreadThreads": 17,
+            "sortOrder": 3,
+            "isSubscribed": false
+          },
+          {
+            "id": "7f9fe262-a47b-407a-adb8-dfaeaa56c038",
+            "name": "Drafts",
+            "parentId": null,
+            "myRights": {
+              "mayReadItems": true,
+              "mayAddItems": true,
+              "mayRemoveItems": true,
+              "mayCreateChild": true,
+              "mayDelete": true,
+              "maySubmit": true,
+              "maySetSeen": true,
+              "maySetKeywords": true,
+              "mayAdmin": true,
+              "mayRename": true
+            },
+            "role": "drafts",
+            "totalEmails": 0,
+            "unreadEmails": 0,
+            "totalThreads": 0,
+            "unreadThreads": 0,
+            "sortOrder": 4,
+            "isSubscribed": false
+          },
+          {
+            "id": "da8d00c5-f86f-4175-aa0d-6c9970135f29",
+            "name": "Sent",
+            "parentId": null,
+            "myRights": {
+              "mayReadItems": true,
+              "mayAddItems": true,
+              "mayRemoveItems": true,
+              "mayCreateChild": true,
+              "mayDelete": true,
+              "maySubmit": true,
+              "maySetSeen": true,
+              "maySetKeywords": true,
+              "mayAdmin": true,
+              "mayRename": true
+            },
+            "role": "sent",
+            "totalEmails": 2,
+            "unreadEmails": 0,
+            "totalThreads": 2,
+            "unreadThreads": 0,
+            "sortOrder": 5,
+            "isSubscribed": false
+          },
+          {
+            "id": "d3173423-9c73-4757-bf96-cb8c24d0b8f9",
+            "name": "Trash",
+            "parentId": null,
+            "myRights": {
+              "mayReadItems": true,
+              "mayAddItems": true,
+              "mayRemoveItems": true,
+              "mayCreateChild": true,
+              "mayDelete": true,
+              "maySubmit": true,
+              "maySetSeen": true,
+              "maySetKeywords": true,
+              "mayAdmin": true,
+              "mayRename": true
+            },
+            "role": "trash",
+            "totalEmails": 2,
+            "unreadEmails": 0,
+            "totalThreads": 2,
+            "unreadThreads": 0,
+            "sortOrder": 7,
+            "isSubscribed": false
+          },
+          {
+            "id": "0c4d0e21-7901-4905-8490-7367cc33dcc2",
+            "name": "jmap",
+            "parentId": null,
+            "myRights": {
+              "mayReadItems": true,
+              "mayAddItems": true,
+              "mayRemoveItems": true,
+              "mayCreateChild": true,
+              "mayDelete": true,
+              "maySubmit": true,
+              "maySetSeen": true,
+              "maySetKeywords": true,
+              "mayAdmin": true,
+              "mayRename": true
+            },
+            "role": null,
+            "totalEmails": 0,
+            "unreadEmails": 0,
+            "totalThreads": 0,
+            "unreadThreads": 0,
+            "sortOrder": 10,
+            "isSubscribed": false
+          },
+          {
+            "id": "26af1db4-fbec-4ccd-ac5a-a886748be2b5",
+            "name": "xmpp",
+            "parentId": null,
+            "myRights": {
+              "mayReadItems": true,
+              "mayAddItems": true,
+              "mayRemoveItems": true,
+              "mayCreateChild": true,
+              "mayDelete": true,
+              "maySubmit": true,
+              "maySetSeen": true,
+              "maySetKeywords": true,
+              "mayAdmin": true,
+              "mayRename": true
+            },
+            "role": null,
+            "totalEmails": 0,
+            "unreadEmails": 0,
+            "totalThreads": 0,
+            "unreadThreads": 0,
+            "sortOrder": 10,
+            "isSubscribed": false
+          }
+        ],
+        "notFound": [],
+        "accountId": "test@example.com"
+      },
+      "%s"
+    ]
+  ],
+  "sessionState": "0"
+}
