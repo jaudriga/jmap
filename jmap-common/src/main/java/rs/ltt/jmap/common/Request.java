@@ -52,13 +52,9 @@ public class Request {
 
         }
 
-        private Invocation(MethodCall methodCall, String id) {
+        public Invocation(MethodCall methodCall, String id) {
             this.methodCall = methodCall;
             this.id = id;
-        }
-
-        public static Invocation create(MethodCall methodCall, String id) {
-            return new Invocation(methodCall, id);
         }
 
         public MethodCall getMethodCall() {
@@ -73,7 +69,7 @@ public class Request {
             return id;
         }
 
-        //TODO maybe try typeadapter?
+        //TODO maybe try TypeAdapter?
 
         public static class ResultReference {
 

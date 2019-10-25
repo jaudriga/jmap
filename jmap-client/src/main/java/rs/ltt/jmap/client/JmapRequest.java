@@ -60,7 +60,7 @@ public class JmapRequest {
         private int nextMethodCallId = 0;
 
         public Call call(final MethodCall methodCall) {
-            final Request.Invocation invocation = Request.Invocation.create(methodCall, nextMethodCallId());
+            final Request.Invocation invocation = new Request.Invocation(methodCall, nextMethodCallId());
             final ListenableFuture<MethodResponses> future = add(invocation);
             return new Call(future, invocation);
         }
