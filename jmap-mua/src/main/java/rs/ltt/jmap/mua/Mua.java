@@ -1237,6 +1237,7 @@ public class Mua {
                         throw new IllegalStateException("Server reported position " + queryResult.position + " in response to initial query. We expected 0");
                     }
 
+                    //TODO actually not writing state might be wrong; we could be here after a canNotCalculate changes
                     if (queryResult.items.length == 0) {
                         settableFuture.set(Status.UNCHANGED);
                         LOGGER.info("initial query yielded empty result");
