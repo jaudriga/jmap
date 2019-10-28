@@ -16,6 +16,8 @@
 
 package rs.ltt.jmap.client.util;
 
+import okhttp3.HttpUrl;
+
 import java.net.MalformedURLException;
 import java.net.URL;
 
@@ -25,7 +27,7 @@ public final class WellKnownUtil {
 
     }
 
-    public static URL fromUsername(String username) throws MalformedUsernameException {
+    public static HttpUrl fromUsername(String username) throws MalformedUsernameException {
         int index = username.lastIndexOf("@");
         if (index == -1) {
             throw new MalformedUsernameException("Username has no domain part");
@@ -34,18 +36,16 @@ public final class WellKnownUtil {
         if (domain.isEmpty()) {
             throw new MalformedUsernameException("Domain part was empty");
         }
-        try {
-            return new URL("https://" + domain + "/.well-known/jmap");
-        } catch (MalformedURLException e) {
-            throw new MalformedUsernameException(e);
-        }
+        return new HttpUrl.Builder()
+                .scheme("https")
+                .host(domain)
+                .addPathSegment(".well-known")
+                .addPathSegment("jmap")
+                .build();
     }
 
     public static class MalformedUsernameException extends Exception {
-        public MalformedUsernameException(Exception e) {
-            super(e);
-        }
-        public MalformedUsernameException(String message) {
+        MalformedUsernameException(String message) {
             super(message);
         }
     }

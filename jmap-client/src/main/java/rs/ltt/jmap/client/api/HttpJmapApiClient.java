@@ -36,19 +36,19 @@ public class HttpJmapApiClient extends AbstractJmapApiClient {
 
     private static final OkHttpClient OK_HTTP_CLIENT = new OkHttpClient();
 
-    private final URL apiUrl;
+    private final HttpUrl apiUrl;
     private final HttpAuthentication httpAuthentication;
     private final SessionStateListener sessionStateListener;
 
-    public HttpJmapApiClient(final URL apiUrl, String username, String password) {
+    public HttpJmapApiClient(final HttpUrl apiUrl, String username, String password) {
         this(apiUrl, new BasicAuthHttpAuthentication(username, password), null);
     }
 
-    public HttpJmapApiClient(final URL apiUrl, final HttpAuthentication httpAuthentication) {
+    public HttpJmapApiClient(final HttpUrl apiUrl, final HttpAuthentication httpAuthentication) {
         this(apiUrl,httpAuthentication, null);
     }
 
-    public HttpJmapApiClient(final URL apiUrl, final HttpAuthentication httpAuthentication, @NullableDecl final SessionStateListener sessionStateListener) {
+    public HttpJmapApiClient(final HttpUrl apiUrl, final HttpAuthentication httpAuthentication, @NullableDecl final SessionStateListener sessionStateListener) {
         this.apiUrl = apiUrl;
         this.httpAuthentication = httpAuthentication;
         this.sessionStateListener = sessionStateListener;

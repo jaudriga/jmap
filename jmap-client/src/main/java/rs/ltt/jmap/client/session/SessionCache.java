@@ -16,12 +16,13 @@
 
 package rs.ltt.jmap.client.session;
 
+import okhttp3.HttpUrl;
 import rs.ltt.jmap.client.session.Session;
 
 import java.net.URL;
 
 public interface SessionCache {
 
-    void store(String username, URL sessionResource, Session session);
-    Session load(String username, URL sessionResource);
+    void store(String username, HttpUrl sessionResource, Session session);
+    Session load(String username, HttpUrl sessionResource);
 }

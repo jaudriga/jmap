@@ -20,6 +20,7 @@ import com.google.common.base.Charsets;
 import com.google.common.hash.Hashing;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import okhttp3.HttpUrl;
 import rs.ltt.jmap.gson.JmapAdapters;
 
 import java.io.*;
@@ -42,7 +43,7 @@ public class SessionFileCache implements SessionCache {
     }
 
     @Override
-    public void store(String username, URL sessionResource, Session session) {
+    public void store(String username, HttpUrl sessionResource, Session session) {
         Gson gson = this.gsonBuilder.create();
         try {
             final String filename = getFilename(username, sessionResource);
@@ -61,13 +62,13 @@ public class SessionFileCache implements SessionCache {
         }
     }
 
-    private static String getFilename(String username, URL sessionResource) {
+    private static String getFilename(String username, HttpUrl sessionResource) {
         final String name = username + ':' + (sessionResource == null ? '\00' : sessionResource.toString());
         return "session-cache-"+Hashing.sha256().hashString(name, Charsets.UTF_8).toString();
     }
 
     @Override
-    public Session load(String username, URL sessionResource) {
+    public Session load(String username, HttpUrl sessionResource) {
         Gson gson = this.gsonBuilder.create();
         try {
             return gson.fromJson(new FileReader(new File(getFilename(username, sessionResource))), Session.class);

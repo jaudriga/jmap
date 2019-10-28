@@ -16,26 +16,29 @@
 
 package rs.ltt.jmap.client.session;
 
+import com.google.common.base.Preconditions;
+import okhttp3.HttpUrl;
 import rs.ltt.jmap.common.SessionResource;
-
-import java.net.URL;
 
 public class Session {
 
-    private final URL base;
+    private final HttpUrl base;
 
     private final SessionResource sessionResource;
 
-    public Session(URL base, SessionResource sessionResource) {
+    public Session(HttpUrl base, SessionResource sessionResource) {
         this.base = base;
         this.sessionResource = sessionResource;
     }
 
-    public URL getApiUrl() {
-        return sessionResource.getApiUrl(this.base);
+    public HttpUrl getApiUrl() {
+        final String apiUrl = sessionResource.getApiUrl();
+        final HttpUrl.Builder builder = base.newBuilder(apiUrl);
+        Preconditions.checkState(builder != null, String.format("Unable to assemble final API Url from base=%s and apiUrl=%s", base, apiUrl));
+        return builder.build();
     }
 
-    public URL getBase() {
+    public HttpUrl getBase() {
         return base;
     }
 

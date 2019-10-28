@@ -40,14 +40,6 @@ public class SessionResource {
         return username;
     }
 
-    public URL getApiUrl(final URL base) {
-        try {
-            return new URL(base, apiUrl);
-        } catch (MalformedURLException e) {
-            return base;
-        }
-    }
-
     public String getApiUrl() {
         return this.apiUrl;
     }

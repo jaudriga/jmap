@@ -30,7 +30,6 @@ import rs.ltt.jmap.gson.JmapAdapters;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.URL;
 
 public class SessionClient {
 
@@ -38,7 +37,7 @@ public class SessionClient {
 
     private static final OkHttpClient OK_HTTP_CLIENT = new OkHttpClient();
 
-    private final URL sessionResource;
+    private final HttpUrl sessionResource;
     private HttpAuthentication httpAuthentication;
     private SessionCache sessionCache;
     private Session currentSession = null;
@@ -49,7 +48,7 @@ public class SessionClient {
         this.httpAuthentication = authentication;
     }
 
-    public SessionClient(HttpAuthentication authentication, URL sessionResource) {
+    public SessionClient(HttpAuthentication authentication, HttpUrl sessionResource) {
         this.sessionResource = sessionResource;
         this.httpAuthentication = authentication;
     }
@@ -61,7 +60,7 @@ public class SessionClient {
             }
 
             final String username = httpAuthentication.getUsername();
-            final URL resource;
+            final HttpUrl resource;
             if (sessionResource != null) {
                 resource = sessionResource;
             } else {
@@ -104,7 +103,7 @@ public class SessionClient {
         }
     }
 
-    private Session fetchSession(final URL base) throws Exception {
+    private Session fetchSession(final HttpUrl base) throws Exception {
         final Request.Builder requestBuilder = new Request.Builder();
         requestBuilder.url(base);
         httpAuthentication.authenticate(requestBuilder);
@@ -122,10 +121,10 @@ public class SessionClient {
             final Gson gson = builder.create();
             final SessionResource sessionResource = gson.fromJson(new InputStreamReader(inputStream), SessionResource.class);
             final HttpUrl currentBaseUrl = response.request().url();
-            if (!base.equals(currentBaseUrl.url())) {
+            if (!base.equals(currentBaseUrl)) {
                 LOGGER.info("Processed new base URL {}", currentBaseUrl.url());
             }
-            return new Session(currentBaseUrl.url(), sessionResource);
+            return new Session(currentBaseUrl, sessionResource);
         } else if (code == 401) {
             throw new UnauthorizedException(String.format("Session object(%s) was unauthorized", base.toString()));
         } else {

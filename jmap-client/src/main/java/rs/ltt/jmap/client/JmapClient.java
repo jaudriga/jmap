@@ -20,6 +20,7 @@ package rs.ltt.jmap.client;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.*;
+import okhttp3.HttpUrl;
 import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 import rs.ltt.jmap.client.api.HttpJmapApiClient;
@@ -56,7 +57,7 @@ public class JmapClient implements Closeable {
         this.sessionClient = new SessionClient(httpAuthentication);
     }
 
-    public JmapClient(HttpAuthentication httpAuthentication, URL sessionResource) {
+    public JmapClient(HttpAuthentication httpAuthentication, HttpUrl sessionResource) {
         this.authentication = httpAuthentication;
         this.sessionClient = new SessionClient(httpAuthentication, sessionResource);
     }
@@ -66,16 +67,16 @@ public class JmapClient implements Closeable {
         this(new BasicAuthHttpAuthentication(username, password));
     }
 
-    public JmapClient(String username, String password, URL base) {
+    public JmapClient(String username, String password, HttpUrl base) {
         this(new BasicAuthHttpAuthentication(username, password), base);
     }
 
-    public ListenableFuture<URL> getBaseUrl() {
+    public ListenableFuture<HttpUrl> getBaseUrl() {
         Preconditions.checkState(!isShutdown(), "Unable to get baseUrl. JmapClient has been closed already");
-        return Futures.transform(loadSession(), new Function<Session, URL>() {
+        return Futures.transform(loadSession(), new Function<Session, HttpUrl>() {
             @NullableDecl
             @Override
-            public URL apply(@NullableDecl Session session) {
+            public HttpUrl apply(@NullableDecl Session session) {
                 return session != null ? session.getBase() : null;
             }
         }, MoreExecutors.directExecutor());

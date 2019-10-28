@@ -52,7 +52,7 @@ public class HttpJmapClientTest {
         final JmapClient jmapClient = new JmapClient(
                 USERNAME,
                 PASSWORD,
-                server.url(".well-know/jmap").url()
+                server.url(".well-know/jmap")
         );
 
 
@@ -80,7 +80,7 @@ public class HttpJmapClientTest {
         final JmapClient jmapClient = new JmapClient(
                 USERNAME,
                 PASSWORD,
-                server.url(".well-know/jmap").url()
+                server.url(".well-know/jmap")
         );
 
 
@@ -109,7 +109,7 @@ public class HttpJmapClientTest {
         final JmapClient jmapClient = new JmapClient(
                 USERNAME,
                 PASSWORD,
-                server.url(".well-know/jmap").url()
+                server.url(".well-know/jmap")
         );
 
         final ListenableFuture<MethodResponses> future = jmapClient.call(new GetMailboxMethodCall());
@@ -133,7 +133,7 @@ public class HttpJmapClientTest {
         final JmapClient jmapClient = new JmapClient(
                 USERNAME,
                 PASSWORD,
-                server.url(".well-know/jmap").url()
+                server.url(".well-know/jmap")
         );
 
         final ListenableFuture<MethodResponses> mailboxFuture = jmapClient.call(new GetMailboxMethodCall());
