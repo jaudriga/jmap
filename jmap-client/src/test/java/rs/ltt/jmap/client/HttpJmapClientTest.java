@@ -18,6 +18,7 @@ package rs.ltt.jmap.client;
 
 import com.google.common.io.Resources;
 import com.google.common.util.concurrent.ListenableFuture;
+import okhttp3.HttpUrl;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.hamcrest.CoreMatchers;
@@ -159,5 +160,28 @@ public class HttpJmapClientTest {
 
 
         server.shutdown();
+    }
+
+    @Test
+    public void redirectFromWellKnown() throws IOException, ExecutionException, InterruptedException {
+        final MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(301).addHeader("Location", "/jmap"));
+        server.enqueue(new MockResponse().setResponseCode(301).addHeader("Location", "/jmap/"));
+        server.enqueue(new MockResponse().setBody(readResourceAsString("redirect/01-session.json")));
+
+        server.start();
+
+        final JmapClient jmapClient = new JmapClient(
+                USERNAME,
+                PASSWORD,
+                server.url(".well-know/jmap")
+        );
+
+        HttpUrl base = jmapClient.getBaseUrl().get();
+
+        Assert.assertEquals(server.url("/jmap/"), base);
+
+        server.shutdown();
+
     }
 }
