@@ -34,7 +34,6 @@ import rs.ltt.jmap.client.session.SessionClient;
 import rs.ltt.jmap.common.method.MethodCall;
 
 import java.io.Closeable;
-import java.net.URL;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 
@@ -71,22 +70,11 @@ public class JmapClient implements Closeable {
         this(new BasicAuthHttpAuthentication(username, password), base);
     }
 
-    public ListenableFuture<HttpUrl> getBaseUrl() {
-        Preconditions.checkState(!isShutdown(), "Unable to get baseUrl. JmapClient has been closed already");
-        return Futures.transform(loadSession(), new Function<Session, HttpUrl>() {
-            @NullableDecl
-            @Override
-            public HttpUrl apply(@NullableDecl Session session) {
-                return session != null ? session.getBase() : null;
-            }
-        }, MoreExecutors.directExecutor());
-    }
-
     public String getUsername() {
         return authentication.getUsername();
     }
 
-    private ListenableFuture<Session> loadSession() {
+    public ListenableFuture<Session> getSession() {
         return executorService.submit(new Callable<Session>() {
             @Override
             public Session call() throws Exception {
@@ -104,12 +92,10 @@ public class JmapClient implements Closeable {
     }
 
     private void execute(final JmapRequest request) {
-        Futures.addCallback(loadSession(), new FutureCallback<Session>() {
+        Futures.addCallback(getSession(), new FutureCallback<Session>() {
             @Override
             public void onSuccess(@NullableDecl Session session) {
-                if (session == null) {
-                    return;
-                }
+                Preconditions.checkState(session != null, "Session was null");
                 JmapApiClient apiClient = new HttpJmapApiClient(session.getApiUrl(), authentication, sessionStateListener);
                 apiClient.execute(request);
             }

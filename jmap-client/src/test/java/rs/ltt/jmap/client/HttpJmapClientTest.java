@@ -26,6 +26,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import rs.ltt.jmap.client.api.MethodErrorResponseException;
 import rs.ltt.jmap.client.api.MethodResponseNotFoundException;
+import rs.ltt.jmap.client.session.Session;
 import rs.ltt.jmap.common.method.MethodErrorResponse;
 import rs.ltt.jmap.common.method.call.core.EchoMethodCall;
 import rs.ltt.jmap.common.method.call.mailbox.GetMailboxMethodCall;
@@ -177,9 +178,9 @@ public class HttpJmapClientTest {
                 server.url(".well-know/jmap")
         );
 
-        HttpUrl base = jmapClient.getBaseUrl().get();
+        Session session = jmapClient.getSession().get();
 
-        Assert.assertEquals(server.url("/jmap/"), base);
+        Assert.assertEquals(server.url("/jmap/"), session.getBase());
 
         server.shutdown();
 
