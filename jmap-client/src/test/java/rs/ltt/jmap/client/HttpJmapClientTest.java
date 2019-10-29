@@ -18,12 +18,14 @@ package rs.ltt.jmap.client;
 
 import com.google.common.io.Resources;
 import com.google.common.util.concurrent.ListenableFuture;
-import okhttp3.HttpUrl;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
+import rs.ltt.jmap.client.api.EndpointNotFoundException;
 import rs.ltt.jmap.client.api.MethodErrorResponseException;
 import rs.ltt.jmap.client.api.MethodResponseNotFoundException;
 import rs.ltt.jmap.client.session.Session;
@@ -43,6 +45,10 @@ public class HttpJmapClientTest {
 
     private static String USERNAME = "test@example.com";
     private static String PASSWORD = "secret";
+    private static String WELL_KNOWN_PATH = ".well-known/jmap";
+
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
 
     @Test
     public void fetchMailboxes() throws Exception {
@@ -54,7 +60,7 @@ public class HttpJmapClientTest {
         final JmapClient jmapClient = new JmapClient(
                 USERNAME,
                 PASSWORD,
-                server.url(".well-know/jmap")
+                server.url(WELL_KNOWN_PATH)
         );
 
 
@@ -82,7 +88,7 @@ public class HttpJmapClientTest {
         final JmapClient jmapClient = new JmapClient(
                 USERNAME,
                 PASSWORD,
-                server.url(".well-know/jmap")
+                server.url(WELL_KNOWN_PATH)
         );
 
 
@@ -102,7 +108,7 @@ public class HttpJmapClientTest {
     }
 
     @Test
-    public void fetchMailboxesGarbage() throws IOException, InterruptedException {
+    public void fetchMailboxesException() throws IOException, InterruptedException, ExecutionException {
         final MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setBody(readResourceAsString("fetch-mailboxes/01-session.json")));
         server.enqueue(new MockResponse().setBody(readResourceAsString("fetch-mailboxes/unknown-method-call-id.json")));
@@ -111,16 +117,33 @@ public class HttpJmapClientTest {
         final JmapClient jmapClient = new JmapClient(
                 USERNAME,
                 PASSWORD,
-                server.url(".well-know/jmap")
+                server.url(WELL_KNOWN_PATH)
         );
 
-        final ListenableFuture<MethodResponses> future = jmapClient.call(new GetMailboxMethodCall());
+        thrown.expect(ExecutionException.class);
+        thrown.expectCause(CoreMatchers.<Throwable>instanceOf(MethodResponseNotFoundException.class));
+        jmapClient.call(new GetMailboxMethodCall()).get();
 
-        try {
-            future.get();
-        } catch (ExecutionException e) {
-            Assert.assertThat(e.getCause(), CoreMatchers.<Throwable>instanceOf(MethodResponseNotFoundException.class));
-        }
+        server.shutdown();
+    }
+
+    @Test
+    public void endpointNotFound() throws ExecutionException, InterruptedException, IOException {
+        final MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(404));
+
+        final JmapClient jmapClient = new JmapClient(
+                USERNAME,
+                PASSWORD,
+                server.url(WELL_KNOWN_PATH)
+        );
+
+        thrown.expect(ExecutionException.class);
+        thrown.expectCause(CoreMatchers.<Throwable>instanceOf(EndpointNotFoundException.class));
+
+        jmapClient.call(new EchoMethodCall()).get();
+
+        server.shutdown();
     }
 
     @Test
@@ -135,7 +158,7 @@ public class HttpJmapClientTest {
         final JmapClient jmapClient = new JmapClient(
                 USERNAME,
                 PASSWORD,
-                server.url(".well-know/jmap")
+                server.url(WELL_KNOWN_PATH)
         );
 
         final ListenableFuture<MethodResponses> mailboxFuture = jmapClient.call(new GetMailboxMethodCall());
@@ -175,7 +198,7 @@ public class HttpJmapClientTest {
         final JmapClient jmapClient = new JmapClient(
                 USERNAME,
                 PASSWORD,
-                server.url(".well-know/jmap")
+                server.url(WELL_KNOWN_PATH)
         );
 
         Session session = jmapClient.getSession().get();
