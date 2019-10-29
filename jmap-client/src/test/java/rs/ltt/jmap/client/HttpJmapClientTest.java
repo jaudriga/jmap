@@ -18,6 +18,7 @@ package rs.ltt.jmap.client;
 
 import com.google.common.io.Resources;
 import com.google.common.util.concurrent.ListenableFuture;
+import okhttp3.HttpUrl;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.hamcrest.CoreMatchers;
@@ -28,7 +29,10 @@ import org.junit.rules.ExpectedException;
 import rs.ltt.jmap.client.api.EndpointNotFoundException;
 import rs.ltt.jmap.client.api.MethodErrorResponseException;
 import rs.ltt.jmap.client.api.MethodResponseNotFoundException;
+import rs.ltt.jmap.client.event.CloseAfter;
 import rs.ltt.jmap.client.session.Session;
+import rs.ltt.jmap.common.entity.Email;
+import rs.ltt.jmap.common.entity.Mailbox;
 import rs.ltt.jmap.common.method.MethodErrorResponse;
 import rs.ltt.jmap.common.method.call.core.EchoMethodCall;
 import rs.ltt.jmap.common.method.call.mailbox.GetMailboxMethodCall;
@@ -37,6 +41,7 @@ import rs.ltt.jmap.common.method.response.mailbox.GetMailboxMethodResponse;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
@@ -204,6 +209,31 @@ public class HttpJmapClientTest {
         Session session = jmapClient.getSession().get();
 
         Assert.assertEquals(server.url("/jmap/"), session.getBase());
+
+        server.shutdown();
+
+    }
+
+    @Test
+    public void downloadUploadAndEventSourceUrlTest() throws IOException, ExecutionException, InterruptedException {
+        final MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setBody(readResourceAsString("session-urls/01-session.json")));
+        server.start();
+        final JmapClient jmapClient = new JmapClient(
+                USERNAME,
+                PASSWORD,
+                server.url(WELL_KNOWN_PATH)
+        );
+
+        final Session session = jmapClient.getSession().get();
+
+        HttpUrl download = session.getDownloadUrl(USERNAME, "B10B1D", "lttrs", "text/plain");
+        HttpUrl upload = session.getUploadUrl(USERNAME);
+        HttpUrl eventSource = session.getEventSourceUrl(Arrays.asList(Email.class, Mailbox.class), CloseAfter.STATE, 300L);
+
+        Assert.assertEquals(server.url("/jmap/download/test%40example.com/B10B1D/lttrs?accept=text%2Fplain"), download);
+        Assert.assertEquals(server.url("/jmap/upload/test%40example.com/"), upload);
+        Assert.assertEquals(server.url("jmap/eventsource/?types=Email,Mailbox&closeafter=state&ping=300"), eventSource);
 
         server.shutdown();
 
