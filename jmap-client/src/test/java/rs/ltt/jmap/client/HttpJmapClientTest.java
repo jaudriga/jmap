@@ -238,4 +238,23 @@ public class HttpJmapClientTest {
         server.shutdown();
 
     }
+
+    @Test
+    public void inclompleteSessionResource() throws IOException, ExecutionException, InterruptedException {
+        final MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setBody(readResourceAsString("broken-session-urls/01-session.json")));
+        server.start();
+        final JmapClient jmapClient = new JmapClient(
+                USERNAME,
+                PASSWORD,
+                server.url(WELL_KNOWN_PATH)
+        );
+
+        final Session session = jmapClient.getSession().get();
+
+        thrown.expect(IllegalStateException.class);
+        session.getUploadUrl(USERNAME);
+
+        server.shutdown();
+    }
 }
