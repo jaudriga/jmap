@@ -609,10 +609,10 @@ public class Mua {
      * Removes the emails in this collection from both the Trash and Archive mailbox (if they are in either of those)
      * and puts all emails into the Inbox instead.
      *
-     * @param emails    A collection of emails; usually all emails in a thread
+     * @param emails A collection of emails; usually all emails in a thread
      * @return
      */
-    public ListenableFuture<Boolean> moveToInbox(final Collection<?extends IdentifiableEmailWithMailboxIds> emails) {
+    public ListenableFuture<Boolean> moveToInbox(final Collection<? extends IdentifiableEmailWithMailboxIds> emails) {
         return Futures.transformAsync(getMailboxes(), new AsyncFunction<Collection<? extends IdentifiableMailboxWithRole>, Boolean>() {
             @Override
             public ListenableFuture<Boolean> apply(@NullableDecl Collection<? extends IdentifiableMailboxWithRole> mailboxes) throws Exception {
@@ -625,7 +625,7 @@ public class Mua {
         }, MoreExecutors.directExecutor());
     }
 
-    private ListenableFuture<Boolean> moveToInbox(final Collection<?extends IdentifiableEmailWithMailboxIds> emails, final IdentifiableMailboxWithRole archive, final IdentifiableMailboxWithRole trash, final IdentifiableMailboxWithRole inbox) {
+    private ListenableFuture<Boolean> moveToInbox(final Collection<? extends IdentifiableEmailWithMailboxIds> emails, final IdentifiableMailboxWithRole archive, final IdentifiableMailboxWithRole trash, final IdentifiableMailboxWithRole inbox) {
         return Futures.transformAsync(getObjectsState(), new AsyncFunction<ObjectsState, Boolean>() {
             @Override
             public ListenableFuture<Boolean> apply(@NullableDecl ObjectsState objectsState) throws Exception {
@@ -634,7 +634,7 @@ public class Mua {
         }, MoreExecutors.directExecutor());
     }
 
-    private ListenableFuture<Boolean> moveToInbox(final Collection<?extends IdentifiableEmailWithMailboxIds> emails, IdentifiableMailboxWithRole archive, IdentifiableMailboxWithRole trash, IdentifiableMailboxWithRole inbox, final ObjectsState objectsState) {
+    private ListenableFuture<Boolean> moveToInbox(final Collection<? extends IdentifiableEmailWithMailboxIds> emails, IdentifiableMailboxWithRole archive, IdentifiableMailboxWithRole trash, IdentifiableMailboxWithRole inbox, final ObjectsState objectsState) {
         Preconditions.checkNotNull(emails, "emails can not be null when attempting to move them to inbox");
 
         final JmapClient.MultiCall multiCall = jmapClient.newMultiCall();
@@ -686,7 +686,7 @@ public class Mua {
      * @param emails A collection of emails. Usually all messages in a thread
      * @return
      */
-    public ListenableFuture<Boolean> archive(final Collection<?extends IdentifiableEmailWithMailboxIds> emails) {
+    public ListenableFuture<Boolean> archive(final Collection<? extends IdentifiableEmailWithMailboxIds> emails) {
         return Futures.transformAsync(getMailboxes(), new AsyncFunction<Collection<? extends IdentifiableMailboxWithRole>, Boolean>() {
             @Override
             public ListenableFuture<Boolean> apply(@NullableDecl Collection<? extends IdentifiableMailboxWithRole> mailboxes) throws Exception {
@@ -1234,13 +1234,6 @@ public class Mua {
                         throw new IllegalStateException("Server reported position " + queryResult.position + " in response to initial query. We expected 0");
                     }
 
-                    //TODO actually not writing state might be wrong; we could be here after a canNotCalculate changes
-                    if (queryResult.items.length == 0) {
-                        settableFuture.set(Status.UNCHANGED);
-                        LOGGER.info("initial query yielded empty result");
-                        return;
-                    }
-
                     cache.setQueryResult(query.toQueryString(), queryResult);
 
                     if (getThreadsResponsesFuture != null && getEmailResponsesFuture != null) {
@@ -1333,13 +1326,13 @@ public class Mua {
             return this;
         }
 
+        public Builder queryPageSize(int queryPageSize) {
+            return queryPageSize((long) queryPageSize);
+        }
+
         public Builder queryPageSize(Long queryPageSize) {
             this.queryPageSize = queryPageSize;
             return this;
-        }
-
-        public Builder queryPageSize(int queryPageSize) {
-            return queryPageSize((long) queryPageSize);
         }
 
         public Builder sessionCache(SessionCache sessionCache) {
