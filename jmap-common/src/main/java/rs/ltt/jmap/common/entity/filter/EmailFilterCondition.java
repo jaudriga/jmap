@@ -20,13 +20,9 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ComparisonChain;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.Singular;
 import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 import rs.ltt.jmap.common.entity.Email;
 import rs.ltt.jmap.common.util.IndexableStringUtils;
-
-import java.util.Arrays;
-import java.util.Comparator;
 
 @Getter
 @Builder
@@ -39,6 +35,18 @@ public class EmailFilterCondition implements FilterCondition<Email> {
     private Long minSize;
 
     private Long maxSize;
+
+    private String allInThreadHaveKeyword;
+
+    private String someInThreadHaveKeyword;
+
+    private String noneInThreadHaveKeyword;
+
+    private String hasKeyword;
+
+    private String notKeyword;
+
+    private Boolean hasAttachment;
 
     private String text;
 
@@ -56,7 +64,27 @@ public class EmailFilterCondition implements FilterCondition<Email> {
 
     @Override
     public String toQueryString() {
-        return IndexableStringUtils.toIndexableString(L3_DIVIDER, L4_DIVIDER, inMailbox, inMailboxOtherThan, minSize, maxSize, text, from, to, cc, bcc, subject, body);
+        return IndexableStringUtils.toIndexableString(
+                L3_DIVIDER,
+                L4_DIVIDER,
+                inMailbox,
+                inMailboxOtherThan,
+                minSize,
+                maxSize,
+                allInThreadHaveKeyword,
+                someInThreadHaveKeyword,
+                noneInThreadHaveKeyword,
+                hasKeyword,
+                notKeyword,
+                hasAttachment,
+                text,
+                from,
+                to,
+                cc,
+                bcc,
+                subject,
+                body
+        );
     }
 
     @Override
@@ -68,6 +96,12 @@ public class EmailFilterCondition implements FilterCondition<Email> {
                     .compare(inMailboxOtherThan, other.inMailboxOtherThan, new IndexableStringUtils.StringArrayComparator())
                     .compare(minSize == null ? 0L : minSize, other.minSize == null ? 0L : other.minSize)
                     .compare(maxSize == null ? 0L : maxSize, other.maxSize == null ? 0L : other.maxSize)
+                    .compare(Strings.nullToEmpty(allInThreadHaveKeyword), Strings.nullToEmpty(other.allInThreadHaveKeyword))
+                    .compare(Strings.nullToEmpty(someInThreadHaveKeyword), Strings.nullToEmpty(other.someInThreadHaveKeyword))
+                    .compare(Strings.nullToEmpty(noneInThreadHaveKeyword), Strings.nullToEmpty(other.noneInThreadHaveKeyword))
+                    .compare(Strings.nullToEmpty(hasKeyword), Strings.nullToEmpty(other.hasKeyword))
+                    .compare(Strings.nullToEmpty(notKeyword), Strings.nullToEmpty(other.notKeyword))
+                    .compareFalseFirst(nullToFalse(hasAttachment), nullToFalse(other.hasAttachment))
                     .compare(Strings.nullToEmpty(text), Strings.nullToEmpty(other.text))
                     .compare(Strings.nullToEmpty(from), Strings.nullToEmpty(other.from))
                     .compare(Strings.nullToEmpty(cc), Strings.nullToEmpty(other.cc))
@@ -78,5 +112,9 @@ public class EmailFilterCondition implements FilterCondition<Email> {
         } else {
             return 1;
         }
+    }
+
+    private static boolean nullToFalse(Boolean b) {
+        return b == null ? false : b;
     }
 }
