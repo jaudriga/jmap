@@ -65,7 +65,9 @@ public interface Cache {
 
     void addQueryResult(String queryString, String afterId, QueryResult queryResult) throws CacheWriteException, CacheConflictException;
 
-    void updateQueryResults(String query, QueryUpdate<Email, QueryResultItem> update, TypedState<Email> emailState) throws CacheWriteException, CacheConflictException;
+    void updateQueryResults(String queryString, QueryUpdate<Email, QueryResultItem> update, TypedState<Email> emailState) throws CacheWriteException, CacheConflictException;
+
+    void invalidateQueryResult(String queryString);
 
     Missing getMissing(String query) throws CacheReadException;
 }

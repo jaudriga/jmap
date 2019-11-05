@@ -1105,7 +1105,12 @@ public class Mua {
                     //TODO as mentioned above we probably need to ignore canNotCalculate changes errors and the like otherwise we won’t be able to page through queries that aren’t cachable
                     queryRefreshFuture.get();
 
-                    cache.addQueryResult(query.toQueryString(), afterEmailId, queryResult);
+                    try {
+                        cache.addQueryResult(query.toQueryString(), afterEmailId, queryResult);
+                    } catch (CorruptCacheException e) {
+                        cache.invalidateQueryResult(query.toQueryString());
+                        throw e;
+                    }
 
                     fetchMissing(query.toQueryString()).addListener(new Runnable() {
                         @Override

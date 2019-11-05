@@ -350,6 +350,13 @@ public class InMemoryCache implements Cache {
     }
 
     @Override
+    public void invalidateQueryResult(final String queryString) {
+        synchronized (this.queryResults) {
+            this.queryResults.remove(queryString);
+        }
+    }
+
+    @Override
     public Missing getMissing(final String query) throws CacheReadException {
         final List<String> threadIds = new ArrayList<>();
         synchronized (this.queryResults) {
