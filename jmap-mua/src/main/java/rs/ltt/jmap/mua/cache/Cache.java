@@ -63,7 +63,7 @@ public interface Cache {
 
     void setQueryResult(String queryString, QueryResult queryResult) throws CacheWriteException;
 
-    void addQueryResult(String queryString, QueryResult queryResult) throws CacheWriteException, CacheConflictException;
+    void addQueryResult(String queryString, String afterId, QueryResult queryResult) throws CacheWriteException, CacheConflictException;
 
     void updateQueryResults(String query, QueryUpdate<Email, QueryResultItem> update, TypedState<Email> emailState) throws CacheWriteException, CacheConflictException;
 

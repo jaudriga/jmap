@@ -291,7 +291,7 @@ public class InMemoryCache implements Cache {
     }
 
     @Override
-    public void addQueryResult(String queryString, QueryResult queryResult) throws CacheWriteException, CacheConflictException {
+    public void addQueryResult(String queryString, String afterEmailId, QueryResult queryResult) throws CacheWriteException, CacheConflictException {
         synchronized (this.queryResults) {
             final String emailState = queryResult.objectState.getState();
             final String queryState = queryResult.queryState.getState();
@@ -308,9 +308,16 @@ public class InMemoryCache implements Cache {
             if (queryState == null || !queryState.equals(inMemoryQueryResult.queryState)) {
                 throw new CacheConflictException("QueryState does not match");
             }
-            int currentItemCount = inMemoryQueryResult.items.size();
+            final int currentItemCount = inMemoryQueryResult.items.size();
+
+            final String currentLastItemId = inMemoryQueryResult.items.get(currentItemCount - 1).getEmailId();
+
+            if (!currentLastItemId.equals(afterEmailId)) {
+                throw new CacheConflictException(String.format("Current last email id (%s) doesn't match afterId (%s) from request", currentLastItemId, afterEmailId));
+            }
+
             if (currentItemCount != queryResult.position) {
-                throw new CacheConflictException(String.format("Unexpected QueryPage. Cache has %d items. Page starts at position %d",currentItemCount,queryResult.position));
+                throw new CorruptCacheException(String.format("Unexpected QueryPage. Cache has %d items. Page starts at position %d",currentItemCount,queryResult.position));
             }
             inMemoryQueryResult.items.addAll(Arrays.asList(queryResult.items));
         }

@@ -17,15 +17,18 @@
 package rs.ltt.jmap.mua.cache;
 
 /**
- * A cache implementation will throw that for errors that can be recovered from automatically like state mismatched
- * states. (When attempting to update from state a to state c but the state in the cache is b or d.) This usually
- * means that the cache write attempt is a result for a request that got delayed  or duplicated in flight or something.
+ * A Cache implementation should throw this when it detects a problem it can not simply recover from.
+ * For example seeing an update to an element it doesn't have stored or processing an addQueryResult when the
+ * previous page is corrupt or out of sync.
+ * MUA will then mark the cache for that object or for that query as invalid and overwrite it on the next request.
  *
- * MUA will pass this error on to the higher ups but it is probably save to ignore as a request with a correct update
- * is probably already in flight or can easily be made.
+ * This exception should not be thrown lightly as rebuilding the cache is potentially expensive.
  */
-public class CacheConflictException extends IllegalStateException {
-    public CacheConflictException(String message) {
+public class CorruptCacheException extends IllegalStateException {
+
+
+    public CorruptCacheException(String message) {
         super(message);
     }
+
 }
