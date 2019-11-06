@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import rs.ltt.jmap.client.JmapClient;
 import rs.ltt.jmap.client.JmapRequest.Call;
 import rs.ltt.jmap.client.MethodResponses;
+import rs.ltt.jmap.client.api.MethodErrorResponseException;
 import rs.ltt.jmap.client.session.SessionCache;
 import rs.ltt.jmap.client.session.SessionFileCache;
 import rs.ltt.jmap.common.Request;
@@ -37,6 +38,7 @@ import rs.ltt.jmap.common.entity.*;
 import rs.ltt.jmap.common.entity.filter.EmailFilterCondition;
 import rs.ltt.jmap.common.entity.filter.Filter;
 import rs.ltt.jmap.common.entity.query.EmailQuery;
+import rs.ltt.jmap.common.method.MethodErrorResponse;
 import rs.ltt.jmap.common.method.call.email.GetEmailMethodCall;
 import rs.ltt.jmap.common.method.call.email.QueryChangesEmailMethodCall;
 import rs.ltt.jmap.common.method.call.email.QueryEmailMethodCall;
@@ -46,6 +48,7 @@ import rs.ltt.jmap.common.method.call.mailbox.GetMailboxMethodCall;
 import rs.ltt.jmap.common.method.call.mailbox.SetMailboxMethodCall;
 import rs.ltt.jmap.common.method.call.submission.SetEmailSubmissionMethodCall;
 import rs.ltt.jmap.common.method.call.thread.GetThreadMethodCall;
+import rs.ltt.jmap.common.method.error.AnchorNotFoundMethodErrorResponse;
 import rs.ltt.jmap.common.method.response.email.*;
 import rs.ltt.jmap.common.method.response.identity.ChangesIdentityMethodResponse;
 import rs.ltt.jmap.common.method.response.identity.GetIdentityMethodResponse;
@@ -1078,6 +1081,9 @@ public class Mua {
             throw new InconsistentQueryStateException("QueryStateWrapper needs queryState for paging");
         }
         if (!afterEmailId.equals(queryStateWrapper.upTo)) {
+            //in conjunction with lttrs-android this can happen if we have a QueryItemOverwrite for the last item in
+            //a query. This will probably fix itself once the update command has run as well as a subsequent updateQuery() call.
+            //TODO: is there a point in triggering a queryUpdate from Mua? Probably not as we don’t know if the update command ran yet.
             throw new InconsistentQueryStateException("upToId from QueryState needs to match the supplied afterEmailId");
         }
         final SettableFuture<Status> settableFuture = SettableFuture.create();
@@ -1092,8 +1098,10 @@ public class Mua {
             @Override
             public void run() {
                 try {
-                    QueryEmailMethodResponse queryResponse = queryResponsesFuture.get().getMain(QueryEmailMethodResponse.class);
-                    GetEmailMethodResponse getThreadIdsResponse = getThreadIdsResponsesFuture.get().getMain(GetEmailMethodResponse.class);
+                    //This needs to be the first response that we get in order to properly process a potential
+                    //anchorNotFound in the catch block
+                    final QueryEmailMethodResponse queryResponse = queryResponsesFuture.get().getMain(QueryEmailMethodResponse.class);
+                    final GetEmailMethodResponse getThreadIdsResponse = getThreadIdsResponsesFuture.get().getMain(GetEmailMethodResponse.class);
 
                     final QueryResult queryResult = QueryResult.of(queryResponse, getThreadIdsResponse);
 
@@ -1108,6 +1116,7 @@ public class Mua {
                     try {
                         cache.addQueryResult(query.toQueryString(), afterEmailId, queryResult);
                     } catch (CorruptCacheException e) {
+                        LOGGER.info("Invalidating query result cache after cache corruption", e);
                         cache.invalidateQueryResult(query.toQueryString());
                         throw e;
                     }
@@ -1118,6 +1127,22 @@ public class Mua {
                             settableFuture.set(queryResult.items.length > 0 ? Status.UPDATED : Status.UNCHANGED);
                         }
                     }, MoreExecutors.directExecutor());
+                } catch (ExecutionException e) {
+                    final Throwable cause = e.getCause();
+                    if (cause instanceof MethodErrorResponseException) {
+                        final MethodErrorResponse methodError = ((MethodErrorResponseException) cause).getMethodErrorResponse();
+                        if (methodError instanceof AnchorNotFoundMethodErrorResponse) {
+                            if (Status.unchanged(queryRefreshFuture)) {
+                                LOGGER.info("Invalidating query result cache after receiving AnchorNotFound response");
+                                cache.invalidateQueryResult(query.toQueryString());
+                            } else {
+                                LOGGER.info(
+                                        "Holding back on invaliding query result cache despite AnchorNotFound response because query refresh had changes"
+                                );
+                            }
+                        }
+                    }
+                    settableFuture.setException(extractException(e));
                 } catch (Exception e) {
                     settableFuture.setException(extractException(e));
                 }
@@ -1140,7 +1165,7 @@ public class Mua {
 
         final List<ListenableFuture<Status>> piggyBackedFuturesList = piggyBack(queryStateWrapper.objectsState, multiCall);
 
-        final Call queryChangesCall = multiCall.call(new QueryChangesEmailMethodCall(queryStateWrapper.queryState, query));
+        final Call queryChangesCall = multiCall.call(new QueryChangesEmailMethodCall(queryStateWrapper.queryState, query)); //TODO do we want to include upTo?
         final ListenableFuture<MethodResponses> queryChangesResponsesFuture = queryChangesCall.getMethodResponses();
         final ListenableFuture<MethodResponses> getThreadIdResponsesFuture = multiCall.call(new GetEmailMethodCall(queryChangesCall.createResultReference(Request.Invocation.ResultReference.Path.ADDED_IDS), new String[]{"threadId"})).getMethodResponses();
 
@@ -1169,7 +1194,6 @@ public class Mua {
                         settableFuture.set(Status.UNCHANGED);
                     } else {
                         final List<ListenableFuture<Status>> list = new ArrayList<>();
-                        list.add(Futures.immediateFuture(piggybackStatus));
                         list.add(Futures.immediateFuture(queryUpdateStatus));
                         //TODO this should be unnecessary. At the time of an refresh we have previously loaded all ids
                         //TODO: however it might be that a previous fetchMissing() has failed. so better safe than sorry

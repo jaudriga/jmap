@@ -25,6 +25,7 @@ public class MethodErrorResponseException extends JmapApiException {
     private final MethodResponse[] additional;
 
     MethodErrorResponseException(MethodErrorResponse methodErrorResponse, MethodResponse[] additional) {
+        super(methodErrorResponse.getType() + ((additional != null && additional.length > 0) ? " + "+additional.length : ""));
         this.methodErrorResponse = methodErrorResponse;
         this.additional = additional;
     }

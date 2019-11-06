@@ -16,6 +16,7 @@
 
 package rs.ltt.jmap.mua;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import rs.ltt.jmap.common.entity.AbstractIdentifiableEntity;
 import rs.ltt.jmap.mua.cache.AbstractUpdate;
 
@@ -30,6 +31,15 @@ public enum Status {
 
     public static Status of(final boolean hasChanges) {
         return hasChanges ? UPDATED : UNCHANGED;
+    }
+
+    public static boolean unchanged(ListenableFuture<Status> statusListenableFuture) {
+        try {
+            return statusListenableFuture.get() == UNCHANGED;
+        } catch (Exception e) {
+            //exception also means no changes
+            return true;
+        }
     }
 
 }
