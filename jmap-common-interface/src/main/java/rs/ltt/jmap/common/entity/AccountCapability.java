@@ -14,12 +14,7 @@
  *
  */
 
-package rs.ltt.jmap.common.entity.capability;
+package rs.ltt.jmap.common.entity;
 
-import rs.ltt.jmap.Namespace;
-import rs.ltt.jmap.annotation.JmapCapability;
-import rs.ltt.jmap.common.entity.Capability;
-
-@JmapCapability( namespace = Namespace.SUBMISSION)
-public class SubmissionCapability implements Capability  {
+public interface AccountCapability {
 }

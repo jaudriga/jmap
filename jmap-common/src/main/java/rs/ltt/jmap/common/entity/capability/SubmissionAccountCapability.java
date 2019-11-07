@@ -16,10 +16,20 @@
 
 package rs.ltt.jmap.common.entity.capability;
 
+import lombok.Builder;
+import lombok.Getter;
+import lombok.ToString;
 import rs.ltt.jmap.Namespace;
-import rs.ltt.jmap.annotation.JmapCapability;
-import rs.ltt.jmap.common.entity.Capability;
+import rs.ltt.jmap.annotation.JmapAccountCapability;
+import rs.ltt.jmap.common.entity.AccountCapability;
 
-@JmapCapability( namespace = Namespace.SUBMISSION)
-public class SubmissionCapability implements Capability  {
+import java.util.Map;
+
+@JmapAccountCapability(namespace = Namespace.SUBMISSION)
+@Getter
+@Builder
+@ToString
+public class SubmissionAccountCapability implements AccountCapability  {
+    private long maxDelayedSend;
+    private Map<String,String[]> submissionExtensions;
 }

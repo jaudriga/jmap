@@ -18,12 +18,12 @@ package rs.ltt.jmap.common.entity;
 
 import lombok.Getter;
 
-import java.util.List;
+import java.util.Map;
 
 @Getter
 public class Account {
     private String name;
     private boolean isPersonal;
     private boolean isReadOnly;
-    private List<String> hasDataFor;
+    private Map<Class<?extends AccountCapability>, AccountCapability> accountCapabilities;
 }

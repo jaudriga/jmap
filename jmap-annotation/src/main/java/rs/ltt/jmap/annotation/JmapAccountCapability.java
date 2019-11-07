@@ -14,12 +14,14 @@
  *
  */
 
-package rs.ltt.jmap.common.entity.capability;
+package rs.ltt.jmap.annotation;
 
-import rs.ltt.jmap.Namespace;
-import rs.ltt.jmap.annotation.JmapCapability;
-import rs.ltt.jmap.common.entity.Capability;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Target;
 
-@JmapCapability( namespace = Namespace.SUBMISSION)
-public class SubmissionCapability implements Capability  {
+@Target(ElementType.TYPE)
+public @interface JmapAccountCapability {
+
+    String namespace();
+
 }

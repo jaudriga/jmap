@@ -16,10 +16,16 @@
 
 package rs.ltt.jmap.common.entity.capability;
 
+import lombok.Builder;
+import lombok.ToString;
 import rs.ltt.jmap.Namespace;
+import rs.ltt.jmap.annotation.JmapAccountCapability;
 import rs.ltt.jmap.annotation.JmapCapability;
+import rs.ltt.jmap.common.entity.AccountCapability;
 import rs.ltt.jmap.common.entity.Capability;
 
-@JmapCapability( namespace = Namespace.SUBMISSION)
-public class SubmissionCapability implements Capability  {
+@JmapAccountCapability(namespace = Namespace.VACATION_RESPONSE)
+@Builder
+@ToString
+public class VacationResponseAccountCapability implements AccountCapability {
 }

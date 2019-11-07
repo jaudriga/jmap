@@ -16,10 +16,22 @@
 
 package rs.ltt.jmap.common.entity.capability;
 
+import lombok.Builder;
+import lombok.Getter;
+import lombok.ToString;
 import rs.ltt.jmap.Namespace;
-import rs.ltt.jmap.annotation.JmapCapability;
-import rs.ltt.jmap.common.entity.Capability;
+import rs.ltt.jmap.annotation.JmapAccountCapability;
+import rs.ltt.jmap.common.entity.AccountCapability;
 
-@JmapCapability( namespace = Namespace.SUBMISSION)
-public class SubmissionCapability implements Capability  {
+@JmapAccountCapability(namespace = Namespace.MAIL)
+@Getter
+@Builder
+@ToString
+public class MailAccountCapability implements AccountCapability {
+    private Long maxMailboxesPerEmail;
+    private Long maxMailboxDepth;
+    private long maxSizeMailboxName;
+    private long maxSizeAttachmentsPerEmail;
+    private String[] emailQuerySortOptions;
+    private boolean mayCreateTopLevelMailbox;
 }
