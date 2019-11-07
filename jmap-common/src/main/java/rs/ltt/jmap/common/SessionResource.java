@@ -35,6 +35,7 @@ public class SessionResource {
     private String eventSourceUrl;
     @Singular
     private Map<String, Account> accounts;
+    //TODO we probably want this to be Map<Class<?extends AccountCapability>,String>
     private Map<String, String> primaryAccounts;
     //TODO @Singular annotation doesn’t seem to compile. Maybe report with lombok?
     @Getter(AccessLevel.NONE)
