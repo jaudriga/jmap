@@ -308,7 +308,7 @@ public class Mua {
         Preconditions.checkState(email.getBlobId() == null, "blobId is a server-set property");
         Preconditions.checkState(email.getThreadId() == null, "threadId is a server-set property");
         final Email.EmailBuilder emailBuilder = email.toBuilder();
-        final Optional<ListenableFuture<MethodResponses>> mailboxCreateFutureOptional = CreateUtil.mailbox(multiCall, drafts, Role.DRAFTS);
+        final Optional<ListenableFuture<MethodResponses>> mailboxCreateFutureOptional = createMailboxIfNeeded(drafts, Role.DRAFTS, null, multiCall);
         if (drafts == null) {
             emailBuilder.mailboxId(CreateUtil.createIdReference(Role.DRAFTS), true);
         } else if (!email.getMailboxIds().containsKey(drafts.getId())) {
@@ -334,6 +334,45 @@ public class Mua {
             }
         }, MoreExecutors.directExecutor());
 
+    }
+
+    /**
+     * Utility method to automatically create a mailbox of a certain role if it doesn’t exist yet. This method is usually
+     * used in conjunction with a modification of emails in a thread. For example a generalized 'move to archive' method
+     * can call this method ahead of time to create the archive mailbox.
+     * <p>
+     * When called with an ObjectsState the SetMailboxMethodCall will be guarded with an ifInState parameter. In that case
+     * an automatic call to updateMailboxes is made as well - The idea behind that approach is that if the ifInState fails
+     * we will at least have an up to date state on the next attempt.
+     *
+     * @param mailbox      A mailbox with a certain role. If set to something other than null this call will not be made. Must match the role supplied in the second argument
+     * @param role         The role of the mailbox we want to create.
+     * @param objectsState If an ObjectsState is giving the create call will be guarded with a ifInState
+     * @param multiCall    The MultiCall that will later have the SetEmailMethodCall added to it.
+     * @return
+     */
+    private Optional<ListenableFuture<MethodResponses>> createMailboxIfNeeded(@NullableDecl final IdentifiableMailboxWithRole mailbox, @NonNullDecl final Role role, @NullableDecl ObjectsState objectsState, final JmapClient.MultiCall multiCall) {
+        if (mailbox != null) {
+            Preconditions.checkArgument(mailbox.getRole() == role);
+        }
+        if (mailbox == null) {
+            final SetMailboxMethodCall setMailboxMethodCall = new SetMailboxMethodCall(
+                    null, //TODO this is the account; we need to do something useful with that
+                    objectsState == null ? null : objectsState.mailboxState,
+                    ImmutableMap.of(CreateUtil.createId(role), MailboxUtil.create(role)),
+                    null,
+                    null
+            );
+            final Optional<ListenableFuture<MethodResponses>> optional = Optional.of(
+                    multiCall.call(setMailboxMethodCall).getMethodResponses()
+            );
+            if (objectsState != null && objectsState.mailboxState != null) {
+                updateMailboxes(objectsState.mailboxState, multiCall);
+            }
+            return optional;
+        } else {
+            return Optional.absent();
+        }
     }
 
     public ListenableFuture<Boolean> submit(final Email email, final Identity identity) {
@@ -379,7 +418,7 @@ public class Mua {
     private ListenableFuture<Boolean> submit(@NonNullDecl final String emailId, @NonNullDecl final Identity identity, @NullableDecl String draftMailboxId, @NullableDecl final IdentifiableMailboxWithRole sent, final JmapClient.MultiCall multiCall) {
         Preconditions.checkNotNull(emailId, "emailId can not be null when attempting to submit");
         Preconditions.checkNotNull(identity, "identity can not be null when attempting to submit an email");
-        final Optional<ListenableFuture<MethodResponses>> mailboxCreateFutureOptional = CreateUtil.mailbox(multiCall, sent, Role.SENT);
+        final Optional<ListenableFuture<MethodResponses>> mailboxCreateFutureOptional = createMailboxIfNeeded(sent, Role.SENT, null, multiCall);
         final Patches.Builder patchesBuilder = Patches.builder();
         patchesBuilder.remove("keywords/" + Keyword.DRAFT);
         patchesBuilder.set("mailboxIds/" + (sent == null ? CreateUtil.createIdReference(Role.SENT) : sent.getId()), true);
@@ -497,14 +536,36 @@ public class Mua {
             return Futures.immediateFuture(false);
         }
         JmapClient.MultiCall multiCall = jmapClient.newMultiCall();
-        ListenableFuture<Boolean> future = applyEmailPatches(patches, objectsState, multiCall);
+        ListenableFuture<Boolean> future = applyEmailPatches(patches, objectsState, true, multiCall);
         multiCall.execute();
         return future;
     }
 
-    private ListenableFuture<Boolean> applyEmailPatches(final Map<String, Map<String, Object>> patches, final ObjectsState objectsState, JmapClient.MultiCall multiCall) {
-        ListenableFuture<MethodResponses> future = multiCall.call(new SetEmailMethodCall(objectsState.emailState, patches)).getMethodResponses();
-        if (objectsState.emailState != null) {
+    /**
+     * Utility method to update emails with a given patch set. Optionally this call will be guarded with an ifInState
+     * parameter. If it is this method will also chain an updateEmailCall right after it. The rational for that is that
+     * when the first call fails with a miss matched state a second attempt (not triggered automatically) will most likely
+     * succeed.
+     *
+     * When calling this method after creating a mailbox ifInState should be set to false; Otherwise the createMailbox
+     * call will increase the state and the subsequent setEmail call would fail.
+     *
+     *
+     * @param patches The map of patches
+     * @param objectsState An ObjectsState that will be used to guard the set call. Only used when ifInState is true
+     * @param ifInState Whether or not to guard the call
+     * @param multiCall
+     * @return
+     */
+    private ListenableFuture<Boolean> applyEmailPatches(final Map<String, Map<String, Object>> patches,
+                                                        final ObjectsState objectsState,
+                                                        final boolean ifInState,
+                                                        final JmapClient.MultiCall multiCall) {
+        if (ifInState) {
+            Preconditions.checkNotNull(objectsState);
+        }
+        final ListenableFuture<MethodResponses> future = multiCall.call(new SetEmailMethodCall(ifInState ? objectsState.emailState : null, patches)).getMethodResponses();
+        if (ifInState && objectsState.emailState != null) {
             updateEmails(objectsState.emailState, multiCall);
         }
         return Futures.transformAsync(future, new AsyncFunction<MethodResponses, Boolean>() {
@@ -561,7 +622,6 @@ public class Mua {
         return applyEmailPatches(patches, objectsState);
     }
 
-
     public ListenableFuture<Boolean> createMailbox(Mailbox mailbox) {
         ListenableFuture<MethodResponses> future = jmapClient.call(new SetMailboxMethodCall(ImmutableMap.of("new-mailbox-0", mailbox)));
         return Futures.transformAsync(future, new AsyncFunction<MethodResponses, Boolean>() {
@@ -575,32 +635,103 @@ public class Mua {
     }
 
     /**
+     * Copies the individual emails in this collection (usually applied to an entire thread) to the mailbox with the
+     * role IMPORTANT. If a mailbox with that role doesn’t exist it will be created.
+     *
+     * @param emails A collection of emails. Usually all messages in a thread
+     * @return
+     */
+    public ListenableFuture<Boolean> copyToImportant(@NonNullDecl final Collection<? extends IdentifiableEmailWithMailboxIds> emails) {
+        return Futures.transformAsync(getMailboxes(), new AsyncFunction<Collection<? extends IdentifiableMailboxWithRole>, Boolean>() {
+            @Override
+            public ListenableFuture<Boolean> apply(@NullableDecl Collection<? extends IdentifiableMailboxWithRole> mailboxes) throws Exception {
+                Preconditions.checkNotNull(mailboxes, "SpecialMailboxes collection must not be null but can be empty");
+                final IdentifiableMailboxWithRole important = MailboxUtil.find(mailboxes, Role.IMPORTANT);
+                return copyToImportant(emails, important);
+            }
+        }, MoreExecutors.directExecutor());
+    }
+
+    private ListenableFuture<Boolean> copyToImportant(@NonNullDecl final Collection<? extends IdentifiableEmailWithMailboxIds> emails, @NullableDecl final IdentifiableMailboxWithRole important) {
+        return Futures.transformAsync(getObjectsState(), new AsyncFunction<ObjectsState, Boolean>() {
+            @Override
+            public ListenableFuture<Boolean> apply(@NullableDecl ObjectsState objectsState) {
+                return copyToImportant(emails, important, objectsState);
+            }
+        }, MoreExecutors.directExecutor());
+    }
+
+    private ListenableFuture<Boolean> copyToImportant(@NonNullDecl final Collection<? extends IdentifiableEmailWithMailboxIds> emails, @NullableDecl final IdentifiableMailboxWithRole important, final ObjectsState objectsState) {
+        Preconditions.checkNotNull(emails, "emails can not be null when attempting to copy them to important");
+        if (important != null) {
+            Preconditions.checkArgument(important.getRole() == Role.IMPORTANT, "Supplied important mailbox must have the role IMPORTANT");
+        }
+        final JmapClient.MultiCall multiCall = jmapClient.newMultiCall();
+
+        final Optional<ListenableFuture<MethodResponses>> mailboxCreateFutureOptional = createMailboxIfNeeded(important, Role.IMPORTANT, objectsState, multiCall);
+
+        ImmutableMap.Builder<String, Map<String, Object>> emailPatchObjectMapBuilder = ImmutableMap.builder();
+        for (IdentifiableEmailWithMailboxIds email : emails) {
+            Patches.Builder patchesBuilder = Patches.builder();
+            if (mailboxCreateFutureOptional.isPresent()) {
+                patchesBuilder.set("mailboxIds/" + CreateUtil.createIdReference(Role.INBOX), true);
+            } else {
+                patchesBuilder.set("mailboxIds/" + important.getId(), true);
+            }
+            emailPatchObjectMapBuilder.put(email.getId(), patchesBuilder.build());
+        }
+        final ImmutableMap<String, Map<String, Object>> patches = emailPatchObjectMapBuilder.build();
+        if (patches.size() == 0) {
+            return Futures.immediateFuture(false);
+        }
+
+        final ListenableFuture<Boolean> patchesFuture = applyEmailPatches(patches,
+                objectsState,
+                !mailboxCreateFutureOptional.isPresent(),
+                multiCall
+        );
+
+        multiCall.execute();
+
+        return Futures.transformAsync(patchesFuture, new AsyncFunction<Boolean, Boolean>() {
+            @Override
+            public ListenableFuture<Boolean> apply(@NullableDecl Boolean patchesResults) throws Exception {
+                if (mailboxCreateFutureOptional.isPresent()) {
+                    SetMailboxMethodResponse setMailboxResponse = mailboxCreateFutureOptional.get().get().getMain(SetMailboxMethodResponse.class);
+                    SetMailboxException.throwIfFailed(setMailboxResponse);
+                }
+                return Futures.immediateFuture(patchesResults);
+            }
+        }, MoreExecutors.directExecutor());
+    }
+
+    /**
      * Copies the individual emails in this collection (usually applied to an entire thread) to a given mailbox.
      * If a certain email of this collection is already in that mailbox it will be skipped.
      * <p>
      * This method is usually run as a 'add label' action.
      *
-     * @param emails    A collection of emails. Usually all messages in a thread
-     * @param mailboxId The id of the mailbox those emails should be copied to.
+     * @param emails  A collection of emails. Usually all messages in a thread
+     * @param mailbox The mailbox those emails should be copied to.
      * @return
      */
-    public ListenableFuture<Boolean> copyToMailbox(final Collection<? extends IdentifiableEmailWithMailboxIds> emails, final String mailboxId) {
+    public ListenableFuture<Boolean> copyToMailbox(final Collection<? extends IdentifiableEmailWithMailboxIds> emails, final IdentifiableMailboxWithRole mailbox) {
         return Futures.transformAsync(getObjectsState(), new AsyncFunction<ObjectsState, Boolean>() {
             @Override
             public ListenableFuture<Boolean> apply(@NullableDecl ObjectsState objectsState) throws Exception {
-                return copyToMailbox(emails, mailboxId, objectsState);
+                return copyToMailbox(emails, mailbox, objectsState);
             }
         }, MoreExecutors.directExecutor());
     }
 
-    private ListenableFuture<Boolean> copyToMailbox(final Collection<? extends IdentifiableEmailWithMailboxIds> emails, String mailboxId, final ObjectsState objectsState) {
+    private ListenableFuture<Boolean> copyToMailbox(final Collection<? extends IdentifiableEmailWithMailboxIds> emails, final IdentifiableMailboxWithRole mailbox, final ObjectsState objectsState) {
         ImmutableMap.Builder<String, Map<String, Object>> emailPatchObjectMapBuilder = ImmutableMap.builder();
         for (IdentifiableEmailWithMailboxIds email : emails) {
-            if (email.getMailboxIds().containsKey(mailboxId)) {
+            if (email.getMailboxIds().containsKey(mailbox.getId())) {
                 continue;
             }
             Patches.Builder patchesBuilder = Patches.builder();
-            patchesBuilder.set("mailboxIds/" + mailboxId, true);
+            patchesBuilder.set("mailboxIds/" + mailbox.getId(), true);
             emailPatchObjectMapBuilder.put(email.getId(), patchesBuilder.build());
         }
         final ImmutableMap<String, Map<String, Object>> patches = emailPatchObjectMapBuilder.build();
@@ -642,7 +773,7 @@ public class Mua {
 
         final JmapClient.MultiCall multiCall = jmapClient.newMultiCall();
 
-        final Optional<ListenableFuture<MethodResponses>> mailboxCreateFutureOptional = CreateUtil.mailbox(multiCall, inbox, Role.INBOX);
+        final Optional<ListenableFuture<MethodResponses>> mailboxCreateFutureOptional = createMailboxIfNeeded(inbox, Role.INBOX, objectsState, multiCall);
 
         ImmutableMap.Builder<String, Map<String, Object>> emailPatchObjectMapBuilder = ImmutableMap.builder();
         for (IdentifiableEmailWithMailboxIds email : emails) {
@@ -666,7 +797,12 @@ public class Mua {
             return Futures.immediateFuture(false);
         }
 
-        final ListenableFuture<Boolean> patchesFuture = applyEmailPatches(patches, objectsState, multiCall);
+        final ListenableFuture<Boolean> patchesFuture = applyEmailPatches(
+                patches,
+                objectsState,
+                !mailboxCreateFutureOptional.isPresent(),
+                multiCall
+        );
 
         multiCall.execute();
 
@@ -702,7 +838,6 @@ public class Mua {
         }, MoreExecutors.directExecutor());
     }
 
-
     private ListenableFuture<Boolean> archive(final Collection<? extends IdentifiableEmailWithMailboxIds> emails, @NonNullDecl final IdentifiableMailboxWithRole inbox, @NullableDecl final IdentifiableMailboxWithRole archive) {
         return Futures.transformAsync(getObjectsState(), new AsyncFunction<ObjectsState, Boolean>() {
             @Override
@@ -717,7 +852,7 @@ public class Mua {
 
         final JmapClient.MultiCall multiCall = jmapClient.newMultiCall();
 
-        final Optional<ListenableFuture<MethodResponses>> mailboxCreateFutureOptional = CreateUtil.mailbox(multiCall, archive, Role.ARCHIVE);
+        final Optional<ListenableFuture<MethodResponses>> mailboxCreateFutureOptional = createMailboxIfNeeded(archive, Role.ARCHIVE, objectsState, multiCall);
 
         ImmutableMap.Builder<String, Map<String, Object>> emailPatchObjectMapBuilder = ImmutableMap.builder();
         for (IdentifiableEmailWithMailboxIds email : emails) {
@@ -738,7 +873,11 @@ public class Mua {
             return Futures.immediateFuture(false);
         }
 
-        final ListenableFuture<Boolean> patchesFuture = applyEmailPatches(patches, objectsState, multiCall);
+        final ListenableFuture<Boolean> patchesFuture = applyEmailPatches(patches,
+                objectsState,
+                !mailboxCreateFutureOptional.isPresent(),
+                multiCall
+        );
 
         multiCall.execute();
 
@@ -770,6 +909,9 @@ public class Mua {
      */
     public ListenableFuture<Boolean> removeFromMailbox(Collection<? extends IdentifiableEmailWithMailboxIds> emails, @NonNullDecl Mailbox mailbox, @NullableDecl final IdentifiableMailboxWithRole archive) {
         Preconditions.checkNotNull(mailbox, "Mailbox can not be null when attempting to remove it from a collection of emails");
+        if (archive != null) {
+            Preconditions.checkArgument(archive.getRole() == Role.ARCHIVE, "Supplied archive mailbox must have the role ARCHIVE");
+        }
         return removeFromMailbox(emails, mailbox.getId(), archive);
     }
 
@@ -786,7 +928,7 @@ public class Mua {
         Preconditions.checkNotNull(emails, "emails can not be null when attempting to remove them from a mailbox");
         Preconditions.checkNotNull(mailboxId, "mailboxId can not be null when attempting to remove emails");
         final JmapClient.MultiCall multiCall = jmapClient.newMultiCall();
-        final Optional<ListenableFuture<MethodResponses>> mailboxCreateFutureOptional = CreateUtil.mailbox(multiCall, archive, Role.ARCHIVE);
+        final Optional<ListenableFuture<MethodResponses>> mailboxCreateFutureOptional = createMailboxIfNeeded(archive, Role.ARCHIVE, objectsState, multiCall);
         ImmutableMap.Builder<String, Map<String, Object>> emailPatchObjectMapBuilder = ImmutableMap.builder();
         for (IdentifiableEmailWithMailboxIds email : emails) {
             if (!email.getMailboxIds().containsKey(mailboxId)) {
@@ -809,7 +951,11 @@ public class Mua {
             return Futures.immediateFuture(false);
         }
 
-        final ListenableFuture<Boolean> patchesFuture = applyEmailPatches(patches, objectsState, multiCall);
+        final ListenableFuture<Boolean> patchesFuture = applyEmailPatches(patches,
+                objectsState,
+                !mailboxCreateFutureOptional.isPresent(),
+                multiCall
+        );
 
         multiCall.execute();
 
@@ -884,7 +1030,7 @@ public class Mua {
 
     private ListenableFuture<Boolean> moveToTrash(Collection<? extends IdentifiableEmailWithMailboxIds> emails, @NullableDecl final IdentifiableMailboxWithRole trash, final ObjectsState objectsState) {
         final JmapClient.MultiCall multiCall = jmapClient.newMultiCall();
-        final Optional<ListenableFuture<MethodResponses>> mailboxCreateFutureOptional = CreateUtil.mailbox(multiCall, trash, Role.TRASH);
+        final Optional<ListenableFuture<MethodResponses>> mailboxCreateFutureOptional = createMailboxIfNeeded(trash, Role.TRASH, objectsState, multiCall);
         ImmutableMap.Builder<String, Map<String, Object>> emailPatchObjectMapBuilder = ImmutableMap.builder();
         for (IdentifiableEmailWithMailboxIds email : emails) {
             if (trash != null && email.getMailboxIds().size() == 1 && email.getMailboxIds().containsKey(trash.getId())) {
@@ -902,7 +1048,11 @@ public class Mua {
         if (patches.size() == 0) {
             return Futures.immediateFuture(false);
         }
-        final ListenableFuture<Boolean> patchesFuture = applyEmailPatches(patches, objectsState, multiCall);
+        final ListenableFuture<Boolean> patchesFuture = applyEmailPatches(patches,
+                objectsState,
+                !mailboxCreateFutureOptional.isPresent(),
+                multiCall
+        );
         multiCall.execute();
         return Futures.transformAsync(patchesFuture, new AsyncFunction<Boolean, Boolean>() {
             @Override

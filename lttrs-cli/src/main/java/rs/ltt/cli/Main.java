@@ -186,6 +186,9 @@ public class Main {
                 if (keyStroke.getKeyType() == KeyType.Character && keyStroke.getCharacter() == 'x') {
                     applyLabel(mua, "xmpp");
                 }
+                if (keyStroke.getKeyType() == KeyType.Character && keyStroke.getCharacter() == 'm') {
+                    markImportant(mua);
+                }
                 if (keyStroke.getKeyType() == KeyType.Character && keyStroke.getCharacter() == 'w') {
                     write(mua, false);
                 }
@@ -291,19 +294,15 @@ public class Main {
         if (labelMailbox == null) {
             try {
                 mua.createMailbox(Mailbox.builder().name(label).build()).get();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (ExecutionException e) {
+            } catch (InterruptedException | ExecutionException e) {
                 e.printStackTrace();
             }
         } else {
             QueryViewItem item = items.get(cursorPosition);
             Collection<Email> emails = myInMemoryCache.getEmails(item.threadId);
             try {
-                mua.copyToMailbox(emails, labelMailbox.getId()).get();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (ExecutionException e) {
+                mua.copyToMailbox(emails, labelMailbox).get();
+            } catch (InterruptedException | ExecutionException e) {
                 e.printStackTrace();
             }
         }
@@ -363,9 +362,16 @@ public class Main {
         QueryViewItem item = items.get(cursorPosition);
         try {
             mua.archive(myInMemoryCache.getEmails(item.threadId)).get();
-        } catch (InterruptedException e) {
+        } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
-        } catch (ExecutionException e) {
+        }
+    }
+
+    private static void markImportant(Mua mua) {
+        QueryViewItem item = items.get(cursorPosition);
+        try {
+            mua.copyToImportant(myInMemoryCache.getEmails(item.threadId)).get();
+        } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
         }
     }

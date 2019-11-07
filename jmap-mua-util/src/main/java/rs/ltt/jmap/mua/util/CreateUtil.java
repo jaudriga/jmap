@@ -30,19 +30,7 @@ import java.util.Locale;
 
 public class CreateUtil {
 
-    public static Optional<ListenableFuture<MethodResponses>> mailbox(final JmapClient.MultiCall multiCall, final IdentifiableMailboxWithRole mailbox, final Role role) {
-        if (mailbox != null) {
-            Preconditions.checkArgument(mailbox.getRole() == role);
-        }
-        final Optional<ListenableFuture<MethodResponses>> mailboxCreateFutureOptional;
-        if (mailbox == null) {
-            return Optional.of(multiCall.call(new SetMailboxMethodCall(ImmutableMap.of(createId(role), MailboxUtil.create(role)))).getMethodResponses());
-        } else {
-            return Optional.absent();
-        }
-    }
-
-    private static String createId(Role role) {
+    public static String createId(Role role) {
         return "mb-" + role.toString().toLowerCase(Locale.US);
     }
 
