@@ -16,10 +16,12 @@
 
 package rs.ltt.jmap.common.entity.capability;
 
+import lombok.Builder;
 import rs.ltt.jmap.Namespace;
 import rs.ltt.jmap.annotation.JmapCapability;
 import rs.ltt.jmap.common.entity.Capability;
 
 @JmapCapability(namespace = Namespace.MAIL)
+@Builder
 public class MailCapability implements Capability {
 }

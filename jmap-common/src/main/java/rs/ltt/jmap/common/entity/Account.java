@@ -16,14 +16,30 @@
 
 package rs.ltt.jmap.common.entity;
 
+import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.Singular;
 
+import java.util.Collection;
 import java.util.Map;
 
+@Builder
 @Getter
 public class Account {
     private String name;
-    private boolean isPersonal;
-    private boolean isReadOnly;
-    private Map<Class<?extends AccountCapability>, AccountCapability> accountCapabilities;
+    private Boolean isPersonal;
+    private Boolean isReadOnly;
+    //TODO @Singular annotation doesn’t seem to compile. Maybe report with lombok?
+    @Getter(AccessLevel.NONE)
+    private Map<Class<? extends AccountCapability>, AccountCapability> accountCapabilities;
+
+
+    public <T extends AccountCapability> T getCapability(Class<T> clazz) {
+        return clazz.cast(accountCapabilities.get(clazz));
+    }
+
+    public Collection<AccountCapability> getCapabilities() {
+        return accountCapabilities.values();
+    }
 }

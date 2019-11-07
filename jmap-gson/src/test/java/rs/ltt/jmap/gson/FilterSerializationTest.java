@@ -15,9 +15,7 @@ public class FilterSerializationTest extends AbstractGsonTest {
 
     @Test
     public void complexEmailFilterSerialization() throws IOException {
-        GsonBuilder builder = new GsonBuilder();
-        JmapAdapters.register(builder);
-        Gson gson = builder.create();
+        Gson gson = getGson();
         Filter<Email> emailFilter = FilterOperator.and(
                 EmailFilterCondition.builder().text("two").build(),
                 FilterOperator.not(EmailFilterCondition.builder().text("three").build()),

@@ -72,8 +72,8 @@ public class AccountCapabilitiesSerializerTest extends AbstractGsonTest {
         return MailAccountCapability.builder()
                 .maxMailboxesPerEmail(1L)
                 .maxMailboxDepth(5L)
-                .maxSizeMailboxName(500)
-                .maxSizeAttachmentsPerEmail(10_000_000)
+                .maxSizeMailboxName(500L)
+                .maxSizeAttachmentsPerEmail(10_000_000L)
                 .emailQuerySortOptions(new String[] { "receivedAt", "To" })
                 .mayCreateTopLevelMailbox(false)
                 .build();
@@ -83,7 +83,7 @@ public class AccountCapabilitiesSerializerTest extends AbstractGsonTest {
         Map<String, String[]> submissionExtensions = new LinkedHashMap<>();
         submissionExtensions.put("DELIVERBY", new String[] { "240" });
         return SubmissionAccountCapability.builder()
-                .maxDelayedSend(300)
+                .maxDelayedSend(300L)
                 .submissionExtensions(submissionExtensions)
                 .build();
     }

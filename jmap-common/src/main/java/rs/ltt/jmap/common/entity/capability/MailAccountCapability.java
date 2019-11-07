@@ -30,8 +30,8 @@ import rs.ltt.jmap.common.entity.AccountCapability;
 public class MailAccountCapability implements AccountCapability {
     private Long maxMailboxesPerEmail;
     private Long maxMailboxDepth;
-    private long maxSizeMailboxName;
-    private long maxSizeAttachmentsPerEmail;
+    private Long maxSizeMailboxName;
+    private Long maxSizeAttachmentsPerEmail;
     private String[] emailQuerySortOptions;
-    private boolean mayCreateTopLevelMailbox;
+    private Boolean mayCreateTopLevelMailbox;
 }

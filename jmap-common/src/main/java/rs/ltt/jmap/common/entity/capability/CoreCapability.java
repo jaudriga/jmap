@@ -18,53 +18,24 @@ package rs.ltt.jmap.common.entity.capability;
 
 
 import com.google.common.base.MoreObjects;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.ToString;
 import rs.ltt.jmap.Namespace;
 import rs.ltt.jmap.annotation.JmapCapability;
 import rs.ltt.jmap.common.entity.Capability;
 
 @JmapCapability(namespace = Namespace.CORE)
+@Builder
+@Getter
+@ToString
 public class CoreCapability implements Capability {
 
-    private long maxSizeUpload;
-    private long maxConcurrentUpload;
-    private long maxCallsInRequest;
-    private long maxObjectsInGet;
-    private long maxObjectsInSet;
+    private Long maxSizeUpload;
+    private Long maxConcurrentUpload;
+    private Long maxCallsInRequest;
+    private Long maxObjectsInGet;
+    private Long maxObjectsInSet;
     private String[] collationAlgorithms;
 
-    @Override
-    public String toString() {
-        return MoreObjects.toStringHelper(this)
-                .add("maxSizeUpload", maxSizeUpload)
-                .add("maxConcurrentUpload", maxConcurrentUpload)
-                .add("maxCallsInRequest", maxCallsInRequest)
-                .add("maxObjectsInGet", maxObjectsInGet)
-                .add("maxObjectsinSet", maxObjectsInSet)
-                .add("collationAlgorithms", collationAlgorithms)
-                .toString();
-    }
-
-    public long getMaxSizeUpload() {
-        return maxSizeUpload;
-    }
-
-    public long getMaxConcurrentUpload() {
-        return maxConcurrentUpload;
-    }
-
-    public long getMaxCallsInRequest() {
-        return maxCallsInRequest;
-    }
-
-    public long getMaxObjectsInGet() {
-        return maxObjectsInGet;
-    }
-
-    public long getMaxObjectsInSet() {
-        return maxObjectsInSet;
-    }
-
-    public String[] getCollationAlgorithms() {
-        return collationAlgorithms;
-    }
 }
