@@ -42,7 +42,7 @@ public class SessionResourceTest extends AbstractGsonTest {
 
         CoreCapability coreCapability = session.getCapability(CoreCapability.class);
         assertNotNull(coreCapability);
-        assertEquals(Long.valueOf(50000000), coreCapability.getMaxSizeUpload());
+        assertEquals(50000000, coreCapability.maxSizeUpload());
 
 
         Map<String, Account> accounts = session.getAccounts();
@@ -53,10 +53,30 @@ public class SessionResourceTest extends AbstractGsonTest {
         assertNotNull(account);
         assertEquals("john@example.com", account.getName());
 
+        assertTrue(account.isPersonal());
+        assertFalse(account.isReadOnly());
+
         assertNotNull(account.getCapability(MailAccountCapability.class));
         assertNull(account.getCapability(SubmissionAccountCapability.class));
 
     }
+
+    @Test(expected = IllegalStateException.class)
+    public void missingRequiredPropertyInMailCapability() throws IOException {
+        final SessionResource session = parseFromResource("rfc-example/session.json", SessionResource.class);
+
+        Map<String, Account> accounts = session.getAccounts();
+        assertNotNull(accounts);
+
+        Account account = accounts.get("A13824");
+        assertNotNull(account);
+
+        MailAccountCapability mailAccountCapability = account.getCapability(MailAccountCapability.class);
+
+        mailAccountCapability.maxSizeAttachmentsPerEmail(); //this property is missing in the example but is required
+
+    }
+
 
     @Test
     public void serialization() throws IOException {

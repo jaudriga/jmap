@@ -17,13 +17,13 @@
 package rs.ltt.jmap.common.entity.capability;
 
 
-import com.google.common.base.MoreObjects;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
 import rs.ltt.jmap.Namespace;
 import rs.ltt.jmap.annotation.JmapCapability;
 import rs.ltt.jmap.common.entity.Capability;
+import rs.ltt.jmap.common.util.Property;
 
 @JmapCapability(namespace = Namespace.CORE)
 @Builder
@@ -37,5 +37,26 @@ public class CoreCapability implements Capability {
     private Long maxObjectsInGet;
     private Long maxObjectsInSet;
     private String[] collationAlgorithms;
+
+
+    public long maxSizeUpload() {
+        return Property.expected(maxSizeUpload);
+    }
+
+    public long maxConcurrentUpload() {
+        return Property.expected(maxConcurrentUpload);
+    }
+
+    public long maxCallsInRequest() {
+        return Property.expected(maxCallsInRequest);
+    }
+
+    public long maxObjectsInGet() {
+        return Property.expected(maxObjectsInGet);
+    }
+
+    public long maxObjectsInSet() {
+        return Property.expected(maxObjectsInSet);
+    }
 
 }

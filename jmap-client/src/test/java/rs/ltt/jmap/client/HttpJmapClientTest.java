@@ -240,7 +240,7 @@ public class HttpJmapClientTest {
     }
 
     @Test
-    public void inclompleteSessionResource() throws IOException, ExecutionException, InterruptedException {
+    public void incompleteSessionResource() throws IOException, ExecutionException, InterruptedException {
         final MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setBody(readResourceAsString("broken-session-urls/01-session.json")));
         server.start();

@@ -26,10 +26,10 @@ public class AccountCapabilitiesDeserializerTest extends AbstractGsonTest {
         MailAccountCapability mailAccountCapability = (MailAccountCapability) accountCapability;
         assertEquals(Long.valueOf(20), mailAccountCapability.getMaxMailboxesPerEmail());
         assertEquals(Long.valueOf(10), mailAccountCapability.getMaxMailboxDepth());
-        assertEquals(Long.valueOf(200), mailAccountCapability.getMaxSizeMailboxName());
-        assertEquals(Long.valueOf(50_000_000), mailAccountCapability.getMaxSizeAttachmentsPerEmail());
+        assertEquals(200, mailAccountCapability.maxSizeMailboxName());
+        assertEquals(50_000_000, mailAccountCapability.maxSizeAttachmentsPerEmail());
         assertArrayEquals(new String[] { "receivedAt" }, mailAccountCapability.getEmailQuerySortOptions());
-        assertTrue(mailAccountCapability.getMayCreateTopLevelMailbox());
+        assertTrue(mailAccountCapability.mayCreateTopLevelMailbox());
     }
 
     @Test
@@ -41,7 +41,7 @@ public class AccountCapabilitiesDeserializerTest extends AbstractGsonTest {
         AccountCapability accountCapability = accountCapabilities.get(SubmissionAccountCapability.class);
         assertEquals(SubmissionAccountCapability.class, accountCapability.getClass());
         SubmissionAccountCapability submissionAccountCapability = (SubmissionAccountCapability) accountCapability;
-        assertEquals(Long.valueOf(0), submissionAccountCapability.getMaxDelayedSend());
+        assertEquals(0, submissionAccountCapability.maxDelayedSend());
         Map<String, String[]> submissionExtensions = submissionAccountCapability.getSubmissionExtensions();
         assertEquals(1, submissionExtensions.size());
         assertTrue(submissionExtensions.containsKey("SIZE"));

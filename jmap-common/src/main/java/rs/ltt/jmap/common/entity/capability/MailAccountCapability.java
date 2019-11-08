@@ -22,6 +22,7 @@ import lombok.ToString;
 import rs.ltt.jmap.Namespace;
 import rs.ltt.jmap.annotation.JmapAccountCapability;
 import rs.ltt.jmap.common.entity.AccountCapability;
+import rs.ltt.jmap.common.util.Property;
 
 @JmapAccountCapability(namespace = Namespace.MAIL)
 @Getter
@@ -34,4 +35,17 @@ public class MailAccountCapability implements AccountCapability {
     private Long maxSizeAttachmentsPerEmail;
     private String[] emailQuerySortOptions;
     private Boolean mayCreateTopLevelMailbox;
+
+
+    public long maxSizeMailboxName() {
+        return Property.expected(maxSizeMailboxName);
+    }
+
+    public long maxSizeAttachmentsPerEmail() {
+        return Property.expected(maxSizeAttachmentsPerEmail);
+    }
+
+    public boolean mayCreateTopLevelMailbox() {
+        return Property.expected(mayCreateTopLevelMailbox);
+    }
 }

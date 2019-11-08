@@ -19,6 +19,7 @@ package rs.ltt.jmap.common.entity;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
+import rs.ltt.jmap.common.util.Property;
 
 import java.util.Collection;
 import java.util.Map;
@@ -33,6 +34,13 @@ public class Account {
     @Getter(AccessLevel.NONE)
     private Map<Class<? extends AccountCapability>, AccountCapability> accountCapabilities;
 
+    public boolean isPersonal() {
+        return Property.expected(isPersonal);
+    }
+
+    public boolean isReadOnly() {
+        return Property.expected(isReadOnly);
+    }
 
     public <T extends AccountCapability> T getCapability(Class<T> clazz) {
         return clazz.cast(accountCapabilities.get(clazz));
