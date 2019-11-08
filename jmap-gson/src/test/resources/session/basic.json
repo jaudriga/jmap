@@ -1,1 +1,1 @@
-{"apiUrl":"/jmap/","accounts":{"foo@example.com":{"accountCapabilities":{"urn:ietf:params:jmap:mail":{}}}},"capabilities":{"urn:ietf:params:jmap:mail":{},"urn:ietf:params:jmap:core":{"maxSizeUpload":5000,"maxCallsInRequest":2}}}
+{"apiUrl":"/jmap/","accounts":{"foo@example.com":{"accountCapabilities":{"urn:ietf:params:jmap:mail":{}}}},"primaryAccounts":{"urn:ietf:params:jmap:mail":"foo@example.com"},"capabilities":{"urn:ietf:params:jmap:mail":{},"urn:ietf:params:jmap:core":{"maxSizeUpload":5000,"maxCallsInRequest":2}}}

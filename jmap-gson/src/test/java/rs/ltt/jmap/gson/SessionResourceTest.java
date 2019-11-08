@@ -59,6 +59,10 @@ public class SessionResourceTest extends AbstractGsonTest {
         assertNotNull(account.getCapability(MailAccountCapability.class));
         assertNull(account.getCapability(SubmissionAccountCapability.class));
 
+        assertEquals("A13824", session.getPrimaryAccount(MailAccountCapability.class));
+
+        assertNull(session.getPrimaryAccount(SubmissionAccountCapability.class));
+
     }
 
     @Test(expected = IllegalStateException.class)
@@ -91,6 +95,11 @@ public class SessionResourceTest extends AbstractGsonTest {
         Map<Class<? extends AccountCapability>, AccountCapability> accountCaps = new ImmutableMap.Builder<Class<? extends AccountCapability>, AccountCapability>()
                 .put(MailAccountCapability.class, MailAccountCapability.builder().build())
                 .build();
+
+        Map<Class<? extends AccountCapability>, String> primary = new ImmutableMap.Builder<Class<? extends AccountCapability>, String>()
+                .put(MailAccountCapability.class, "foo@example.com")
+                .build();
+
         SessionResource resource = SessionResource.builder()
                 .apiUrl("/jmap/")
                 .capabilities(caps)
@@ -98,6 +107,7 @@ public class SessionResourceTest extends AbstractGsonTest {
                         .accountCapabilities(accountCaps)
                         .build()
                 )
+                .primaryAccounts(primary)
                 .build();
         Gson gson = getGson();
         assertEquals(readResourceAsString("session/basic.json"), gson.toJson(resource));

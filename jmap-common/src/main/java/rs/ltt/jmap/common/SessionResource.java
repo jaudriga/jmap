@@ -18,6 +18,7 @@ package rs.ltt.jmap.common;
 
 import lombok.*;
 import rs.ltt.jmap.common.entity.Account;
+import rs.ltt.jmap.common.entity.AccountCapability;
 import rs.ltt.jmap.common.entity.Capability;
 
 import java.util.Collection;
@@ -35,8 +36,8 @@ public class SessionResource {
     private String eventSourceUrl;
     @Singular
     private Map<String, Account> accounts;
-    //TODO we probably want this to be Map<Class<?extends AccountCapability>,String>
-    private Map<String, String> primaryAccounts;
+    @Getter(AccessLevel.NONE)
+    private Map<Class<? extends AccountCapability>, String> primaryAccounts;
     //TODO @Singular annotation doesn’t seem to compile. Maybe report with lombok?
     @Getter(AccessLevel.NONE)
     private Map<Class<? extends Capability>, Capability> capabilities;
@@ -48,6 +49,10 @@ public class SessionResource {
 
     public Collection<Capability> getCapabilities() {
         return capabilities.values();
+    }
+
+    public String getPrimaryAccount(Class<? extends AccountCapability> clazz) {
+        return primaryAccounts.get(clazz);
     }
 
 }

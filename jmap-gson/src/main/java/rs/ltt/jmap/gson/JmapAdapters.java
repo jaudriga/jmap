@@ -20,14 +20,8 @@ import com.google.gson.GsonBuilder;
 import rs.ltt.jmap.gson.adapter.PatchObjectNullTypeAdapter;
 import rs.ltt.jmap.gson.adapter.RequestInvocationTypeAdapter;
 import rs.ltt.jmap.gson.adapter.ResultReferenceTypeAdapter;
-import rs.ltt.jmap.gson.deserializer.AccountCapabilitiesDeserializer;
-import rs.ltt.jmap.gson.deserializer.CapabilitiesDeserializer;
-import rs.ltt.jmap.gson.deserializer.GenericResponseDeserializer;
-import rs.ltt.jmap.gson.deserializer.ResponseInvocationDeserializer;
-import rs.ltt.jmap.gson.serializer.AccountCapabilitiesSerializer;
-import rs.ltt.jmap.gson.serializer.CapabilitiesSerializer;
-import rs.ltt.jmap.gson.serializer.ListSerializer;
-import rs.ltt.jmap.gson.serializer.StringMapSerializer;
+import rs.ltt.jmap.gson.deserializer.*;
+import rs.ltt.jmap.gson.serializer.*;
 
 
 public final class JmapAdapters {
@@ -43,12 +37,14 @@ public final class JmapAdapters {
 
         CapabilitiesDeserializer.register(builder);
         AccountCapabilitiesDeserializer.register(builder);
+        PrimaryAccountsDeserializer.register(builder);
         GenericResponseDeserializer.register(builder);
         ResponseInvocationDeserializer.register(builder);
 
         RequestInvocationTypeAdapter.register(builder);
         CapabilitiesSerializer.register(builder);
         AccountCapabilitiesSerializer.register(builder);
+        PrimaryAccountsSerializer.register(builder);
         ListSerializer.register(builder);
         StringMapSerializer.register(builder);
     }
