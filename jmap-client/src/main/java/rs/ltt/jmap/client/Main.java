@@ -16,6 +16,7 @@
 
 package rs.ltt.jmap.client;
 
+import okhttp3.HttpUrl;
 import rs.ltt.jmap.client.JmapRequest.Call;
 import rs.ltt.jmap.client.session.Session;
 import rs.ltt.jmap.client.session.SessionFileCache;
@@ -40,13 +41,25 @@ public class Main {
 
     public static void main(String... args) {
 
-        if (args.length != 2) {
-            System.err.println("java -jar jmap-client.jar username password");
+        final String username;
+        final String password;
+        final HttpUrl sessionResource;
+
+        if (args.length ==2 ) {
+            sessionResource = null;
+            username = args[0];
+            password = args[1];
+        } else if (args.length == 3) {
+            sessionResource = HttpUrl.get(args[0]);
+            username = args[1];
+            password = args[2];
+        } else {
+            System.err.println("java -jar jmap-client.jar [url] username password");
             System.exit(1);
             return;
         }
 
-        try (final JmapClient client = new JmapClient(args[0], args[1])) {
+        try (final JmapClient client = new JmapClient(username, password, sessionResource)) {
             client.setSessionCache(new SessionFileCache());
 
             final Future<MethodResponses> methodResponsesFuture = client.call(new EchoMethodCall());
@@ -60,7 +73,6 @@ public class Main {
 
             Filter<Email> emailFilter = FilterOperator.and(
                     FilterOperator.not(EmailFilterCondition.builder().text("match2").build()),
-                    EmailFilterCondition.builder().text("wie").build(),
                     EmailFilterCondition.builder().text("test").build()
             );
 
@@ -81,10 +93,10 @@ public class Main {
                 Thread.sleep(5000);
                 final JmapClient.MultiCall updateMultiCall = client.newMultiCall();
 
-                Call emailQueryChangesCall = multiCall.call(new QueryChangesEmailMethodCall(accountId, currentState, emailFilter));
+                Call emailQueryChangesCall = updateMultiCall.call(new QueryChangesEmailMethodCall(accountId, currentState, emailFilter));
                 Future<MethodResponses> emailQueryChangesResponseFuture = emailQueryChangesCall.getMethodResponses();
 
-                Future<MethodResponses> emailGetAddedResponseFuture = multiCall.call(new GetEmailMethodCall(accountId, emailQueryChangesCall.createResultReference(Request.Invocation.ResultReference.Path.ADDED_IDS))).getMethodResponses();
+                Future<MethodResponses> emailGetAddedResponseFuture = updateMultiCall.call(new GetEmailMethodCall(accountId, emailQueryChangesCall.createResultReference(Request.Invocation.ResultReference.Path.ADDED_IDS))).getMethodResponses();
 
                 updateMultiCall.execute();
                 QueryChangesEmailMethodResponse emailQueryChangesResponse = emailQueryChangesResponseFuture.get().getMain(QueryChangesEmailMethodResponse.class);
