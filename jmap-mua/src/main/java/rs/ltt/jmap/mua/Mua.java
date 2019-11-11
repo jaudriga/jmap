@@ -21,6 +21,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.*;
+import okhttp3.HttpUrl;
 import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 import org.slf4j.Logger;
@@ -1511,6 +1512,7 @@ public class Mua {
     public static class Builder {
         private String username;
         private String password;
+        private HttpUrl sessionResource;
         private String accountId;
         private SessionCache sessionCache = new SessionFileCache();
         private Cache cache = new InMemoryCache();
@@ -1528,6 +1530,15 @@ public class Mua {
         public Builder password(String password) {
             this.password = password;
             return this;
+        }
+
+        public Builder sessionResource(HttpUrl sessionResource) {
+            this.sessionResource = sessionResource;
+            return this;
+        }
+
+        public Builder sessionResource(String sessionResource) {
+            return sessionResource(HttpUrl.get(sessionResource));
         }
 
         public Builder accountId(String accountId) {
@@ -1557,7 +1568,7 @@ public class Mua {
         public Mua build() {
             Preconditions.checkNotNull(accountId, "accountId is required");
 
-            JmapClient jmapClient = new JmapClient(this.username, this.password);
+            JmapClient jmapClient = new JmapClient(this.username, this.password, this.sessionResource);
             jmapClient.setSessionCache(this.sessionCache);
             Mua mua = new Mua(jmapClient, cache, accountId);
             mua.queryPageSize = this.queryPageSize;

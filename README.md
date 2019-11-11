@@ -37,7 +37,10 @@ A JMAP client library to make JMAP method calls and process the responses. It ha
 ```java
 JmapClient client = new JmapClient("user@example.com", "password");
 
-Future<MethodResponses> future = client.call(new GetMailboxMethodCall());
+Session session = client.getSession().get();
+String accountId = session.getPrimaryAccount(MailAccountCapability.class);
+
+Future<MethodResponses> future = client.call(new GetMailboxMethodCall(accountId));
 
 GetMailboxMethodResponse mailboxMethodResponse = future.get().getMain(GetMailboxMethodResponse.class);
 
@@ -51,16 +54,22 @@ for(Mailbox mailbox : mailboxMethodResponse.getList()) {
 ```java
 JmapClient client = new JmapClient("user@example.com", "password");
 
+Session session = client.getSession().get();
+String accountId = session.getPrimaryAccount(MailAccountCapability.class);
+
 JmapClient.MultiCall multiCall = client.newMultiCall();
 
 //create a query request
 Call queryEmailCall = multiCall.call(
-        new QueryEmailMethodCall(EmailQuery.unfiltered())
+        new QueryEmailMethodCall(accountId, EmailQuery.unfiltered())
 );
 
 //create a get email request with a back reference to the IDs found in the previous request
 Call getEmailCall = multiCall.call(
-        new GetEmailMethodCall(queryEmailCall.createResultReference(Request.Invocation.ResultReference.Path.IDS))
+        new GetEmailMethodCall(
+                accountId,
+                queryEmailCall.createResultReference(Request.Invocation.ResultReference.Path.IDS)
+        )
 );
 
 multiCall.execute();

@@ -29,6 +29,7 @@ import com.googlecode.lanterna.screen.TerminalScreen;
 import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
 import com.googlecode.lanterna.terminal.Terminal;
 import com.googlecode.lanterna.terminal.TerminalResizeListener;
+import okhttp3.HttpUrl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rs.ltt.cli.cache.MyInMemoryCache;
@@ -72,19 +73,29 @@ public class Main {
     private static EmailQuery currentQuery;
 
     public static void main(String... args) {
-        if (args.length != 2) {
-            System.err.println("java -jar lttrs-cli.jar username password");
+
+
+        final String username;
+        final String password;
+        final HttpUrl sessionResource;
+
+        if (args.length ==2 ) {
+            sessionResource = null;
+            username = args[0];
+            password = args[1];
+        } else if (args.length == 3) {
+            sessionResource = HttpUrl.get(args[0]);
+            username = args[1];
+            password = args[2];
+        } else {
+            System.err.println("java -jar lttrs-cli.jar [url] username password");
             System.exit(1);
             return;
         }
 
-        final String username = args[0];
-        final String password = args[1];
-
         final String accountId;
-        try {
-            JmapClient jmapClient = new JmapClient(username, password);
-            accountId = jmapClient.getSession().get().getPrimaryAccount(MailAccountCapability.class);
+        try (final JmapClient client = new JmapClient(username, password, sessionResource)) {
+            accountId = client.getSession().get().getPrimaryAccount(MailAccountCapability.class);
         } catch (Exception e) {
             e.printStackTrace();
             System.err.println("Could not find primary email account");
@@ -95,6 +106,7 @@ public class Main {
         final Mua mua = Mua.builder()
                 .username(username)
                 .password(password)
+                .sessionResource(sessionResource)
                 .accountId(accountId)
                 .cache(myInMemoryCache)
                 .queryPageSize(10)
