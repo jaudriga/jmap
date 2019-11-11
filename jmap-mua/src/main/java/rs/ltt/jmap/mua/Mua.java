@@ -797,7 +797,7 @@ public class Mua {
             if (inbox == null) {
                 mailboxIds.put(CreateUtil.createIdReference(Role.INBOX), true);
             } else {
-                mailboxIds.put("mailboxIds/" + inbox.getId(), true);
+                mailboxIds.put(inbox.getId(), true);
             }
             emailPatchObjectMapBuilder.put(email.getId(), Patches.set("mailboxIds", mailboxIds));
         }
