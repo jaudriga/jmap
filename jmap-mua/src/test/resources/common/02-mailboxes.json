@@ -1,0 +1,136 @@
+﻿{
+  "methodResponses": [
+    [
+      "Mailbox/get",
+      {
+        "state": "4011",
+        "list": [
+          {
+            "id": "mb0",
+            "name": "Inbox",
+            "parentId": null,
+            "myRights": {
+              "mayReadItems": true,
+              "mayAddItems": true,
+              "mayRemoveItems": true,
+              "mayCreateChild": true,
+              "mayDelete": false,
+              "maySubmit": true,
+              "maySetSeen": true,
+              "maySetKeywords": true,
+              "mayAdmin": true,
+              "mayRename": false
+            },
+            "role": "inbox",
+            "totalEmails": 238,
+            "unreadEmails": 6,
+            "totalThreads": 80,
+            "unreadThreads": 4,
+            "sortOrder": 1,
+            "isSubscribed": false
+          },
+          {
+            "id": "mb1",
+            "name": "Archive",
+            "parentId": null,
+            "myRights": {
+              "mayReadItems": true,
+              "mayAddItems": true,
+              "mayRemoveItems": true,
+              "mayCreateChild": true,
+              "mayDelete": true,
+              "maySubmit": true,
+              "maySetSeen": true,
+              "maySetKeywords": true,
+              "mayAdmin": true,
+              "mayRename": true
+            },
+            "role": "archive",
+            "totalEmails": 295,
+            "unreadEmails": 36,
+            "totalThreads": 136,
+            "unreadThreads": 17,
+            "sortOrder": 3,
+            "isSubscribed": false
+          },
+          {
+            "id": "mb2",
+            "name": "Important",
+            "parentId": null,
+            "myRights": {
+              "mayReadItems": true,
+              "mayAddItems": true,
+              "mayRemoveItems": true,
+              "mayCreateChild": true,
+              "mayDelete": true,
+              "maySubmit": true,
+              "maySetSeen": true,
+              "maySetKeywords": true,
+              "mayAdmin": true,
+              "mayRename": true
+            },
+            "role": "important",
+            "totalEmails": 0,
+            "unreadEmails": 0,
+            "totalThreads": 0,
+            "unreadThreads": 0,
+            "sortOrder": 4,
+            "isSubscribed": false
+          },
+          {
+            "id": "mb3",
+            "name": "Sent",
+            "parentId": null,
+            "myRights": {
+              "mayReadItems": true,
+              "mayAddItems": true,
+              "mayRemoveItems": true,
+              "mayCreateChild": true,
+              "mayDelete": true,
+              "maySubmit": true,
+              "maySetSeen": true,
+              "maySetKeywords": true,
+              "mayAdmin": true,
+              "mayRename": true
+            },
+            "role": "sent",
+            "totalEmails": 2,
+            "unreadEmails": 0,
+            "totalThreads": 2,
+            "unreadThreads": 0,
+            "sortOrder": 5,
+            "isSubscribed": false
+          },
+          {
+            "id": "mb4",
+            "name": "Trash",
+            "parentId": null,
+            "myRights": {
+              "mayReadItems": true,
+              "mayAddItems": true,
+              "mayRemoveItems": true,
+              "mayCreateChild": true,
+              "mayDelete": true,
+              "maySubmit": true,
+              "maySetSeen": true,
+              "maySetKeywords": true,
+              "mayAdmin": true,
+              "mayRename": true
+            },
+            "role": "trash",
+            "totalEmails": 2,
+            "unreadEmails": 0,
+            "totalThreads": 2,
+            "unreadThreads": 0,
+            "sortOrder": 7,
+            "isSubscribed": false
+          }
+        ],
+        "notFound": [],
+        "accountId": "test@example.com"
+      },
+      "0"
+    ]
+  ],
+  "sessionState": "0"
+}

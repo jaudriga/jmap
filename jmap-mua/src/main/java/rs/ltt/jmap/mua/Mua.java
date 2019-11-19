@@ -683,7 +683,9 @@ public class Mua {
             } else {
                 mailboxIds.put(important.getId(), true);
             }
-            emailPatchObjectMapBuilder.put(email.getId(), Patches.set("mailboxIds", mailboxIds));
+            if (!mailboxIds.equals(email.getMailboxIds())) {
+                emailPatchObjectMapBuilder.put(email.getId(), Patches.set("mailboxIds", mailboxIds));
+            }
         }
         final ImmutableMap<String, Map<String, Object>> patches = emailPatchObjectMapBuilder.build();
         if (patches.size() == 0) {
@@ -785,10 +787,9 @@ public class Mua {
             mailboxCreateFuture = null;
         }
 
-        ImmutableMap.Builder<String, Map<String, Object>> emailPatchObjectMapBuilder = ImmutableMap.builder();
+        final ImmutableMap.Builder<String, Map<String, Object>> emailPatchObjectMapBuilder = ImmutableMap.builder();
         for (IdentifiableEmailWithMailboxIds email : emails) {
-            Map<String, Boolean> mailboxIds = new HashMap<>(email.getMailboxIds());
-
+            final Map<String, Boolean> mailboxIds = new HashMap<>(email.getMailboxIds());
             if (archive != null) {
                 mailboxIds.remove(archive.getId());
             }
@@ -800,7 +801,9 @@ public class Mua {
             } else {
                 mailboxIds.put(inbox.getId(), true);
             }
-            emailPatchObjectMapBuilder.put(email.getId(), Patches.set("mailboxIds", mailboxIds));
+            if (!mailboxIds.equals(email.getMailboxIds())) {
+                emailPatchObjectMapBuilder.put(email.getId(), Patches.set("mailboxIds", mailboxIds));
+            }
         }
         final ImmutableMap<String, Map<String, Object>> patches = emailPatchObjectMapBuilder.build();
         if (patches.size() == 0) {
