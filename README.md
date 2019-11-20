@@ -33,6 +33,20 @@ GSON serializer and deserializer to convert the POJOs from `jmap-common` into JM
 
 A JMAP client library to make JMAP method calls and process the responses. It handles multiples calls in one request (including back references) and multiple method responses per call. Currently it only supports requests over HTTP but it has been designed with the possibility in mind to eventually support requests over WebSockets.
 
+#### Dependencies
+##### Gradle
+```
+implementation 'rs.ltt.jmap:jmap-client:0.1.1'
+```
+##### Maven
+```xml
+<dependency>
+  <groupId>rs.ltt.jmap</groupId>
+  <artifactId>jmap-client</artifactId>
+  <version>0.1.1</version>
+</dependency>
+```
+
 #### A simple example fetching mailboxes
 
 ```java
@@ -87,4 +101,22 @@ for (Email email : getEmailMethodResponse.getList()) {
 
 A high level API to act as an email client. It handles everything an email client is supposed to handle minus storage backend and GUI. The storage (caching) backend is accessed via an interface that different email clients on different platforms can implement. It comes with a reference in-memory implementation of that interface. `jmap-mua` only ever *writes* to that storage backend. Accessing data in that storage backend and displaying it in a GUI is up to the specific email client.
 
-`jmap-mua` serves as the backend for [lttrs-cli](https://github.com/inputmice/lttrs-cli) and [lttrs-android](https://github.com/inputmice/lttrs-android).
+#### Dependencies
+##### Gradle
+```
+implementation 'rs.ltt.jmap:jmap-mua:0.1.1'
+```
+##### Maven
+```xml
+<dependency>
+  <groupId>rs.ltt.jmap</groupId>
+  <artifactId>jmap-mua</artifactId>
+  <version>0.1.1</version>
+</dependency>
+```
+
+#### Users
+
+jmap-mua serves as the backend for:
+* [Ltt.rs for Unix](https://github.com/inputmice/lttrs-cli)
+* [Ltt.rs for Android](https://github.com/inputmice/lttrs-android).
