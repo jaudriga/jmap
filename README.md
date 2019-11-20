@@ -1,5 +1,5 @@
 # Java JMAP library
-[![Build Status](https://travis-ci.org/inputmice/jmap.svg?branch=master)](https://travis-ci.org/inputmice/jmap) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/rs.ltt.jmap/jmap-mua/badge.svg)](https://maven-badges.herokuapp.com/maven-central/rs.ltt.jmap/jmap-mua)
+[![Build Status](https://travis-ci.org/inputmice/jmap.svg?branch=master)](https://travis-ci.org/inputmice/jmap) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/rs.ltt.jmap/jmap/badge.svg)](https://maven-badges.herokuapp.com/maven-central/rs.ltt.jmap/jmap)
 
 A library to synchronize data between a client and a server using the JSON Meta Application Protocol. The current focus is on acting as a client library to retrieve emails from a server however it is easily extensible to also synchronize contacts and calendars. It might even be extended to act as a server library.
 
@@ -11,7 +11,7 @@ Entities (Mailbox, Email, EmailSubmission, …) are annotated with Project Lombo
 
 ## Modules
 
-The library is divided into separate modules.
+The library is divided into separate modules. *Most people will probably want to use the [jmap-client](https://github.com/iNPUTmice/jmap/blob/master/README.md#jmap-client) module.*
 
 ### jmap-annotation
 
