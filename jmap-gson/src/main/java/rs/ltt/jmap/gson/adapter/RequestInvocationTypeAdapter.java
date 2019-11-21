@@ -51,7 +51,11 @@ public class RequestInvocationTypeAdapter extends TypeAdapter<Request.Invocation
     @Override
     public void write(JsonWriter jsonWriter, Request.Invocation invocation) throws IOException {
         final MethodCall methodCall = invocation.getMethodCall();
-        final String name = METHOD_CALLS.inverse().get(methodCall.getClass());
+        final Class<?extends MethodCall> clazz = methodCall.getClass();
+        final String name = METHOD_CALLS.inverse().get(clazz);
+        if (name == null) {
+            throw new IOException(String.format("%s is not a registered @JmapMethod", clazz.getName()));
+        }
         jsonWriter.beginArray();
         jsonWriter.value(name);
         NULL_SERIALIZING_GSON.toJson(REGULAR_GSON.toJsonTree(methodCall), jsonWriter);
