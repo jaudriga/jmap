@@ -99,11 +99,11 @@ for (Email email : getEmailMethodResponse.getList()) {
 
 #### Creating extensions
 
-Extending the Java JMAP library with new object types and methods is relatively easy. For each JMAP method you need to create a request and a response. They will have to implement `MethodCall` and `MethodResponse` respectively. Alternatively if you are implementing one of the standard methods from JMAP Core you can extend for example `GetMethodResponse<T extends AbstractIdentifiableEntity>` and the corresponding response. Additionally the request and the response need to be annotated with `@JmapMethod`. Finally the package in which those new classes reside needs to be annotated with `@JmapNamepace`.
+Extending the Java JMAP library with new object types and methods is easy. For each JMAP method you need to create a request and a response. They will have to implement `MethodCall` and `MethodResponse` respectively. Alternatively, if you are implementing one of the standard methods from JMAP Core, you can extend for example `GetMethodResponse<T extends AbstractIdentifiableEntity>` and the corresponding response. Additionally the request and the response need to be annotated with `@JmapMethod`. Finally the package in which those new classes reside needs to be annotated with `@JmapNamepace`.
 
-A full example that introduces the object type `Placeholder` and a corresponding `Placeholder/get` method can be found in [iNPUTmice/jmap-examples](https://github.com/iNPUTmice/jmap-examples)
+A full example that introduces the object type `Placeholder` and a corresponding `Placeholder/get` method can be found in [iNPUTmice/jmap-examples](https://github.com/iNPUTmice/jmap-examples).
 
-One more thing to look out for: **If you are building a fat jar (shaded jar) the resource files, that map JMAP method names to their respective class names, need to be merged.** How this is done depends on your build system but the [pom.xml file](https://github.com/iNPUTmice/jmap-examples/blob/master/pom.xml#L40-L61) in the example project shows how to do this with Maven.
+One more thing to look out for: **If you are building a fat jar (shaded jar) the resource files, that map JMAP method names to their respective class names, need to be merged.** How this is done depends on your build system but the [pom.xml file in the example project](https://github.com/iNPUTmice/jmap-examples/blob/master/pom.xml#L40-L61) shows how to do this with Maven.
 
 ### jmap-mua
 
