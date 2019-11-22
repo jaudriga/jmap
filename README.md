@@ -97,6 +97,14 @@ for (Email email : getEmailMethodResponse.getList()) {
 }
 ```
 
+#### Creating extensions
+
+Extending the Java JMAP library with new object types and methods is relatively easy. For each JMAP method you need to create a request and a response. They will have to implement `MethodCall` and `MethodResponse` respectively. Alternatively if you are implementing one of the standard methods from JMAP Core you can extend for example `GetMethodResponse<T extends AbstractIdentifiableEntity>` and the corresponding response. Additionally the request and the response need to be annotated with `@JmapMethod`. Finally the package in which those new classes reside needs to be annotated with `@JmapNamepace`.
+
+A full example that introduces the object type `Placeholder` and a corresponding `Placeholder/get` method can be found in [iNPUTmice/jmap-examples](https://github.com/iNPUTmice/jmap-examples)
+
+One more thing to look out for: **If you are building a fat jar (shaded jar) the resource files, that map JMAP method names to their respective class names, need to be merged.** How this is done depends on your build system but the [pom.xml file](https://github.com/iNPUTmice/jmap-examples/blob/master/pom.xml#L40-L61) in the example project shows how to do this with Maven.
+
 ### jmap-mua
 
 A high level API to act as an email client. It handles everything an email client is supposed to handle minus storage backend and GUI. The storage (caching) backend is accessed via an interface that different email clients on different platforms can implement. It comes with a reference in-memory implementation of that interface. `jmap-mua` only ever *writes* to that storage backend. Accessing data in that storage backend and displaying it in a GUI is up to the specific email client.
