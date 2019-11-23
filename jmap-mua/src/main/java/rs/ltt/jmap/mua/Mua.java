@@ -30,8 +30,8 @@ import rs.ltt.jmap.client.JmapClient;
 import rs.ltt.jmap.client.JmapRequest.Call;
 import rs.ltt.jmap.client.MethodResponses;
 import rs.ltt.jmap.client.api.MethodErrorResponseException;
+import rs.ltt.jmap.client.session.InMemorySessionCache;
 import rs.ltt.jmap.client.session.SessionCache;
-import rs.ltt.jmap.client.session.SessionFileCache;
 import rs.ltt.jmap.common.Request;
 import rs.ltt.jmap.common.entity.Thread;
 import rs.ltt.jmap.common.entity.*;
@@ -1517,7 +1517,7 @@ public class Mua {
         private String password;
         private HttpUrl sessionResource;
         private String accountId;
-        private SessionCache sessionCache = new SessionFileCache();
+        private SessionCache sessionCache = new InMemorySessionCache();
         private Cache cache = new InMemoryCache();
         private Long queryPageSize = null;
 

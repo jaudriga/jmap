@@ -26,18 +26,18 @@ import rs.ltt.jmap.gson.JmapAdapters;
 import java.io.*;
 import java.net.URL;
 
-public class SessionFileCache implements SessionCache {
+public class FileSessionCache implements SessionCache {
 
     private final File directory;
 
     private final GsonBuilder gsonBuilder = new GsonBuilder();
 
-    public SessionFileCache() {
+    public FileSessionCache() {
         JmapAdapters.register(this.gsonBuilder);
         this.directory = null;
     }
 
-    public SessionFileCache(File directory) {
+    public FileSessionCache(File directory) {
         JmapAdapters.register(this.gsonBuilder);
         this.directory = directory;
     }

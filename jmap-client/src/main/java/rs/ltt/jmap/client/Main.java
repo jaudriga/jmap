@@ -19,7 +19,7 @@ package rs.ltt.jmap.client;
 import okhttp3.HttpUrl;
 import rs.ltt.jmap.client.JmapRequest.Call;
 import rs.ltt.jmap.client.session.Session;
-import rs.ltt.jmap.client.session.SessionFileCache;
+import rs.ltt.jmap.client.session.FileSessionCache;
 import rs.ltt.jmap.common.Request;
 import rs.ltt.jmap.common.entity.Email;
 import rs.ltt.jmap.common.entity.capability.MailAccountCapability;
@@ -60,7 +60,7 @@ public class Main {
         }
 
         try (final JmapClient client = new JmapClient(username, password, sessionResource)) {
-            client.setSessionCache(new SessionFileCache());
+            client.setSessionCache(new FileSessionCache());
 
             final Future<MethodResponses> methodResponsesFuture = client.call(new EchoMethodCall());
 

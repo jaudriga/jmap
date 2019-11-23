@@ -35,12 +35,18 @@ public class Request {
 
     private static String getPackageNamespaceFor(Class<? extends MethodCall> clazz) {
         synchronized (PACKAGE_NAMESPACE_CACHE) {
-            if (!PACKAGE_NAMESPACE_CACHE.containsKey(clazz)) {
-                final String value = Namespace.get(clazz);
-                PACKAGE_NAMESPACE_CACHE.put(clazz, Namespace.get(clazz));
-                return value;
+            final String cached = PACKAGE_NAMESPACE_CACHE.get(clazz);
+            if (cached != null) {
+                return cached;
             }
-            return PACKAGE_NAMESPACE_CACHE.get(clazz);
+            final String value = Namespace.get(clazz);
+            if (value == null) {
+                throw new IllegalArgumentException(
+                        String.format("%s is missing a namespace. Annotate package with @JmapNamespace", clazz.getSimpleName())
+                );
+            }
+            PACKAGE_NAMESPACE_CACHE.put(clazz, Namespace.get(clazz));
+            return value;
         }
     }
 
@@ -48,6 +54,7 @@ public class Request {
 
         private MethodCall methodCall;
         private String id;
+
         private Invocation() {
 
         }
@@ -69,15 +76,13 @@ public class Request {
             return id;
         }
 
-        //TODO maybe try TypeAdapter?
-
         public static class ResultReference {
 
             private final String id;
             private final Class<? extends MethodCall> clazz;
             private final String path;
 
-            private ResultReference(String id, Class<?extends MethodCall> clazz, String path) {
+            private ResultReference(String id, Class<? extends MethodCall> clazz, String path) {
                 this.id = id;
                 this.clazz = clazz;
                 this.path = path;
