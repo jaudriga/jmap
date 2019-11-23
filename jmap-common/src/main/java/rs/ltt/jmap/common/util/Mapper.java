@@ -75,8 +75,14 @@ public final class Mapper {
                 LOGGER.warn("Unable to read system resource", e);
             }
         }
-
-        return builder.build();
+        final ImmutableBiMap<String, Class<? extends T>> map = builder.build();
+        if (LOGGER.isWarnEnabled() && MapperLoggingUtils.isMissingWellKnown(map, type)) {
+            LOGGER.warn(
+                    "Some well known mappings are missing. Have you enabled resource merging for {}?",
+                    Utils.getFilenameFor(type)
+            );
+        }
+        return map;
     }
 
     private static <T> Iterable<BufferedReader> getSystemResources(final Class<T> type) {
