@@ -18,8 +18,10 @@ package rs.ltt.jmap.mua;
 
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.*;
 import okhttp3.HttpUrl;
 import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
@@ -1016,8 +1018,8 @@ public class Mua {
 
     /**
      * Moves all emails in this collection (usually applied to an entire thread) to the trash mailbox. The emails will
-     * be removed from all other mailboxes. If a certain email in this collection is already only in the trash mailbox
-     * this email will not be processed.
+     * be removed from all other mailboxes except Important. If a certain email in this collection is already only in
+     * the trash mailbox this email will not be processed.
      *
      * @param emails A collection of emails. Usually all messages in a thread
      */
@@ -1026,15 +1028,17 @@ public class Mua {
             @Override
             public ListenableFuture<Boolean> apply(@NullableDecl Collection<? extends IdentifiableMailboxWithRole> mailboxes) {
                 Preconditions.checkNotNull(mailboxes, "SpecialMailboxes collection must not be null but can be empty");
-                return moveToTrash(emails, MailboxUtil.find(mailboxes, Role.TRASH));
+                final IdentifiableMailboxWithRole trash = MailboxUtil.find(mailboxes, Role.TRASH);
+                final IdentifiableMailboxWithRole important = MailboxUtil.find(mailboxes, Role.IMPORTANT);
+                return moveToTrash(emails, trash, important);
             }
         }, MoreExecutors.directExecutor());
     }
 
     /**
      * Moves all emails in this collection (usually applied to an entire thread) to the trash mailbox. The emails will
-     * be removed from all other mailboxes. If a certain email in this collection is already only in the trash mailbox
-     * this email will not be processed.
+     * be removed from all other mailboxes except Important. If a certain email in this collection is already only in
+     * the trash mailbox this email will not be processed.
      *
      * @param emails A collection of emails. Usually all messages in a thread
      * @param trash  A reference to the Trash mailbox. Can be null and a new trash mailbox will automatically be created.
@@ -1042,16 +1046,29 @@ public class Mua {
      *               and fail.
      */
 
-    public ListenableFuture<Boolean> moveToTrash(final Collection<? extends IdentifiableEmailWithMailboxIds> emails, @NullableDecl final IdentifiableMailboxWithRole trash) {
+    public ListenableFuture<Boolean> moveToTrash(final Collection<? extends IdentifiableEmailWithMailboxIds> emails,
+                                                 @NullableDecl final IdentifiableMailboxWithRole trash,
+                                                 @NullableDecl final IdentifiableMailboxWithRole important) {
+        Preconditions.checkArgument(
+                trash == null || trash.getRole() == Role.TRASH,
+                "Mailbox trash must have role Trash"
+        );
+        Preconditions.checkArgument(
+                important == null || important.getRole() == Role.IMPORTANT,
+                "Mailbox important must have role Important"
+        );
         return Futures.transformAsync(getObjectsState(), new AsyncFunction<ObjectsState, Boolean>() {
             @Override
             public ListenableFuture<Boolean> apply(@NullableDecl ObjectsState objectsState) throws Exception {
-                return moveToTrash(emails, trash, objectsState);
+                return moveToTrash(emails, trash, important, objectsState);
             }
         }, MoreExecutors.directExecutor());
     }
 
-    private ListenableFuture<Boolean> moveToTrash(Collection<? extends IdentifiableEmailWithMailboxIds> emails, @NullableDecl final IdentifiableMailboxWithRole trash, final ObjectsState objectsState) {
+    private ListenableFuture<Boolean> moveToTrash(Collection<? extends IdentifiableEmailWithMailboxIds> emails,
+                                                  @NullableDecl final IdentifiableMailboxWithRole trash,
+                                                  @NullableDecl final IdentifiableMailboxWithRole important,
+                                                  final ObjectsState objectsState) {
         final JmapClient.MultiCall multiCall = jmapClient.newMultiCall();
         final ListenableFuture<MethodResponses> mailboxCreateFuture;
         if (trash == null) {
@@ -1061,16 +1078,20 @@ public class Mua {
         }
         ImmutableMap.Builder<String, Map<String, Object>> emailPatchObjectMapBuilder = ImmutableMap.builder();
         for (IdentifiableEmailWithMailboxIds email : emails) {
-            if (trash != null && email.getMailboxIds().size() == 1 && email.getMailboxIds().containsKey(trash.getId())) {
-                continue;
-            }
-            Patches.Builder patchesBuilder = Patches.builder();
+            final Map<String, Boolean> mailboxIds = new HashMap<>(Maps.filterKeys(email.getMailboxIds(), new Predicate<String>() {
+                @Override
+                public boolean apply(@NullableDecl String id) {
+                    return (important != null && important.getId().equals(id)) || (trash != null && trash.getId().equals(id));
+                }
+            }));
             if (trash == null) {
-                patchesBuilder.set("mailboxIds", ImmutableMap.of(CreateUtil.createIdReference(Role.TRASH), true));
+                mailboxIds.put(CreateUtil.createIdReference(Role.TRASH), true);
+            } else if  (mailboxIds.containsKey(trash.getId())) {
+                continue;
             } else {
-                patchesBuilder.set("mailboxIds", ImmutableMap.of(trash.getId(), true));
+                mailboxIds.put(trash.getId(), true);
             }
-            emailPatchObjectMapBuilder.put(email.getId(), patchesBuilder.build());
+            emailPatchObjectMapBuilder.put(email.getId(), Patches.set("mailboxIds",mailboxIds));
         }
         final ImmutableMap<String, Map<String, Object>> patches = emailPatchObjectMapBuilder.build();
         if (patches.size() == 0) {
