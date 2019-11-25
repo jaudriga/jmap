@@ -53,8 +53,12 @@ public class MoveToTrashTest {
 
 
         Assert.assertFalse(mua.moveToTrash(ImmutableSet.of(
-                new MyIdentifiableEmailWithMailboxes("e0", "mb4"), //mb4 is Trash
-                new MyIdentifiableEmailWithMailboxes("e1", ImmutableSet.of("mb2", "mb4")) //mb2 is Important
+                new MyIdentifiableEmailWithMailboxes("e0", "mb4")
+        )).get());
+
+        Assert.assertFalse(mua.moveToTrash(ImmutableSet.of(
+                new MyIdentifiableEmailWithMailboxes("e0", "mb4"),
+                new MyIdentifiableEmailWithMailboxes("e1", "mb4")
         )).get());
 
 
