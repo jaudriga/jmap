@@ -1,3 +1,9 @@
+### 0.1.2 (2019-11-28)
+
+* fix for not finding all JMAP Methods when extending the library
+* Renamed SessionFileCache to FileSessionCache to match naming pattern
+* Created InMemoryFileCache
+
 ### 0.1.1 (2019-11-20)
 
 * initial release. Basic email processing with either jmap-client or jmap-mua
