@@ -18,10 +18,13 @@ package rs.ltt.jmap.client.session;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonIOException;
+import com.google.gson.JsonSyntaxException;
 import okhttp3.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rs.ltt.jmap.client.api.EndpointNotFoundException;
+import rs.ltt.jmap.client.api.InvalidSessionResourceException;
 import rs.ltt.jmap.client.api.UnauthorizedException;
 import rs.ltt.jmap.client.http.HttpAuthentication;
 import rs.ltt.jmap.client.util.WellKnownUtil;
@@ -113,13 +116,18 @@ public class SessionClient {
         if (code == 200 || code == 201) {
             final ResponseBody body = response.body();
             if (body == null) {
-                throw new EndpointNotFoundException("Unable to fetch session object. Response body was empty.");
+                throw new InvalidSessionResourceException("Unable to fetch session object. Response body was empty.");
             }
             final InputStream inputStream = body.byteStream();
             final GsonBuilder builder = new GsonBuilder();
             JmapAdapters.register(builder);
             final Gson gson = builder.create();
-            final SessionResource sessionResource = gson.fromJson(new InputStreamReader(inputStream), SessionResource.class);
+            final SessionResource sessionResource;
+            try {
+                sessionResource = gson.fromJson(new InputStreamReader(inputStream), SessionResource.class);
+            } catch (JsonIOException | JsonSyntaxException e) {
+                throw new InvalidSessionResourceException(e);
+            }
             final HttpUrl currentBaseUrl = response.request().url();
             if (!base.equals(currentBaseUrl)) {
                 LOGGER.info("Processed new base URL {}", currentBaseUrl.url());

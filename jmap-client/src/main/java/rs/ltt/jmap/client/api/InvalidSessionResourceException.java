@@ -16,17 +16,13 @@
 
 package rs.ltt.jmap.client.api;
 
-public abstract class JmapApiException extends Exception {
+public class InvalidSessionResourceException extends JmapApiException {
 
-    JmapApiException() {
-        super();
-    }
-
-    JmapApiException(String message) {
+    public InvalidSessionResourceException(String message) {
         super(message);
     }
 
-    JmapApiException(Throwable throwable) {
+    public InvalidSessionResourceException(Throwable throwable) {
         super(throwable);
     }
 
