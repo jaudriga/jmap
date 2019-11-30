@@ -49,4 +49,8 @@ public class Account {
     public Collection<AccountCapability> getCapabilities() {
         return accountCapabilities.values();
     }
+
+    public boolean hasCapability(Class<? extends AccountCapability> clazz) {
+        return accountCapabilities.containsKey(clazz);
+    }
 }

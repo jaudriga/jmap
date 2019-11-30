@@ -19,17 +19,21 @@ package rs.ltt.jmap.client.session;
 import com.damnhandy.uri.template.UriTemplate;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
+import com.google.common.collect.Maps;
 import okhttp3.HttpUrl;
 import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 import rs.ltt.jmap.client.event.CloseAfter;
 import rs.ltt.jmap.common.SessionResource;
 import rs.ltt.jmap.common.entity.AbstractIdentifiableEntity;
+import rs.ltt.jmap.common.entity.Account;
 import rs.ltt.jmap.common.entity.AccountCapability;
 
 import java.util.Collection;
 import java.util.Locale;
+import java.util.Map;
 
 public class Session {
 
@@ -107,5 +111,14 @@ public class Session {
 
     public String getPrimaryAccount(Class<? extends AccountCapability> clazz) {
         return sessionResource.getPrimaryAccount(clazz);
+    }
+
+    public Map<String, Account> getAccounts(final Class<? extends AccountCapability> clazz) {
+        return Maps.filterEntries(sessionResource.getAccounts(), new Predicate<Map.Entry<String, Account>>() {
+            @Override
+            public boolean apply(@NullableDecl Map.Entry<String, Account> entry) {
+                return entry != null && entry.getValue().hasCapability(clazz);
+            }
+        });
     }
 }
