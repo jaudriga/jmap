@@ -1,3 +1,7 @@
+### 0.1.3 (2019-11-30)
+
+* Session object gains ability to get a list of accounts with a given capability
+
 ### 0.1.2 (2019-11-28)
 
 * fix for not finding all JMAP Methods when extending the library
