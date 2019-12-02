@@ -15,7 +15,11 @@ The library is divided into separate modules. *Most people will probably want to
 
 ### jmap-annotation
 
-Each JMAP method call and response is a POJO annotated with `@JmapMethod`. An annotation processor collects a lists of all available JMAP Methods. This modules holds these annotations and annotation processors.
+Each JMAP method call and response is a POJO annotated with `@JmapMethod`. An annotation processor collects a lists of all available JMAP Methods. This modules only holds the annotations. When extending the library you need to include `jmap-annotation-processor` as well.
+
+### jmap-annotation-processor
+
+The annotation processors that compile lists of JMAP methods, JMAP errors and capabilities into resource files. This modules is only required when extending the library.
 
 ### jmap-common
 
@@ -100,6 +104,8 @@ for (Email email : getEmailMethodResponse.getList()) {
 #### Creating extensions
 
 Extending the Java JMAP library with new object types and methods is easy. For each JMAP method you need to create a request and a response. They will have to implement `MethodCall` and `MethodResponse` respectively. Alternatively, if you are implementing one of the standard methods from JMAP Core, you can extend for example `GetMethodResponse<T extends AbstractIdentifiableEntity>` and the corresponding response. Additionally the request and the response need to be annotated with `@JmapMethod`. Finally the package in which those new classes reside needs to be annotated with `@JmapNamepace`.
+
+You will have to include `jmap-annotation-processor` as an additional dependency in your project.
 
 A full example that introduces the object type `Placeholder` and a corresponding `Placeholder/get` method can be found in [iNPUTmice/jmap-examples](https://github.com/iNPUTmice/jmap-examples).
 
