@@ -1,3 +1,7 @@
+### 0.1.4 (2019-12-03)
+
+* Move annotation processor to separate sub project
+
 ### 0.1.3 (2019-11-30)
 
 * Session object gains ability to get a list of accounts with a given capability
