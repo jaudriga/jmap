@@ -30,6 +30,8 @@ import rs.ltt.jmap.common.SessionResource;
 import rs.ltt.jmap.common.entity.AbstractIdentifiableEntity;
 import rs.ltt.jmap.common.entity.Account;
 import rs.ltt.jmap.common.entity.AccountCapability;
+import rs.ltt.jmap.common.entity.Capability;
+import rs.ltt.jmap.common.entity.capability.CoreCapability;
 
 import java.util.Collection;
 import java.util.Locale;
@@ -120,5 +122,9 @@ public class Session {
                 return entry != null && entry.getValue().hasCapability(clazz);
             }
         });
+    }
+
+    public <T extends Capability> T getCapability(Class<T> clazz) {
+        return sessionResource.getCapability(clazz);
     }
 }

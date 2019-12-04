@@ -16,6 +16,7 @@
 
 package rs.ltt.jmap.common.entity.filter;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Strings;
 import com.google.common.collect.ComparisonChain;
 import lombok.Builder;
@@ -116,5 +117,29 @@ public class EmailFilterCondition implements FilterCondition<Email> {
 
     private static boolean nullToFalse(Boolean b) {
         return b == null ? false : b;
+    }
+
+    @Override
+    public String toString() {
+        return MoreObjects.toStringHelper(this)
+                .add("inMailbox", inMailbox)
+                .add("inMailboxOtherThan", inMailboxOtherThan)
+                .add("minSize", minSize)
+                .add("maxSize", maxSize)
+                .add("allInThreadHaveKeyword", allInThreadHaveKeyword)
+                .add("someInThreadHaveKeyword", someInThreadHaveKeyword)
+                .add("noneInThreadHaveKeyword", noneInThreadHaveKeyword)
+                .add("hasKeyword", hasKeyword)
+                .add("notKeyword", notKeyword)
+                .add("hasAttachment", hasAttachment)
+                .add("text", text)
+                .add("from", from)
+                .add("to", to)
+                .add("cc", cc)
+                .add("bcc", bcc)
+                .add("subject", subject)
+                .add("body", body)
+                .omitNullValues()
+                .toString();
     }
 }

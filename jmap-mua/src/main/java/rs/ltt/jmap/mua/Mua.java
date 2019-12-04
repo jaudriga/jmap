@@ -31,10 +31,12 @@ import rs.ltt.jmap.client.JmapRequest.Call;
 import rs.ltt.jmap.client.MethodResponses;
 import rs.ltt.jmap.client.api.MethodErrorResponseException;
 import rs.ltt.jmap.client.session.InMemorySessionCache;
+import rs.ltt.jmap.client.session.Session;
 import rs.ltt.jmap.client.session.SessionCache;
 import rs.ltt.jmap.common.Request;
 import rs.ltt.jmap.common.entity.Thread;
 import rs.ltt.jmap.common.entity.*;
+import rs.ltt.jmap.common.entity.capability.CoreCapability;
 import rs.ltt.jmap.common.entity.filter.EmailFilterCondition;
 import rs.ltt.jmap.common.entity.filter.Filter;
 import rs.ltt.jmap.common.entity.query.EmailQuery;
@@ -356,7 +358,7 @@ public class Mua {
      */
     private ListenableFuture<MethodResponses> createMailbox(@NonNullDecl final Role role, @NullableDecl ObjectsState objectsState, final JmapClient.MultiCall multiCall) {
         final SetMailboxMethodCall setMailboxMethodCall = new SetMailboxMethodCall(
-                null, //TODO this is the account; we need to do something useful with that
+                this.accountId,
                 objectsState == null ? null : objectsState.mailboxState,
                 ImmutableMap.of(CreateUtil.createId(role), MailboxUtil.create(role)),
                 null,
@@ -1219,7 +1221,7 @@ public class Mua {
             @Override
             public ListenableFuture<Status> apply(@NullableDecl QueryStateWrapper queryStateWrapper) {
                 Preconditions.checkNotNull(queryStateWrapper, "QueryStateWrapper can not be null");
-                if (queryStateWrapper.queryState == null || queryStateWrapper.upTo == null) {
+                if (!queryStateWrapper.canCalculateChanges || queryStateWrapper.upTo == null) {
                     return initialQuery(query, queryStateWrapper);
                 } else {
                     Preconditions.checkNotNull(queryStateWrapper.objectsState, "ObjectsState can not be null if queryState was not");
@@ -1251,22 +1253,27 @@ public class Mua {
         Preconditions.checkNotNull(afterEmailId, "afterEmailId can not be null");
         Preconditions.checkNotNull(queryStateWrapper, "QueryStateWrapper can not be null when paging");
 
+        LOGGER.info("Paging query {} after {}", query.toString(), afterEmailId);
 
-        //TODO: this currently means we can’t page in queries that aren’t cacheable (=don’t have a queryState)
-        //TODO: we should probably get rid of that check and instead simply don’t do the update call
-        //TODO: likewise we probably need to be able to ignore a canNotCalculate Changes error on the update response
-        if (queryStateWrapper.queryState == null) {
-            throw new InconsistentQueryStateException("QueryStateWrapper needs queryState for paging");
+        if (queryStateWrapper.canCalculateChanges && queryStateWrapper.queryState == null) {
+            throw new InconsistentQueryStateException(
+                    "QueryStateWrapper needs queryState for paging when canCalculateChanges was true"
+            );
         }
-        if (!afterEmailId.equals(queryStateWrapper.upTo)) {
+        if (queryStateWrapper.upTo == null || !afterEmailId.equals(queryStateWrapper.upTo.id)) {
             //in conjunction with lttrs-android this can happen if we have a QueryItemOverwrite for the last item in
             //a query. This will probably fix itself once the update command has run as well as a subsequent updateQuery() call.
-            //TODO: is there a point in triggering a queryUpdate from Mua? Probably not as we don’t know if the update command ran yet.
             throw new InconsistentQueryStateException("upToId from QueryState needs to match the supplied afterEmailId");
         }
         final SettableFuture<Status> settableFuture = SettableFuture.create();
         JmapClient.MultiCall multiCall = jmapClient.newMultiCall();
-        final ListenableFuture<Status> queryRefreshFuture = refreshQuery(query, queryStateWrapper, multiCall);
+        final ListenableFuture<Status> queryRefreshFuture;
+        if (queryStateWrapper.canCalculateChanges) {
+            queryRefreshFuture = refreshQuery(query, queryStateWrapper, multiCall);
+        } else {
+            LOGGER.debug("Skipping queryChanges because canCalculateChanges was false");
+            queryRefreshFuture = null;
+        }
 
         final Call queryCall = multiCall.call(new QueryEmailMethodCall(accountId, query, afterEmailId, this.queryPageSize));
         final ListenableFuture<MethodResponses> queryResponsesFuture = queryCall.getMethodResponses();
@@ -1287,9 +1294,9 @@ public class Mua {
                     //  1) refresh the existent query (which in our implementation also piggybacks email and thread updates)
                     //  2) store new items
 
-                    //TODO status=has_more should probably throw; but cache will eventually throw anyway
-                    //TODO as mentioned above we probably need to ignore canNotCalculate changes errors and the like otherwise we won’t be able to page through queries that aren’t cachable
-                    queryRefreshFuture.get();
+                    if (queryRefreshFuture != null) {
+                        queryRefreshFuture.get();
+                    }
 
                     try {
                         cache.addQueryResult(query.toQueryString(), afterEmailId, queryResult);
@@ -1310,7 +1317,7 @@ public class Mua {
                     if (cause instanceof MethodErrorResponseException) {
                         final MethodErrorResponse methodError = ((MethodErrorResponseException) cause).getMethodErrorResponse();
                         if (methodError instanceof AnchorNotFoundMethodErrorResponse) {
-                            if (Status.unchanged(queryRefreshFuture)) {
+                            if (queryRefreshFuture == null || Status.unchanged(queryRefreshFuture)) {
                                 LOGGER.info("Invalidating query result cache after receiving AnchorNotFound response");
                                 cache.invalidateQueryResult(query.toQueryString());
                             } else {
@@ -1339,6 +1346,7 @@ public class Mua {
 
     private ListenableFuture<Status> refreshQuery(@NonNullDecl final EmailQuery query, @NonNullDecl final QueryStateWrapper queryStateWrapper, final JmapClient.MultiCall multiCall) {
         Preconditions.checkNotNull(queryStateWrapper.queryState, "QueryState can not be null when attempting to refresh query");
+        LOGGER.info("Refreshing query {}", query.toString());
         final SettableFuture<Status> settableFuture = SettableFuture.create();
 
         final List<ListenableFuture<Status>> piggyBackedFuturesList = piggyBack(queryStateWrapper.objectsState, multiCall);
@@ -1389,16 +1397,50 @@ public class Mua {
     }
 
     private ListenableFuture<Status> initialQuery(@NonNullDecl final EmailQuery query, @NonNullDecl final QueryStateWrapper queryStateWrapper) {
+        return Futures.transformAsync(getJmapClient().getSession(), new AsyncFunction<Session, Status>() {
+            @Override
+            public ListenableFuture<Status> apply(@NullableDecl final Session session) {
+                return initialQuery(query,
+                        queryStateWrapper,
+                        Preconditions.checkNotNull(session, "Session object must not be null")
+                );
+            }
+        }, MoreExecutors.directExecutor());
 
-        Preconditions.checkState(queryStateWrapper.queryState == null || queryStateWrapper.upTo == null, "QueryState or upTo must be NULL when calling initialQuery");
+    }
 
+    private ListenableFuture<Status> initialQuery(@NonNullDecl final EmailQuery query, @NonNullDecl final QueryStateWrapper queryStateWrapper, @NonNullDecl Session session) {
+
+        Preconditions.checkState(!queryStateWrapper.canCalculateChanges || queryStateWrapper.upTo == null, "canCalculateChanges must be false or upTo must be NULL when calling initialQuery");
+
+        LOGGER.info("Performing initial query for {}", query.toString());
         final SettableFuture<Status> settableFuture = SettableFuture.create();
         JmapClient.MultiCall multiCall = jmapClient.newMultiCall();
 
         //these need to be processed *before* the Query call or else the fetchMissing will not honor newly fetched ids
         final List<ListenableFuture<Status>> piggyBackedFuturesList = piggyBack(queryStateWrapper.objectsState, multiCall);
 
-        final Call queryCall = multiCall.call(new QueryEmailMethodCall(accountId, query, this.queryPageSize));
+
+        final Long queryPageSize;
+        if (queryStateWrapper.upTo != null) {
+            final long currentNumberOfItemsInCache = queryStateWrapper.upTo.position + 1;
+            if (this.queryPageSize == null || currentNumberOfItemsInCache > this.queryPageSize) {
+                LOGGER.info("Current number of items ({}) in query cache exceeds configured page size of {}", currentNumberOfItemsInCache, this.queryPageSize);
+                final long maxObjectsInGet = session.getCapability(CoreCapability.class).maxObjectsInGet();
+                if (maxObjectsInGet < currentNumberOfItemsInCache) {
+                    LOGGER.warn("Capping page size at {} to not exceed maxObjectsInGet", maxObjectsInGet);
+                    queryPageSize = maxObjectsInGet;
+                } else {
+                    queryPageSize = currentNumberOfItemsInCache;
+                }
+            } else {
+                queryPageSize = this.queryPageSize;
+            }
+        } else {
+            queryPageSize = this.queryPageSize;
+        }
+
+        final Call queryCall = multiCall.call(new QueryEmailMethodCall(accountId, query, queryPageSize));
         final ListenableFuture<MethodResponses> queryResponsesFuture = queryCall.getMethodResponses();
         final Call threadIdsCall = multiCall.call(new GetEmailMethodCall(accountId, queryCall.createResultReference(Request.Invocation.ResultReference.Path.IDS), new String[]{"threadId"}));
         final ListenableFuture<MethodResponses> getThreadIdsResponsesFuture = threadIdsCall.getMethodResponses();
@@ -1535,13 +1577,13 @@ public class Mua {
             return this;
         }
 
+        public Builder sessionResource(String sessionResource) {
+            return sessionResource(HttpUrl.get(sessionResource));
+        }
+
         public Builder sessionResource(HttpUrl sessionResource) {
             this.sessionResource = sessionResource;
             return this;
-        }
-
-        public Builder sessionResource(String sessionResource) {
-            return sessionResource(HttpUrl.get(sessionResource));
         }
 
         public Builder accountId(String accountId) {

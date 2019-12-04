@@ -64,11 +64,18 @@ public class InMemoryCache implements Cache {
             final ObjectsState objectsState = new ObjectsState(mailboxState, threadState, emailState);
             final InMemoryQueryResult queryResult = queryResults.get(query);
             if (queryResult == null) {
-                return new QueryStateWrapper(null,null,objectsState);
+                return new QueryStateWrapper(null,false,null,objectsState);
             } else {
-                final QueryResultItem lastItem = Iterables.getLast(queryResult.items, null);
-                final String upTo = lastItem == null ? null : lastItem.getEmailId();
-                return new QueryStateWrapper(queryResult.queryState, upTo, objectsState);
+                final QueryStateWrapper.UpTo upTo;
+                if (queryResult.items.size() > 0) {
+                    final int lastPosition = queryResult.items.size() - 1;
+                    final QueryResultItem lastItem = queryResult.items.get(lastPosition);
+                    final String id = lastItem.getEmailId();
+                    upTo = new QueryStateWrapper.UpTo(id, lastPosition);
+                } else {
+                    upTo = null;
+                }
+                return new QueryStateWrapper(queryResult.queryState, queryResult.canCalculateChanges, upTo, objectsState);
             }
         }
     }
@@ -286,7 +293,7 @@ public class InMemoryCache implements Cache {
             if (emailState == null || !emailState.equals(this.emailState)) {
                 throw new CacheConflictException(String.format("Email state must match when updating query results. Cached state=%s. Your state=%s", this.emailState, emailState));
             }
-            this.queryResults.put(query, new InMemoryQueryResult(queryResult.queryState.getState(), queryResult.items));
+            this.queryResults.put(query, new InMemoryQueryResult(queryResult.queryState.getState(), queryResult.canCalculateChanges, queryResult.items));
         }
     }
 
@@ -388,10 +395,12 @@ public class InMemoryCache implements Cache {
     protected static class InMemoryQueryResult {
 
         private String queryState;
-        private ArrayList<QueryResultItem> items;
+        private final boolean canCalculateChanges;
+        private final ArrayList<QueryResultItem> items;
 
-        InMemoryQueryResult(String queryState, QueryResultItem[] items) {
+        InMemoryQueryResult(String queryState, boolean canCalculateChanges, QueryResultItem[] items) {
             this.queryState = queryState;
+            this.canCalculateChanges = canCalculateChanges;
             this.items = new ArrayList<>(Arrays.asList(items));
         }
 

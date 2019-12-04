@@ -33,14 +33,20 @@ import java.util.List;
 public class QueryResult {
 
     public final QueryResultItem[] items;
-    public final long position;
     public final TypedState<Email> queryState;
+    public final boolean canCalculateChanges;
+    public final long position;
     public final TypedState<Email> objectState;
 
-    private QueryResult(@NonNullDecl QueryResultItem[] items, long position, TypedState<Email> queryState, TypedState<Email> objectState) {
+    private QueryResult(@NonNullDecl final QueryResultItem[] items,
+                        final TypedState<Email> queryState,
+                        final boolean canCalculateChanges,
+                        final long position,
+                        final TypedState<Email> objectState) {
         this.items = items;
-        this.position = position;
         this.queryState = queryState;
+        this.canCalculateChanges = canCalculateChanges;
+        this.position = position;
         this.objectState = objectState;
     }
 
@@ -53,7 +59,12 @@ public class QueryResult {
             final String emailId = emailIds[i];
             resultItems[i] = QueryResultItem.of(emailId, emailIdToThreadIdMap.get(emailId));
         }
-        return new QueryResult(resultItems, queryEmailMethodResponse.getPosition(), queryEmailMethodResponse.getTypedQueryState(), emailMethodResponse.getTypedState());
+        return new QueryResult(resultItems,
+                queryEmailMethodResponse.getTypedQueryState(),
+                queryEmailMethodResponse.isCanCalculateChanges(),
+                queryEmailMethodResponse.getPosition(),
+                emailMethodResponse.getTypedState()
+        );
     }
 
     private static ImmutableMap<String, String> map(GetEmailMethodResponse emailMethodResponse) {
@@ -79,8 +90,10 @@ public class QueryResult {
     public String toString() {
         return MoreObjects.toStringHelper(this)
                 .add("items", items)
+                .add("queryState", queryState)
+                .add("canCalculateChanges", canCalculateChanges)
                 .add("position", position)
-                .add("objectState", objectState.getState())
+                .add("objectState", objectState)
                 .toString();
     }
 }

@@ -16,6 +16,7 @@
 
 package rs.ltt.jmap.common.entity.query;
 
+import com.google.common.base.MoreObjects;
 import rs.ltt.jmap.common.entity.Comparator;
 import rs.ltt.jmap.common.entity.Email;
 import rs.ltt.jmap.common.entity.filter.Filter;
@@ -57,5 +58,15 @@ public class EmailQuery extends Query<Email> {
 
     public static EmailQuery of(Filter<Email> filter, Comparator[] comparators, boolean collapseThreads) {
         return new EmailQuery(filter, comparators, collapseThreads);
+    }
+
+    @Override
+    public String toString() {
+        return MoreObjects.toStringHelper(this)
+                .add("collapseThreads", collapseThreads)
+                .add("filter", filter)
+                .add("comparators", comparators)
+                .omitNullValues()
+                .toString();
     }
 }

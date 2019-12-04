@@ -18,14 +18,26 @@ package rs.ltt.jmap.mua.cache;
 
 public class QueryStateWrapper {
 
-    public final ObjectsState objectsState;
-    public final String upTo;
     public final String queryState;
+    public final boolean canCalculateChanges;
+    public final UpTo upTo;
+    public final ObjectsState objectsState;
 
 
-    public QueryStateWrapper(String queryState, String upTo, ObjectsState objectsState) {
+    public QueryStateWrapper(String queryState, boolean canCalculateChanges, UpTo upTo, ObjectsState objectsState) {
         this.queryState = queryState;
+        this.canCalculateChanges = canCalculateChanges;
         this.upTo = upTo;
         this.objectsState = objectsState;
+    }
+
+    public static class UpTo {
+        public final String id;
+        public final long position;
+
+        public UpTo(final String id, final long position) {
+            this.id = id;
+            this.position = position;
+        }
     }
 }
