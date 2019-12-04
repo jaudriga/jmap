@@ -211,6 +211,7 @@ public class Mua {
     }
 
     private ListenableFuture<Status> loadMailboxes(JmapClient.MultiCall multiCall) {
+        LOGGER.info("Fetching mailboxes");
         final SettableFuture<Status> settableFuture = SettableFuture.create();
         final ListenableFuture<MethodResponses> getMailboxMethodResponsesFuture = multiCall.call(new GetMailboxMethodCall(accountId)).getMethodResponses();
         getMailboxMethodResponsesFuture.addListener(new Runnable() {
@@ -239,6 +240,7 @@ public class Mua {
 
     private ListenableFuture<Status> updateMailboxes(final String state, final JmapClient.MultiCall multiCall) {
         Preconditions.checkNotNull(state, "State can not be null when updating mailboxes");
+        LOGGER.info("Refreshing mailboxes since state {}", state);
         final SettableFuture<Status> settableFuture = SettableFuture.create();
         final UpdateUtil.MethodResponsesFuture methodResponsesFuture = UpdateUtil.mailboxes(multiCall, accountId, state);
         methodResponsesFuture.changes.addListener(new Runnable() {
@@ -582,6 +584,7 @@ public class Mua {
 
     private ListenableFuture<Status> updateEmails(final String state, final JmapClient.MultiCall multiCall) {
         Preconditions.checkNotNull(state, "state can not be null when updating emails");
+        LOGGER.info("Refreshing emails since state {}", state);
         final SettableFuture<Status> settableFuture = SettableFuture.create();
         final UpdateUtil.MethodResponsesFuture methodResponsesFuture = UpdateUtil.emails(multiCall, accountId, state);
         methodResponsesFuture.changes.addListener(new Runnable() {
@@ -1167,6 +1170,7 @@ public class Mua {
 
     private ListenableFuture<Status> updateThreads(final String state, final JmapClient.MultiCall multiCall) {
         Preconditions.checkNotNull(state, "state can not be null when updating threads");
+        LOGGER.info("Refreshing threads since state {}", state);
         final SettableFuture<Status> settableFuture = SettableFuture.create();
         final UpdateUtil.MethodResponsesFuture methodResponsesFuture = UpdateUtil.threads(multiCall, accountId, state);
         methodResponsesFuture.changes.addListener(new Runnable() {

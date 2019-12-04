@@ -24,6 +24,7 @@ import okhttp3.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rs.ltt.jmap.client.api.EndpointNotFoundException;
+import rs.ltt.jmap.client.api.HttpJmapApiClient;
 import rs.ltt.jmap.client.api.InvalidSessionResourceException;
 import rs.ltt.jmap.client.api.UnauthorizedException;
 import rs.ltt.jmap.client.http.HttpAuthentication;
@@ -37,8 +38,6 @@ import java.io.InputStreamReader;
 public class SessionClient {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SessionClient.class);
-
-    private static final OkHttpClient OK_HTTP_CLIENT = new OkHttpClient();
 
     private final HttpUrl sessionResource;
     private HttpAuthentication httpAuthentication;
@@ -111,7 +110,7 @@ public class SessionClient {
         requestBuilder.url(base);
         httpAuthentication.authenticate(requestBuilder);
 
-        final Response response = OK_HTTP_CLIENT.newCall(requestBuilder.build()).execute();
+        final Response response = HttpJmapApiClient.OK_HTTP_CLIENT.newCall(requestBuilder.build()).execute();
         final int code = response.code();
         if (code == 200 || code == 201) {
             final ResponseBody body = response.body();

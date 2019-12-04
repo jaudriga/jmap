@@ -18,6 +18,9 @@ package rs.ltt.jmap.client.api;
 
 
 import okhttp3.*;
+import okhttp3.internal.annotations.EverythingIsNonNull;
+import okhttp3.logging.HttpLoggingInterceptor;
+import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +37,34 @@ public class HttpJmapApiClient extends AbstractJmapApiClient {
 
     private static MediaType MEDIA_TYPE_JSON = MediaType.get("application/json");
 
-    private static final OkHttpClient OK_HTTP_CLIENT = new OkHttpClient();
+    public static final OkHttpClient OK_HTTP_CLIENT;
+
+    static {
+        final OkHttpClient.Builder builder = new OkHttpClient.Builder();
+        final Logger OK_HTTP_LOGGER = LoggerFactory.getLogger(OkHttpClient.class);
+        if (OK_HTTP_LOGGER.isInfoEnabled()) {
+            final HttpLoggingInterceptor loggingInterceptor;
+            if (OK_HTTP_LOGGER.isDebugEnabled()) {
+                loggingInterceptor = new HttpLoggingInterceptor(new HttpLoggingInterceptor.Logger() {
+                    @Override
+                    public void log(@NonNullDecl final String message) {
+                        OK_HTTP_LOGGER.debug(message);
+                    }
+                });
+                loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
+            } else {
+                loggingInterceptor = new HttpLoggingInterceptor(new HttpLoggingInterceptor.Logger() {
+                    @Override
+                    public void log(@NonNullDecl final String message) {
+                        OK_HTTP_LOGGER.info(message);
+                    }
+                });
+                loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BASIC);
+            }
+            builder.addInterceptor(loggingInterceptor);
+        }
+        OK_HTTP_CLIENT = builder.build();
+    }
 
     private final HttpUrl apiUrl;
     private final HttpAuthentication httpAuthentication;
