@@ -1,3 +1,8 @@
+### 0.1.5 (2019-12-04)
+
+* Automatically redo queries that can’t calculate changes
+* Improved logging (Including HTTP traffic logging)
+
 ### 0.1.4 (2019-12-03)
 
 * Move annotation processor to separate sub project

@@ -40,14 +40,14 @@ A JMAP client library to make JMAP method calls and process the responses. It ha
 #### Dependencies
 ##### Gradle
 ```
-implementation 'rs.ltt.jmap:jmap-client:0.1.4'
+implementation 'rs.ltt.jmap:jmap-client:0.1.5'
 ```
 ##### Maven
 ```xml
 <dependency>
   <groupId>rs.ltt.jmap</groupId>
   <artifactId>jmap-client</artifactId>
-  <version>0.1.4</version>
+  <version>0.1.5</version>
 </dependency>
 ```
 
@@ -118,14 +118,14 @@ A high level API to act as an email client. It handles everything an email clien
 #### Dependencies
 ##### Gradle
 ```
-implementation 'rs.ltt.jmap:jmap-mua:0.1.4'
+implementation 'rs.ltt.jmap:jmap-mua:0.1.5'
 ```
 ##### Maven
 ```xml
 <dependency>
   <groupId>rs.ltt.jmap</groupId>
   <artifactId>jmap-mua</artifactId>
-  <version>0.1.4</version>
+  <version>0.1.5</version>
 </dependency>
 ```
 
