@@ -1380,16 +1380,13 @@ public class Mua {
                         cache.updateQueryResults(query.toQueryString(), queryUpdate, getThreadIdsResponse.getTypedState());
                     }
 
-                    if (piggybackStatus == Status.UNCHANGED && queryUpdateStatus == Status.UNCHANGED) {
-                        settableFuture.set(Status.UNCHANGED);
-                    } else {
-                        final List<ListenableFuture<Status>> list = new ArrayList<>();
-                        list.add(Futures.immediateFuture(queryUpdateStatus));
-                        //TODO this should be unnecessary. At the time of an refresh we have previously loaded all ids
-                        //TODO: however it might be that a previous fetchMissing() has failed. so better safe than sorry
-                        list.add(fetchMissing(query.toQueryString()));
-                        settableFuture.setFuture(transform(list));
-                    }
+
+                    final List<ListenableFuture<Status>> list = new ArrayList<>();
+                    list.add(Futures.immediateFuture(piggybackStatus));
+                    list.add(Futures.immediateFuture(queryUpdateStatus));
+                    //it might be that a previous fetchMissing() has failed. so better safe than sorry
+                    list.add(fetchMissing(query.toQueryString()));
+                    settableFuture.setFuture(transform(list));
 
                 } catch (InterruptedException | ExecutionException | CacheWriteException | CacheConflictException e) {
                     settableFuture.setException(extractException(e));
