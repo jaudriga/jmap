@@ -1,3 +1,7 @@
+### 0.1.6 (2019-12-09)
+
+* Added Email Address Tokenizer to parse address field user input to jmap-mua-utils
+
 ### 0.1.5 (2019-12-04)
 
 * Automatically redo queries that can’t calculate changes
