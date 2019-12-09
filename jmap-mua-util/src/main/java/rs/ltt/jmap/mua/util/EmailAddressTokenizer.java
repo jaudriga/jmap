@@ -20,22 +20,23 @@ import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableList;
 import rs.ltt.jmap.common.entity.EmailAddress;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 public class EmailAddressTokenizer {
 
     public static Collection<EmailAddressToken> tokenize(final CharSequence cs) {
+        return tokenize(cs, false);
+    }
+
+    public static Collection<EmailAddressToken> tokenize(final CharSequence cs, final boolean requireExplicitDelimiter) {
         final ImmutableList.Builder<EmailAddressToken> tokenBuilder = new ImmutableList.Builder<>();
         final TokenReader tokenReader = new TokenReader(cs);
         ArrayList<Token> current = new ArrayList<>();
         while (tokenReader.hasMoreToken()) {
             final Token token = tokenReader.read();
             current.add(token);
-            if (token.tokenType == TokenType.DELIMITER || token.tokenType == TokenType.END) {
-                if (current.size() > 1) {
+            if (token.tokenType == TokenType.DELIMITER || (!requireExplicitDelimiter && token.tokenType == TokenType.END)) {
+                if (moreThanJustWhiteSpaces(current)) {
                     tokenBuilder.add(combine(cs, current));
                 }
                 current.clear();
@@ -44,6 +45,19 @@ public class EmailAddressTokenizer {
         return tokenBuilder.build();
     }
 
+    private static boolean moreThanJustWhiteSpaces(List<Token> tokens) {
+        for(Token token : tokens) {
+            if (!isWhitespaceOrDelimiter(token)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean isWhitespaceOrDelimiter(Token token) {
+        return token.tokenType == TokenType.WHITESPACE || token.tokenType == TokenType.DELIMITER || token.tokenType == TokenType.END;
+
+    }
 
     private static EmailAddressToken combine(final CharSequence charSequence, List<Token> tokenList) {
         final ArrayList<Token> labelTokens = new ArrayList<>();
@@ -179,7 +193,7 @@ public class EmailAddressTokenizer {
                     }
                 }
             }
-            if (start < length - 1) {
+            if (start < length) {
                 queue.add(new Token(TokenType.TEXT, start, length - 1));
             }
             queue.add(new Token(TokenType.END, length - 1, length - 1));

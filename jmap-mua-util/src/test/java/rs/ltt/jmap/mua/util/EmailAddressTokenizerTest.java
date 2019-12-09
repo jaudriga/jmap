@@ -33,12 +33,48 @@ public class EmailAddressTokenizerTest {
     }
 
     @Test
+    public void singleChar() {
+        final String input = "s";
+        final Collection<EmailAddressToken> expected = ImmutableList.of(
+                new EmailAddressToken(
+                        0,
+                        0,
+                        EmailAddress.builder().email("s").build()
+                )
+        );
+        final Collection<EmailAddressToken> actual = EmailAddressTokenizer.tokenize(input);
+
+        Assert.assertArrayEquals(
+                expected.toArray(new EmailAddressToken[0]),
+                actual.toArray(new EmailAddressToken[0])
+        );
+    }
+
+    @Test
     public void simpleStandAloneEmailAddress() {
         final String input = "test@example.com";
         final Collection<EmailAddressToken> expected = ImmutableList.of(
                 new EmailAddressToken(
                         0,
                         15,
+                        EmailAddress.builder().email("test@example.com").build()
+                )
+        );
+        final Collection<EmailAddressToken> actual = EmailAddressTokenizer.tokenize(input);
+
+        Assert.assertArrayEquals(
+                expected.toArray(new EmailAddressToken[0]),
+                actual.toArray(new EmailAddressToken[0])
+        );
+    }
+
+    @Test
+    public void singleEmailWithExcessWhiteSpaceAfterDelimiter() {
+        final String input = "test@example.com,  ";
+        final Collection<EmailAddressToken> expected = ImmutableList.of(
+                new EmailAddressToken(
+                        0,
+                        16,
                         EmailAddress.builder().email("test@example.com").build()
                 )
         );
@@ -115,6 +151,16 @@ public class EmailAddressTokenizerTest {
     }
 
     @Test
+    public void singleEmailWithLabelExplicitDelimiter() {
+        final String input = "A <a@example.com>";
+        final Collection<EmailAddressToken> actual = EmailAddressTokenizer.tokenize(input, true);
+        Assert.assertArrayEquals(
+                new EmailAddressToken[0],
+                actual.toArray(new EmailAddressToken[0])
+        );
+    }
+
+    @Test
     public void singleEmailWithLabelExcessWhiteSpace() {
         final String input = " A   <a@example.com>";
         final Collection<EmailAddressToken> expected = ImmutableList.of(
@@ -148,6 +194,24 @@ public class EmailAddressTokenizerTest {
                 )
         );
         final Collection<EmailAddressToken> actual = EmailAddressTokenizer.tokenize(input);
+
+        Assert.assertArrayEquals(
+                expected.toArray(new EmailAddressToken[0]),
+                actual.toArray(new EmailAddressToken[0])
+        );
+    }
+
+    @Test
+    public void multipleWithQuotedLabelExplicitDelimiter() {
+        final String input = "\"Last, First\" <first.last@example.com>, Test <test@example.com>";
+        final Collection<EmailAddressToken> expected = ImmutableList.of(
+                new EmailAddressToken(
+                        0,
+                        38,
+                        EmailAddress.builder().email("first.last@example.com").name("Last, First").build()
+                )
+        );
+        final Collection<EmailAddressToken> actual = EmailAddressTokenizer.tokenize(input, true);
 
         Assert.assertArrayEquals(
                 expected.toArray(new EmailAddressToken[0]),
