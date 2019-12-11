@@ -406,7 +406,7 @@ public class Mua {
      *                       fail.
      * @return
      */
-    public ListenableFuture<Boolean> submit(final String emailId, final Identity identity, @NullableDecl String draftMailboxId, final IdentifiableMailboxWithRole sent) {
+    public ListenableFuture<Boolean> submit(final String emailId, final IdentifiableIdentity identity, @NullableDecl String draftMailboxId, final IdentifiableMailboxWithRole sent) {
         final JmapClient.MultiCall multiCall = jmapClient.newMultiCall();
         final ListenableFuture<Boolean> future = submit(emailId, identity, draftMailboxId, sent, multiCall);
         multiCall.execute();
@@ -414,7 +414,7 @@ public class Mua {
     }
 
     //TODO this need IdentifiableEmailWithMailboxes
-    private ListenableFuture<Boolean> submit(@NonNullDecl final String emailId, @NonNullDecl final Identity identity, @NullableDecl String draftMailboxId, @NullableDecl final IdentifiableMailboxWithRole sent, final JmapClient.MultiCall multiCall) {
+    private ListenableFuture<Boolean> submit(@NonNullDecl final String emailId, @NonNullDecl final IdentifiableIdentity identity, @NullableDecl String draftMailboxId, @NullableDecl final IdentifiableMailboxWithRole sent, final JmapClient.MultiCall multiCall) {
         Preconditions.checkNotNull(emailId, "emailId can not be null when attempting to submit");
         Preconditions.checkNotNull(identity, "identity can not be null when attempting to submit an email");
         final ListenableFuture<MethodResponses> mailboxCreateFuture;
@@ -466,7 +466,7 @@ public class Mua {
      * @param identity The identity used to submit that email
      * @return
      */
-    public ListenableFuture<Boolean> submit(final String emailId, final Identity identity) {
+    public ListenableFuture<Boolean> submit(final String emailId, final IdentifiableIdentity identity) {
         return Futures.transformAsync(getMailboxes(), new AsyncFunction<Collection<? extends IdentifiableMailboxWithRole>, Boolean>() {
             @Override
             public ListenableFuture<Boolean> apply(@NullableDecl Collection<? extends IdentifiableMailboxWithRole> mailboxes) {
@@ -478,7 +478,7 @@ public class Mua {
         }, MoreExecutors.directExecutor());
     }
 
-    public ListenableFuture<Boolean> send(final Email email, final Identity identity) {
+    public ListenableFuture<Boolean> send(final Email email, final IdentifiableIdentity identity) {
         return Futures.transformAsync(getMailboxes(), new AsyncFunction<Collection<? extends IdentifiableMailboxWithRole>, Boolean>() {
             @Override
             public ListenableFuture<Boolean> apply(@NullableDecl Collection<? extends IdentifiableMailboxWithRole> mailboxes) {
@@ -490,7 +490,7 @@ public class Mua {
         }, MoreExecutors.directExecutor());
     }
 
-    private ListenableFuture<Boolean> send(final Email email, final Identity identity, final IdentifiableMailboxWithRole drafts, final IdentifiableMailboxWithRole sent) {
+    private ListenableFuture<Boolean> send(final Email email, final IdentifiableIdentity identity, final IdentifiableMailboxWithRole drafts, final IdentifiableMailboxWithRole sent) {
         final JmapClient.MultiCall multiCall = jmapClient.newMultiCall();
         ListenableFuture<List<Boolean>> future = Futures.allAsList(
                 draft(email, drafts, multiCall),

@@ -15,6 +15,9 @@
 
 package rs.ltt.jmap.mua.util;
 
+import com.google.common.base.Strings;
+import rs.ltt.jmap.common.entity.EmailAddress;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -23,6 +26,16 @@ import java.util.Locale;
 public class EmailAddressUtil {
 
     private static final List<String> STOP_WORDS = Arrays.asList("the");
+
+    public static String toString(EmailAddress emailAddress) {
+        final String email = emailAddress.getEmail();
+        final String name = emailAddress.getName();
+        if (Strings.isNullOrEmpty(name)) {
+            return email;
+        } else {
+            return String.format("%s <%s>", name, email);
+        }
+    }
 
      public static String shorten(String input) {
         String[] parts = removeInvalidShorts(input.split("\\s"));
