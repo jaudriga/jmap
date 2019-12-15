@@ -15,13 +15,13 @@
 
 package rs.ltt.jmap.mua.util;
 
+import com.google.common.base.Function;
 import com.google.common.base.Strings;
+import com.google.common.collect.Collections2;
+import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 import rs.ltt.jmap.common.entity.EmailAddress;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.regex.Pattern;
 
 public class EmailAddressUtil {
@@ -49,6 +49,19 @@ public class EmailAddressUtil {
 
     public static boolean isValid(final EmailAddress emailAddress) {
         return isValid(emailAddress.getEmail());
+    }
+
+    public static Collection<EmailAddress> parse(final String userInput) {
+        return Collections2.transform(
+                EmailAddressTokenizer.tokenize(userInput),
+                new Function<EmailAddressToken, EmailAddress>() {
+                    @NullableDecl
+                    @Override
+                    public EmailAddress apply(@NullableDecl EmailAddressToken token) {
+                        return token != null ? token.getEmailAddress() : null;
+                    }
+                }
+        );
     }
 
      public static String shorten(final String input) {
