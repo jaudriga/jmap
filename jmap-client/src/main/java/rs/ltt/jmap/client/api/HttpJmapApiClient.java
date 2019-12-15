@@ -42,6 +42,7 @@ public class HttpJmapApiClient extends AbstractJmapApiClient {
     static {
         final OkHttpClient.Builder builder = new OkHttpClient.Builder();
         final Logger OK_HTTP_LOGGER = LoggerFactory.getLogger(OkHttpClient.class);
+        builder.addInterceptor(new UserAgentInterceptor());
         if (OK_HTTP_LOGGER.isInfoEnabled()) {
             final HttpLoggingInterceptor loggingInterceptor;
             if (OK_HTTP_LOGGER.isDebugEnabled()) {
