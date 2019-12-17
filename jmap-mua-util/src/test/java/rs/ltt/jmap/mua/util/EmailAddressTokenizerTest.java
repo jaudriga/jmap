@@ -51,6 +51,16 @@ public class EmailAddressTokenizerTest {
     }
 
     @Test
+    public void whitespaces() {
+        final String input = "     ";
+        final Collection<EmailAddressToken> actual = EmailAddressTokenizer.tokenize(input);
+        Assert.assertArrayEquals(
+                new EmailAddressToken[0],
+                actual.toArray(new EmailAddressToken[0])
+        );
+    }
+
+    @Test
     public void simpleStandAloneEmailAddress() {
         final String input = "test@example.com";
         final Collection<EmailAddressToken> expected = ImmutableList.of(

@@ -425,6 +425,7 @@ public class Mua {
         }
         final Patches.Builder patchesBuilder = Patches.builder();
         patchesBuilder.remove("keywords/" + Keyword.DRAFT);
+        //TODO it is probably illegal to put create ids in patches; therefor we need to have access to all preexisting mailboxes and sent the full info
         patchesBuilder.set("mailboxIds/" + (sent == null ? CreateUtil.createIdReference(Role.SENT) : sent.getId()), true);
         if (draftMailboxId != null) {
             patchesBuilder.remove("mailboxIds/" + draftMailboxId);
