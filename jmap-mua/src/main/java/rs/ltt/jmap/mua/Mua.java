@@ -41,6 +41,7 @@ import rs.ltt.jmap.common.entity.filter.EmailFilterCondition;
 import rs.ltt.jmap.common.entity.filter.Filter;
 import rs.ltt.jmap.common.entity.query.EmailQuery;
 import rs.ltt.jmap.common.method.MethodErrorResponse;
+import rs.ltt.jmap.common.method.MethodResponse;
 import rs.ltt.jmap.common.method.call.email.GetEmailMethodCall;
 import rs.ltt.jmap.common.method.call.email.QueryChangesEmailMethodCall;
 import rs.ltt.jmap.common.method.call.email.QueryEmailMethodCall;
@@ -319,15 +320,11 @@ public class Mua {
         }
         if (drafts == null) {
             emailBuilder.mailboxId(CreateUtil.createIdReference(Role.DRAFTS), true);
-        } else if (!email.getMailboxIds().containsKey(drafts.getId())) {
+        } else {
             emailBuilder.mailboxId(drafts.getId(), true);
         }
-        if (!email.getKeywords().containsKey(Keyword.DRAFT)) {
-            emailBuilder.keyword(Keyword.DRAFT, true);
-        }
-        if (!email.getKeywords().containsKey(Keyword.SEEN)) {
-            emailBuilder.keyword(Keyword.SEEN, true);
-        }
+        emailBuilder.keyword(Keyword.DRAFT, true);
+        emailBuilder.keyword(Keyword.SEEN, true);
         final ListenableFuture<MethodResponses> future = multiCall.call(new SetEmailMethodCall(accountId, ImmutableMap.of("e0", emailBuilder.build()))).getMethodResponses();
         return Futures.transformAsync(future, new AsyncFunction<MethodResponses, Boolean>() {
             @Override
@@ -413,7 +410,6 @@ public class Mua {
         return future;
     }
 
-    //TODO this need IdentifiableEmailWithMailboxes
     private ListenableFuture<Boolean> submit(@NonNullDecl final String emailId, @NonNullDecl final IdentifiableIdentity identity, @NullableDecl String draftMailboxId, @NullableDecl final IdentifiableMailboxWithRole sent, final JmapClient.MultiCall multiCall) {
         Preconditions.checkNotNull(emailId, "emailId can not be null when attempting to submit");
         Preconditions.checkNotNull(identity, "identity can not be null when attempting to submit an email");
@@ -425,11 +421,7 @@ public class Mua {
         }
         final Patches.Builder patchesBuilder = Patches.builder();
         patchesBuilder.remove("keywords/" + Keyword.DRAFT);
-        //TODO it is probably illegal to put create ids in patches; therefor we need to have access to all preexisting mailboxes and sent the full info
-        patchesBuilder.set("mailboxIds/" + (sent == null ? CreateUtil.createIdReference(Role.SENT) : sent.getId()), true);
-        if (draftMailboxId != null) {
-            patchesBuilder.remove("mailboxIds/" + draftMailboxId);
-        }
+        patchesBuilder.set("mailboxIds", ImmutableMap.of(sent == null ? CreateUtil.createIdReference(Role.SENT) : sent.getId(), true));
         final ListenableFuture<MethodResponses> setEmailSubmissionFuture = multiCall.call(new SetEmailSubmissionMethodCall(
                 accountId,
                 ImmutableMap.of(
@@ -516,15 +508,6 @@ public class Mua {
         }, MoreExecutors.directExecutor());
     }
 
-    private ListenableFuture<ObjectsState> getObjectsState() {
-        return ioExecutorService.submit(new Callable<ObjectsState>() {
-            @Override
-            public ObjectsState call() {
-                return cache.getObjectsState();
-            }
-        });
-    }
-
     private ListenableFuture<Boolean> setKeyword(Collection<? extends IdentifiableEmailWithKeywords> emails, String keyword, ObjectsState objectsState) {
         final ImmutableMap.Builder<String, Map<String, Object>> emailPatchObjectMapBuilder = ImmutableMap.builder();
         for (IdentifiableEmailWithKeywords email : emails) {
@@ -533,8 +516,44 @@ public class Mua {
             }
         }
         final ImmutableMap<String, Map<String, Object>> patches = emailPatchObjectMapBuilder.build();
-
         return applyEmailPatches(patches, objectsState);
+    }
+
+    public ListenableFuture<Boolean> discardDraft(final @NonNullDecl IdentifiableEmailWithKeywords email) {
+        Preconditions.checkNotNull(email);
+        Preconditions.checkArgument(!email.getKeywords().containsKey(Keyword.DRAFT), "Email does not have $draft keyword");
+        return Futures.transformAsync(getObjectsState(), new AsyncFunction<ObjectsState, Boolean>() {
+            @Override
+            public ListenableFuture<Boolean> apply(@NullableDecl ObjectsState objectsState) throws Exception {
+                return discardDraft(email, objectsState);
+            }
+        }, MoreExecutors.directExecutor());
+    }
+
+    private ListenableFuture<Boolean> discardDraft(final @NonNullDecl IdentifiableEmailWithKeywords email, final ObjectsState objectsState) {
+        Preconditions.checkNotNull(objectsState);
+        final JmapClient.MultiCall multiCall = jmapClient.newMultiCall();
+        final ListenableFuture<Boolean> future = discardDraft(email, objectsState, multiCall);
+        multiCall.execute();
+        return future;
+    }
+
+    private ListenableFuture<Boolean> discardDraft(final @NonNullDecl IdentifiableEmailWithKeywords email, final ObjectsState objectsState, JmapClient.MultiCall multiCall) {
+        final ListenableFuture<MethodResponses> future = multiCall.call(
+                new SetEmailMethodCall(accountId, objectsState.emailState, new String[]{email.getId()})
+        ).getMethodResponses();
+        if (objectsState.emailState != null) {
+            updateEmails(objectsState.emailState, multiCall);
+        }
+        return Futures.transformAsync(future, new AsyncFunction<MethodResponses, Boolean>() {
+            @Override
+            public ListenableFuture<Boolean> apply(@NullableDecl MethodResponses methodResponses) throws Exception {
+                SetEmailMethodResponse setEmailMethodResponse = methodResponses.getMain(SetEmailMethodResponse.class);
+                SetEmailException.throwIfFailed(setEmailMethodResponse);
+                final String[] destroyed = setEmailMethodResponse.getDestroyed();
+                return Futures.immediateFuture(destroyed != null && destroyed.length > 0);
+            }
+        }, MoreExecutors.directExecutor());
     }
 
     private ListenableFuture<Boolean> applyEmailPatches(final Map<String, Map<String, Object>> patches, final ObjectsState objectsState) {
@@ -606,6 +625,15 @@ public class Mua {
             }
         }, ioExecutorService);
         return settableFuture;
+    }
+
+    private ListenableFuture<ObjectsState> getObjectsState() {
+        return ioExecutorService.submit(new Callable<ObjectsState>() {
+            @Override
+            public ObjectsState call() {
+                return cache.getObjectsState();
+            }
+        });
     }
 
     public ListenableFuture<Boolean> removeKeyword(final Collection<? extends IdentifiableEmailWithKeywords> emails, final String keyword) {
