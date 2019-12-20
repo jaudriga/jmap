@@ -524,7 +524,7 @@ public class Mua {
 
     public ListenableFuture<Boolean> discardDraft(final @NonNullDecl IdentifiableEmailWithKeywords email) {
         Preconditions.checkNotNull(email);
-        Preconditions.checkArgument(!email.getKeywords().containsKey(Keyword.DRAFT), "Email does not have $draft keyword");
+        Preconditions.checkArgument(email.getKeywords().containsKey(Keyword.DRAFT), "Email does not have $draft keyword");
         return Futures.transformAsync(getObjectsState(), new AsyncFunction<ObjectsState, Boolean>() {
             @Override
             public ListenableFuture<Boolean> apply(@NullableDecl ObjectsState objectsState) throws Exception {
