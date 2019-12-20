@@ -43,6 +43,23 @@ public class EmailAddressUtil {
         }
     }
 
+    public static String toHeaderValue(Collection<EmailAddress> emailAddresses) {
+        final StringBuilder builder = new StringBuilder();
+        for(EmailAddress emailAddress : emailAddresses) {
+            if (Strings.isNullOrEmpty(emailAddress.getName())) {
+                builder.append(emailAddress.getEmail());
+            } else {
+                builder.append(String.format("\"%s\" <%s>", emailAddress.getName(), emailAddress.getEmail()));
+            }
+            builder.append(',');
+        }
+        return builder.toString();
+    }
+
+    public static boolean equalCollections(final Collection<EmailAddress> a, final Collection<EmailAddress> b) {
+        return new HashSet<>(a).equals(new HashSet<>(b));
+    }
+
     public static boolean isValid(final String email) {
         return EMAIL_PATTERN.matcher(email).matches();
     }
