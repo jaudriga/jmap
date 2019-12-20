@@ -16,25 +16,21 @@
 
 package rs.ltt.jmap.mua.util;
 
-import com.google.common.base.Optional;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.util.concurrent.ListenableFuture;
-import rs.ltt.jmap.client.JmapClient;
-import rs.ltt.jmap.client.MethodResponses;
-import rs.ltt.jmap.common.entity.IdentifiableMailboxWithRole;
 import rs.ltt.jmap.common.entity.Role;
-import rs.ltt.jmap.common.method.call.mailbox.SetMailboxMethodCall;
 
 import java.util.Locale;
 
 public class CreateUtil {
 
-    public static String createId(Role role) {
-        return "mb-" + role.toString().toLowerCase(Locale.US);
-    }
+    public static final String EMAIL_CREATION_ID = "e0";
+
+    public static final String EMAIL_CREATION_ID_REFERENCE = "#" + EMAIL_CREATION_ID;
 
     public static String createIdReference(Role role) {
         return "#" + createId(role);
+    }
+
+    public static String createId(Role role) {
+        return "mb-" + role.toString().toLowerCase(Locale.US);
     }
 }

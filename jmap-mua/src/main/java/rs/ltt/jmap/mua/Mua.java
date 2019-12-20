@@ -269,12 +269,12 @@ public class Mua {
      * to the draft mailbox.
      *
      * @param email The email that should be saved as a draft
-     * @return
+     * @return String The id of the email that has been created
      */
-    public ListenableFuture<Boolean> draft(final Email email) {
-        return Futures.transformAsync(getMailboxes(), new AsyncFunction<Collection<? extends IdentifiableMailboxWithRole>, Boolean>() {
+    public ListenableFuture<String> draft(final Email email) {
+        return Futures.transformAsync(getMailboxes(), new AsyncFunction<Collection<? extends IdentifiableMailboxWithRole>, String>() {
             @Override
-            public ListenableFuture<Boolean> apply(@NullableDecl Collection<? extends IdentifiableMailboxWithRole> mailboxes) {
+            public ListenableFuture<String> apply(@NullableDecl Collection<? extends IdentifiableMailboxWithRole> mailboxes) {
                 return draft(email, MailboxUtil.find(mailboxes, Role.DRAFTS));
             }
         }, MoreExecutors.directExecutor());
@@ -297,16 +297,16 @@ public class Mua {
      * @param drafts A reference to the Drafts mailbox. Can be null and a new Draft mailbox will automatically be created.
      *               Do not pass null if a Drafts mailbox exists on the server as this call will attempt to create one
      *               and fail.
-     * @return
+     * @return The id of the email that has been created
      */
-    public ListenableFuture<Boolean> draft(final Email email, final IdentifiableMailboxWithRole drafts) {
+    public ListenableFuture<String> draft(final Email email, final IdentifiableMailboxWithRole drafts) {
         final JmapClient.MultiCall multiCall = jmapClient.newMultiCall();
-        final ListenableFuture<Boolean> future = draft(email, drafts, multiCall);
+        final ListenableFuture<String> future = draft(email, drafts, multiCall);
         multiCall.execute();
         return future;
     }
 
-    private ListenableFuture<Boolean> draft(final Email email, final IdentifiableMailboxWithRole drafts, final JmapClient.MultiCall multiCall) {
+    private ListenableFuture<String> draft(final Email email, final IdentifiableMailboxWithRole drafts, final JmapClient.MultiCall multiCall) {
         Preconditions.checkNotNull(email, "Email can not be null when attempting to create a draft");
         Preconditions.checkState(email.getId() == null, "id is a server-set property");
         Preconditions.checkState(email.getBlobId() == null, "blobId is a server-set property");
@@ -325,17 +325,23 @@ public class Mua {
         }
         emailBuilder.keyword(Keyword.DRAFT, true);
         emailBuilder.keyword(Keyword.SEEN, true);
-        final ListenableFuture<MethodResponses> future = multiCall.call(new SetEmailMethodCall(accountId, ImmutableMap.of("e0", emailBuilder.build()))).getMethodResponses();
-        return Futures.transformAsync(future, new AsyncFunction<MethodResponses, Boolean>() {
+        final ListenableFuture<MethodResponses> future = multiCall.call(new SetEmailMethodCall(accountId, ImmutableMap.of(CreateUtil.EMAIL_CREATION_ID, emailBuilder.build()))).getMethodResponses();
+        return Futures.transformAsync(future, new AsyncFunction<MethodResponses, String>() {
             @Override
-            public ListenableFuture<Boolean> apply(@NullableDecl MethodResponses methodResponses) throws Exception {
+            public ListenableFuture<String> apply(MethodResponses methodResponses) throws Exception {
                 if (mailboxCreateFuture != null) {
                     SetMailboxMethodResponse setMailboxResponse = mailboxCreateFuture.get().getMain(SetMailboxMethodResponse.class);
                     SetMailboxException.throwIfFailed(setMailboxResponse);
                 }
-                SetEmailMethodResponse setEmailMethodResponse = methodResponses.getMain(SetEmailMethodResponse.class);
+                final SetEmailMethodResponse setEmailMethodResponse = methodResponses.getMain(SetEmailMethodResponse.class);
                 SetEmailException.throwIfFailed(setEmailMethodResponse);
-                return Futures.immediateFuture(setEmailMethodResponse.getUpdatedCreatedCount() > 0);
+                final Map<String, Email> created = setEmailMethodResponse.getCreated();
+                final Email email = created != null ? created.get(CreateUtil.EMAIL_CREATION_ID) : null;
+                if (email != null) {
+                    return Futures.immediateFuture(email.getId());
+                } else {
+                    throw new IllegalStateException("Unable to find email id in method response");
+                }
             }
         }, MoreExecutors.directExecutor());
 
@@ -471,10 +477,10 @@ public class Mua {
         }, MoreExecutors.directExecutor());
     }
 
-    public ListenableFuture<Boolean> send(final Email email, final IdentifiableIdentity identity) {
-        return Futures.transformAsync(getMailboxes(), new AsyncFunction<Collection<? extends IdentifiableMailboxWithRole>, Boolean>() {
+    public ListenableFuture<String> send(final Email email, final IdentifiableIdentity identity) {
+        return Futures.transformAsync(getMailboxes(), new AsyncFunction<Collection<? extends IdentifiableMailboxWithRole>, String>() {
             @Override
-            public ListenableFuture<Boolean> apply(@NullableDecl Collection<? extends IdentifiableMailboxWithRole> mailboxes) {
+            public ListenableFuture<String> apply(@NullableDecl Collection<? extends IdentifiableMailboxWithRole> mailboxes) {
                 Preconditions.checkNotNull(mailboxes, "SpecialMailboxes collection must not be null but can be empty");
                 final IdentifiableMailboxWithRole draft = MailboxUtil.find(mailboxes, Role.DRAFTS);
                 final IdentifiableMailboxWithRole sent = MailboxUtil.find(mailboxes, Role.SENT);
@@ -483,18 +489,15 @@ public class Mua {
         }, MoreExecutors.directExecutor());
     }
 
-    private ListenableFuture<Boolean> send(final Email email, final IdentifiableIdentity identity, final IdentifiableMailboxWithRole drafts, final IdentifiableMailboxWithRole sent) {
+    private ListenableFuture<String> send(final Email email, final IdentifiableIdentity identity, final IdentifiableMailboxWithRole drafts, final IdentifiableMailboxWithRole sent) {
         final JmapClient.MultiCall multiCall = jmapClient.newMultiCall();
-        ListenableFuture<List<Boolean>> future = Futures.allAsList(
-                draft(email, drafts, multiCall),
-                submit("#e0", identity, drafts == null ? CreateUtil.createIdReference(Role.DRAFTS) : drafts.getId(), sent, multiCall)
-        );
+        final ListenableFuture<String> draftFuture = draft(email, drafts, multiCall);
+        final ListenableFuture<Boolean> submitFuture = submit(CreateUtil.EMAIL_CREATION_ID_REFERENCE, identity, drafts == null ? CreateUtil.createIdReference(Role.DRAFTS) : drafts.getId(), sent, multiCall);
         multiCall.execute();
-        return Futures.transform(future, new Function<List<Boolean>, Boolean>() {
-            @NullableDecl
+        return Futures.transformAsync(submitFuture, new AsyncFunction<Boolean, String>() {
             @Override
-            public Boolean apply(@NullableDecl List<Boolean> booleans) {
-                return booleans != null && !booleans.contains(false);
+            public ListenableFuture<String> apply(@NullableDecl Boolean aBoolean) {
+                return draftFuture;
             }
         }, MoreExecutors.directExecutor());
     }
