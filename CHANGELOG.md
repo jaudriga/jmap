@@ -1,3 +1,8 @@
+### 0.2.0 (2019-12-20)
+
+* Mua.draft(…) and Mua.send(…) now return the id of the created email
+* New utility functions in jmap-mua-util to parse email addresses from user input in address fields
+
 ### 0.1.6 (2019-12-09)
 
 * Added Email Address Tokenizer to parse address field user input to jmap-mua-utils
