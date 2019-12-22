@@ -130,10 +130,8 @@ public class Request {
 
         public Builder add(Invocation invocation) {
             this.invocations.add(invocation);
-            final String namespace = getPackageNamespaceFor(invocation.methodCall.getClass());
-            if (namespace != null) {
-                this.using.add(namespace);
-            }
+            final Class<?extends MethodCall> clazz = invocation.methodCall.getClass();
+            this.using.add(getPackageNamespaceFor(clazz));
             return this;
         }
 
