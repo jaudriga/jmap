@@ -27,7 +27,7 @@ import java.util.Map;
 
 @Getter
 @Builder(toBuilder = true)
-public class Email extends AbstractIdentifiableEntity implements IdentifiableEmailWithKeywords, IdentifiableEmailWithMailboxIds {
+public class Email extends AbstractIdentifiableEntity implements IdentifiableEmailWithKeywords, IdentifiableEmailWithMailboxIds, IdentifiableEmailWithAddresses, IdentifiableEmailWithSubject {
 
     public static final String[] MUTABLE_PROPERTIES = {"keywords", "mailboxIds"};
 
