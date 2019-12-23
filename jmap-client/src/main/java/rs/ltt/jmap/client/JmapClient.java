@@ -17,7 +17,6 @@
 package rs.ltt.jmap.client;
 
 
-import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.*;
 import okhttp3.HttpUrl;

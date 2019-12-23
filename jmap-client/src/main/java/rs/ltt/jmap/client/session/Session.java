@@ -31,7 +31,6 @@ import rs.ltt.jmap.common.entity.AbstractIdentifiableEntity;
 import rs.ltt.jmap.common.entity.Account;
 import rs.ltt.jmap.common.entity.AccountCapability;
 import rs.ltt.jmap.common.entity.Capability;
-import rs.ltt.jmap.common.entity.capability.CoreCapability;
 
 import java.util.Collection;
 import java.util.Locale;

@@ -18,9 +18,6 @@ package rs.ltt.jmap.client.util;
 
 import okhttp3.HttpUrl;
 
-import java.net.MalformedURLException;
-import java.net.URL;
-
 public final class WellKnownUtil {
 
     private WellKnownUtil() {

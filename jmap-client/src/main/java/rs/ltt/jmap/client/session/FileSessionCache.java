@@ -24,7 +24,6 @@ import okhttp3.HttpUrl;
 import rs.ltt.jmap.gson.JmapAdapters;
 
 import java.io.*;
-import java.net.URL;
 
 public class FileSessionCache implements SessionCache {
 

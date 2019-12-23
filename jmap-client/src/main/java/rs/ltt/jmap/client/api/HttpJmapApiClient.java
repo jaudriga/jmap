@@ -18,7 +18,6 @@ package rs.ltt.jmap.client.api;
 
 
 import okhttp3.*;
-import okhttp3.internal.annotations.EverythingIsNonNull;
 import okhttp3.logging.HttpLoggingInterceptor;
 import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 import org.checkerframework.checker.nullness.compatqual.NullableDecl;
@@ -29,7 +28,6 @@ import rs.ltt.jmap.client.http.HttpAuthentication;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
 
 public class HttpJmapApiClient extends AbstractJmapApiClient {
 

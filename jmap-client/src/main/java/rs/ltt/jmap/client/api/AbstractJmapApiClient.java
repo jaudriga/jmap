@@ -19,7 +19,6 @@ package rs.ltt.jmap.client.api;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import rs.ltt.jmap.gson.JmapAdapters;
 import rs.ltt.jmap.client.JmapRequest;
 import rs.ltt.jmap.client.MethodResponses;
 import rs.ltt.jmap.client.util.ResponseAnalyzer;
@@ -29,6 +28,7 @@ import rs.ltt.jmap.common.Request;
 import rs.ltt.jmap.common.Response;
 import rs.ltt.jmap.common.method.MethodErrorResponse;
 import rs.ltt.jmap.common.method.MethodResponse;
+import rs.ltt.jmap.gson.JmapAdapters;
 
 import java.io.IOException;
 import java.io.InputStream;

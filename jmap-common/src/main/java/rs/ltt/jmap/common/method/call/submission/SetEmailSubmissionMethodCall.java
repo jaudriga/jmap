@@ -16,6 +16,9 @@
 
 package rs.ltt.jmap.common.method.call.submission;
 
+import lombok.Getter;
+import rs.ltt.jmap.Namespace;
+import rs.ltt.jmap.annotation.JmapImplicitNamespace;
 import rs.ltt.jmap.annotation.JmapMethod;
 import rs.ltt.jmap.common.entity.EmailSubmission;
 import rs.ltt.jmap.common.method.call.standard.SetMethodCall;
@@ -24,8 +27,10 @@ import java.util.List;
 import java.util.Map;
 
 @JmapMethod("EmailSubmission/set")
+@Getter
 public class SetEmailSubmissionMethodCall extends SetMethodCall<EmailSubmission> {
 
+    @JmapImplicitNamespace(Namespace.MAIL)
     private Map<String, Map<String, Object>> onSuccessUpdateEmail;
     private List<String> onSuccessDestroyEmail;
 

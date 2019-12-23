@@ -17,9 +17,6 @@
 package rs.ltt.jmap.client.session;
 
 import okhttp3.HttpUrl;
-import rs.ltt.jmap.client.session.Session;
-
-import java.net.URL;
 
 public interface SessionCache {
 

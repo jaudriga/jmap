@@ -16,14 +16,16 @@
 
 package rs.ltt.jmap.common;
 
+import com.google.common.collect.ImmutableList;
 import rs.ltt.jmap.common.method.MethodCall;
+import rs.ltt.jmap.common.method.call.submission.SetEmailSubmissionMethodCall;
 import rs.ltt.jmap.common.util.Namespace;
 
 import java.util.*;
 
 public class Request {
 
-    private static final Map<Class<? extends MethodCall>, String> PACKAGE_NAMESPACE_CACHE = new HashMap<>();
+    private static final Map<Class<? extends MethodCall>, List<String>> NAMESPACE_CACHE = new HashMap<>();
 
     private String[] using;
     private Invocation[] methodCalls;
@@ -33,20 +35,24 @@ public class Request {
         this.methodCalls = methodCalls;
     }
 
-    private static String getPackageNamespaceFor(Class<? extends MethodCall> clazz) {
-        synchronized (PACKAGE_NAMESPACE_CACHE) {
-            final String cached = PACKAGE_NAMESPACE_CACHE.get(clazz);
+    private static List<String> getNamespacesFor(Class<? extends MethodCall> clazz) {
+        synchronized (NAMESPACE_CACHE) {
+            final List<String> cached = NAMESPACE_CACHE.get(clazz);
             if (cached != null) {
                 return cached;
             }
-            final String value = Namespace.get(clazz);
-            if (value == null) {
+            final String namespace = Namespace.get(clazz);
+            if (namespace == null) {
                 throw new IllegalArgumentException(
                         String.format("%s is missing a namespace. Annotate package with @JmapNamespace", clazz.getSimpleName())
                 );
             }
-            PACKAGE_NAMESPACE_CACHE.put(clazz, Namespace.get(clazz));
-            return value;
+            ImmutableList.Builder<String> listBuilder = new ImmutableList.Builder<>();
+            listBuilder.add(namespace);
+            listBuilder.addAll(Namespace.getImplicit(clazz));
+            List<String> namespaces = listBuilder.build();
+            NAMESPACE_CACHE.put(clazz, namespaces);
+            return namespaces;
         }
     }
 
@@ -116,7 +122,7 @@ public class Request {
     public static class Builder {
 
         private List<Invocation> invocations = new ArrayList<>();
-        private Set<String> using = new HashSet<>();
+        private Set<String> using = new TreeSet<>();
 
         public Builder() {
 
@@ -131,7 +137,13 @@ public class Request {
         public Builder add(Invocation invocation) {
             this.invocations.add(invocation);
             final Class<?extends MethodCall> clazz = invocation.methodCall.getClass();
-            this.using.add(getPackageNamespaceFor(clazz));
+            this.using.addAll(getNamespacesFor(clazz));
+            if (invocation.methodCall instanceof SetEmailSubmissionMethodCall) {
+                final SetEmailSubmissionMethodCall call = (SetEmailSubmissionMethodCall) invocation.methodCall;
+                if (call.getOnSuccessUpdateEmail() != null && !call.getOnSuccessUpdateEmail().isEmpty()) {
+                    this.using.add(rs.ltt.jmap.Namespace.MAIL);
+                }
+            }
             return this;
         }
 

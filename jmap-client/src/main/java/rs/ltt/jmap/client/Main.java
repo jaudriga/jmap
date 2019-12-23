@@ -18,8 +18,8 @@ package rs.ltt.jmap.client;
 
 import okhttp3.HttpUrl;
 import rs.ltt.jmap.client.JmapRequest.Call;
-import rs.ltt.jmap.client.session.Session;
 import rs.ltt.jmap.client.session.FileSessionCache;
+import rs.ltt.jmap.client.session.Session;
 import rs.ltt.jmap.common.Request;
 import rs.ltt.jmap.common.entity.Email;
 import rs.ltt.jmap.common.entity.capability.MailAccountCapability;

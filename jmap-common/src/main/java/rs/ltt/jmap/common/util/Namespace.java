@@ -16,8 +16,13 @@
 
 package rs.ltt.jmap.common.util;
 
+import com.google.common.collect.ImmutableList;
+import rs.ltt.jmap.annotation.JmapImplicitNamespace;
 import rs.ltt.jmap.annotation.JmapNamespace;
 import rs.ltt.jmap.common.method.MethodCall;
+
+import java.lang.reflect.Field;
+import java.util.List;
 
 public final class Namespace {
 
@@ -29,6 +34,19 @@ public final class Namespace {
         final Package p = clazz.getPackage();
         final JmapNamespace namespace = p.getAnnotation(JmapNamespace.class);
         return namespace == null ? null : namespace.value();
+    }
+
+
+    public static List<String> getImplicit(Class<? extends MethodCall> clazz) {
+        final ImmutableList.Builder<String> listBuilder = new ImmutableList.Builder<>();
+        for(final Field field : clazz.getDeclaredFields()) {
+            final JmapImplicitNamespace implicitNamespace = field.getAnnotation(JmapImplicitNamespace.class);
+            final String namespace = implicitNamespace == null ? null : implicitNamespace.value();
+            if (namespace != null) {
+                listBuilder.add(namespace);
+            }
+        }
+        return listBuilder.build();
     }
 
 }
