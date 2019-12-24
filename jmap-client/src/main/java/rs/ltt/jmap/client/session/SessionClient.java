@@ -74,11 +74,11 @@ public class SessionClient {
 
             final SessionCache cache = sessionCache;
             Session session = !sessionResourceChanged && cache != null ? cache.load(username, resource) : null;
-
             if (session == null) {
                 session = fetchSession(resource);
                 sessionResourceChanged = false;
                 if (cache != null) {
+                    LOGGER.debug("caching to {}", cache.getClass().getSimpleName());
                     cache.store(username, resource, session);
                 }
             }
@@ -87,25 +87,6 @@ public class SessionClient {
 
         }
         return currentSession;
-    }
-
-    public void setLatestSessionState(String sessionState) {
-        synchronized (this) {
-            if (sessionResourceChanged) {
-                return;
-            }
-
-            final Session existingSession = this.currentSession;
-            if (existingSession == null) {
-                sessionResourceChanged = true;
-                return;
-            }
-
-            final String oldState = existingSession.getState();
-            if (oldState == null || !oldState.equals(sessionState)) {
-                sessionResourceChanged = true;
-            }
-        }
     }
 
     private Session fetchSession(final HttpUrl base) throws Exception {
@@ -140,6 +121,25 @@ public class SessionClient {
             throw new UnauthorizedException(String.format("Session object(%s) was unauthorized", base.toString()));
         } else {
             throw new EndpointNotFoundException(String.format("Unable to fetch session object(%s)", base.toString()));
+        }
+    }
+
+    public void setLatestSessionState(String sessionState) {
+        synchronized (this) {
+            if (sessionResourceChanged) {
+                return;
+            }
+
+            final Session existingSession = this.currentSession;
+            if (existingSession == null) {
+                sessionResourceChanged = true;
+                return;
+            }
+
+            final String oldState = existingSession.getState();
+            if (oldState == null || !oldState.equals(sessionState)) {
+                sessionResourceChanged = true;
+            }
         }
     }
 

@@ -21,11 +21,16 @@ import com.google.common.hash.Hashing;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import okhttp3.HttpUrl;
+import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import rs.ltt.jmap.gson.JmapAdapters;
 
 import java.io.*;
 
 public class FileSessionCache implements SessionCache {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(FileSessionCache.class);
 
     private final File directory;
 
@@ -36,45 +41,52 @@ public class FileSessionCache implements SessionCache {
         this.directory = null;
     }
 
-    public FileSessionCache(File directory) {
+    public FileSessionCache(@NonNullDecl File directory) {
         JmapAdapters.register(this.gsonBuilder);
         this.directory = directory;
+        LOGGER.debug("Initialize cache in {}", directory.getAbsolutePath());
     }
 
     @Override
     public void store(String username, HttpUrl sessionResource, Session session) {
-        Gson gson = this.gsonBuilder.create();
+        final File file = getFile(getFilename(username, sessionResource));
+        final Gson gson = this.gsonBuilder.create();
         try {
-            final String filename = getFilename(username, sessionResource);
-            final File file;
-            if (directory == null) {
-                file = new File(filename);
-            } else {
-                file = new File(directory, filename);
-            }
             final FileWriter fileWriter = new FileWriter(file);
             gson.toJson(session, fileWriter);
             fileWriter.flush();
             fileWriter.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error("Unable to cache session in {}", file.getAbsolutePath());
+        }
+    }
+
+    private File getFile(final String filename) {
+        if (directory == null) {
+            return new File(filename);
+        } else {
+            return new File(directory, filename);
         }
     }
 
     private static String getFilename(String username, HttpUrl sessionResource) {
         final String name = username + ':' + (sessionResource == null ? '\00' : sessionResource.toString());
-        return "session-cache-"+Hashing.sha256().hashString(name, Charsets.UTF_8).toString();
+        return "session-cache-" + Hashing.sha256().hashString(name, Charsets.UTF_8).toString();
     }
 
     @Override
     public Session load(String username, HttpUrl sessionResource) {
-        Gson gson = this.gsonBuilder.create();
+        final File file = getFile(getFilename(username, sessionResource));
+        final Gson gson = this.gsonBuilder.create();
         try {
-            return gson.fromJson(new FileReader(new File(getFilename(username, sessionResource))), Session.class);
-        } catch (FileNotFoundException e) {
+            final Session session = gson.fromJson(new FileReader(file), Session.class);
+            LOGGER.debug("Restored session from {}", file.getAbsolutePath());
+            return session;
+        } catch (final FileNotFoundException e) {
+            LOGGER.debug("Unable to restore session. {} not found", file.getAbsolutePath());
             return null;
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (final Exception e) {
+            LOGGER.warn("Unable to restore session", e);
             return null;
         }
     }
