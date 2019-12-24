@@ -1,3 +1,7 @@
+### 0.2.1 (2019-12-24)
+
+* (temporary?) fix for Cyrus requiring the client to set `:mail` namespace on submit.
+
 ### 0.2.0 (2019-12-20)
 
 * Mua.draft(…) and Mua.send(…) now return the id of the created email
