@@ -24,7 +24,7 @@
     <parent>
         <groupId>rs.ltt.jmap</groupId>
         <artifactId>jmap</artifactId>
-        <version>0.2.1</version>
+        <version>0.2.2</version>
     </parent>
 
     <artifactId>jmap-mua</artifactId>
@@ -55,12 +55,6 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>jmap-mua-util</artifactId>
             <version>${project.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>1.7.25</version>
         </dependency>
 
         <dependency>

@@ -1,3 +1,7 @@
+### 0.2.2 (2020-01-05)
+
+* Fixed FileSessionCache writing to wrong directory  
+
 ### 0.2.1 (2019-12-24)
 
 * (temporary?) fix for Cyrus requiring the client to set `:mail` namespace on submit.

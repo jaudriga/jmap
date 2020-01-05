@@ -24,7 +24,7 @@
     <parent>
         <groupId>rs.ltt.jmap</groupId>
         <artifactId>jmap</artifactId>
-        <version>0.2.1</version>
+        <version>0.2.2</version>
     </parent>
 
     <artifactId>jmap-client</artifactId>
@@ -72,15 +72,9 @@
         </dependency>
 
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>1.7.25</version>
-        </dependency>
-
-        <dependency>
             <groupId>com.squareup.okhttp3</groupId>
             <artifactId>okhttp</artifactId>
-            <version>3.12.6</version>
+            <version>3.12.7</version>
         </dependency>
 
         <dependency>
