@@ -22,7 +22,7 @@
 
     <groupId>rs.ltt.jmap</groupId>
     <artifactId>jmap</artifactId>
-    <version>0.2.2</version>
+    <version>0.2.3</version>
     <packaging>pom</packaging>
 
     <modules>

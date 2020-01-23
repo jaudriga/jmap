@@ -1,3 +1,8 @@
+### 0.2.3 (2020-01-23)
+
+* Provide easier access to User-Agent and Autocrypt headers in Email entity
+* Email update call will only request mutable properties
+
 ### 0.2.2 (2020-01-05)
 
 * Fixed FileSessionCache writing to wrong directory  
