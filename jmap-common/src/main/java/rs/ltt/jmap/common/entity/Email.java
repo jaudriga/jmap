@@ -17,6 +17,7 @@
 package rs.ltt.jmap.common.entity;
 
 import com.google.common.base.MoreObjects;
+import com.google.gson.annotations.SerializedName;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Singular;
@@ -83,6 +84,20 @@ public class Email extends AbstractIdentifiableEntity implements IdentifiableEma
 
     private Date sentAt;
 
+    //The following properties are not directly specified by JMAP but are provided by the library for your convenience
+    @SerializedName("header:User-Agent:asText")
+    private String userAgent;
+
+    @SerializedName("header:Autocrypt:asText:all")
+    @Singular("autocrypt")
+    private List<String> autocrypt;
+
+    @SerializedName("header:Autocrypt-Draft-State:asText")
+    private String autocryptDraftState;
+
+    @SerializedName("header:Autocrypt-Setup-Message:asText")
+    private String autocryptSetupMessage;
+
     //body data
 
     @Singular("bodyStructure")
@@ -106,6 +121,10 @@ public class Email extends AbstractIdentifiableEntity implements IdentifiableEma
 
     public static Email of(String id) {
         final Email email = new Email(
+                null,
+                null,
+                null,
+                null,
                 null,
                 null,
                 null,
@@ -158,10 +177,14 @@ public class Email extends AbstractIdentifiableEntity implements IdentifiableEma
                 .add("replyTo", replyTo)
                 .add("subject", subject)
                 .add("sentAt", sentAt)
+                .add("userAgent", userAgent)
+                .add("autocrypt", autocrypt)
+                .add("autocryptDraftState", autocryptDraftState)
+                .add("autocryptSetupMessage", autocryptSetupMessage)
                 .add("bodyStructure", bodyStructure)
                 .add("bodyValues", bodyValues)
                 .add("textBody", textBody)
-                .add("htmlBody", textBody)
+                .add("htmlBody", htmlBody)
                 .add("attachments", attachments)
                 .add("hasAttachment", hasAttachment)
                 .add("preview", preview)
