@@ -30,8 +30,6 @@ import java.util.Map;
 @Builder(toBuilder = true)
 public class Email extends AbstractIdentifiableEntity implements IdentifiableEmailWithKeywords, IdentifiableEmailWithMailboxIds, IdentifiableEmailWithAddresses, IdentifiableEmailWithSubject {
 
-    public static final String[] MUTABLE_PROPERTIES = {"keywords", "mailboxIds"};
-
     //Metadata
 
     private String blobId;
@@ -85,17 +83,17 @@ public class Email extends AbstractIdentifiableEntity implements IdentifiableEma
     private Date sentAt;
 
     //The following properties are not directly specified by JMAP but are provided by the library for your convenience
-    @SerializedName("header:User-Agent:asText")
+    @SerializedName(Property.USER_AGENT)
     private String userAgent;
 
-    @SerializedName("header:Autocrypt:asText:all")
+    @SerializedName(Property.AUTOCRYPT)
     @Singular("autocrypt")
     private List<String> autocrypt;
 
-    @SerializedName("header:Autocrypt-Draft-State:asText")
+    @SerializedName(Property.AUTOCRYPT_DRAFT_STATE)
     private String autocryptDraftState;
 
-    @SerializedName("header:Autocrypt-Setup-Message:asText")
+    @SerializedName(Property.AUTOCRYPT_SETUP_MESSAGE)
     private String autocryptSetupMessage;
 
     //body data
@@ -189,5 +187,28 @@ public class Email extends AbstractIdentifiableEntity implements IdentifiableEma
                 .add("hasAttachment", hasAttachment)
                 .add("preview", preview)
                 .toString();
+    }
+
+    public static final class Property {
+        public static final String KEYWORDS = "keywords";
+        public static final String MAILBOX_IDS = "mailboxIds";
+        public static final String THREAD_ID = "threadId";
+        public static final String USER_AGENT = "header:User-Agent:asText";
+        public static final String AUTOCRYPT = "header:Autocrypt:asText:all";
+        public static final String AUTOCRYPT_DRAFT_STATE = "header:Autocrypt-Draft-State:asText";
+        public static final String AUTOCRYPT_SETUP_MESSAGE = "header:Autocrypt-Setup-Message:asText";
+
+        private Property() {
+
+        }
+    }
+
+    public static final class Properties {
+        public static final String[] THREAD_ID = new String[]{Property.THREAD_ID};
+        public static final String[] MUTABLE = new String[]{Property.KEYWORDS, Property.MAILBOX_IDS};
+
+        private Properties() {
+
+        }
     }
 }

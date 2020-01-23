@@ -21,6 +21,7 @@ import rs.ltt.jmap.client.JmapClient;
 import rs.ltt.jmap.client.JmapRequest;
 import rs.ltt.jmap.client.MethodResponses;
 import rs.ltt.jmap.common.Request;
+import rs.ltt.jmap.common.entity.Email;
 import rs.ltt.jmap.common.method.call.email.ChangesEmailMethodCall;
 import rs.ltt.jmap.common.method.call.email.GetEmailMethodCall;
 import rs.ltt.jmap.common.method.call.identity.ChangesIdentityMethodCall;
@@ -43,7 +44,7 @@ public class UpdateUtil {
         final ListenableFuture<MethodResponses> updated = multiCall.call(new GetEmailMethodCall(
                 accountId,
                 changesCallInfo.createResultReference(Request.Invocation.ResultReference.Path.UPDATED),
-                true
+                Email.Properties.MUTABLE
         )).getMethodResponses();
 
         return new MethodResponsesFuture(changes, created, updated);

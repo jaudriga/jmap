@@ -41,7 +41,6 @@ import rs.ltt.jmap.common.entity.filter.EmailFilterCondition;
 import rs.ltt.jmap.common.entity.filter.Filter;
 import rs.ltt.jmap.common.entity.query.EmailQuery;
 import rs.ltt.jmap.common.method.MethodErrorResponse;
-import rs.ltt.jmap.common.method.MethodResponse;
 import rs.ltt.jmap.common.method.call.email.GetEmailMethodCall;
 import rs.ltt.jmap.common.method.call.email.QueryChangesEmailMethodCall;
 import rs.ltt.jmap.common.method.call.email.QueryEmailMethodCall;
@@ -522,43 +521,6 @@ public class Mua {
         return applyEmailPatches(patches, objectsState);
     }
 
-    public ListenableFuture<Boolean> discardDraft(final @NonNullDecl IdentifiableEmailWithKeywords email) {
-        Preconditions.checkNotNull(email);
-        Preconditions.checkArgument(email.getKeywords().containsKey(Keyword.DRAFT), "Email does not have $draft keyword");
-        return Futures.transformAsync(getObjectsState(), new AsyncFunction<ObjectsState, Boolean>() {
-            @Override
-            public ListenableFuture<Boolean> apply(@NullableDecl ObjectsState objectsState) throws Exception {
-                return discardDraft(email, objectsState);
-            }
-        }, MoreExecutors.directExecutor());
-    }
-
-    private ListenableFuture<Boolean> discardDraft(final @NonNullDecl IdentifiableEmailWithKeywords email, final ObjectsState objectsState) {
-        Preconditions.checkNotNull(objectsState);
-        final JmapClient.MultiCall multiCall = jmapClient.newMultiCall();
-        final ListenableFuture<Boolean> future = discardDraft(email, objectsState, multiCall);
-        multiCall.execute();
-        return future;
-    }
-
-    private ListenableFuture<Boolean> discardDraft(final @NonNullDecl IdentifiableEmailWithKeywords email, final ObjectsState objectsState, JmapClient.MultiCall multiCall) {
-        final ListenableFuture<MethodResponses> future = multiCall.call(
-                new SetEmailMethodCall(accountId, objectsState.emailState, new String[]{email.getId()})
-        ).getMethodResponses();
-        if (objectsState.emailState != null) {
-            updateEmails(objectsState.emailState, multiCall);
-        }
-        return Futures.transformAsync(future, new AsyncFunction<MethodResponses, Boolean>() {
-            @Override
-            public ListenableFuture<Boolean> apply(@NullableDecl MethodResponses methodResponses) throws Exception {
-                SetEmailMethodResponse setEmailMethodResponse = methodResponses.getMain(SetEmailMethodResponse.class);
-                SetEmailException.throwIfFailed(setEmailMethodResponse);
-                final String[] destroyed = setEmailMethodResponse.getDestroyed();
-                return Futures.immediateFuture(destroyed != null && destroyed.length > 0);
-            }
-        }, MoreExecutors.directExecutor());
-    }
-
     private ListenableFuture<Boolean> applyEmailPatches(final Map<String, Map<String, Object>> patches, final ObjectsState objectsState) {
         if (patches.size() == 0) {
             return Futures.immediateFuture(false);
@@ -619,7 +581,7 @@ public class Mua {
                     final GetEmailMethodResponse updatedResponse = methodResponsesFuture.updated.get().getMain(GetEmailMethodResponse.class);
                     final Update<Email> update = Update.of(changesResponse, createdResponse, updatedResponse);
                     if (update.hasChanges()) {
-                        cache.updateEmails(update, Email.MUTABLE_PROPERTIES);
+                        cache.updateEmails(update, Email.Properties.MUTABLE);
                     }
                     settableFuture.set(Status.of(update));
                 } catch (InterruptedException | ExecutionException | CacheWriteException | CacheConflictException e) {
@@ -637,6 +599,43 @@ public class Mua {
                 return cache.getObjectsState();
             }
         });
+    }
+
+    public ListenableFuture<Boolean> discardDraft(final @NonNullDecl IdentifiableEmailWithKeywords email) {
+        Preconditions.checkNotNull(email);
+        Preconditions.checkArgument(email.getKeywords().containsKey(Keyword.DRAFT), "Email does not have $draft keyword");
+        return Futures.transformAsync(getObjectsState(), new AsyncFunction<ObjectsState, Boolean>() {
+            @Override
+            public ListenableFuture<Boolean> apply(@NullableDecl ObjectsState objectsState) throws Exception {
+                return discardDraft(email, objectsState);
+            }
+        }, MoreExecutors.directExecutor());
+    }
+
+    private ListenableFuture<Boolean> discardDraft(final @NonNullDecl IdentifiableEmailWithKeywords email, final ObjectsState objectsState) {
+        Preconditions.checkNotNull(objectsState);
+        final JmapClient.MultiCall multiCall = jmapClient.newMultiCall();
+        final ListenableFuture<Boolean> future = discardDraft(email, objectsState, multiCall);
+        multiCall.execute();
+        return future;
+    }
+
+    private ListenableFuture<Boolean> discardDraft(final @NonNullDecl IdentifiableEmailWithKeywords email, final ObjectsState objectsState, JmapClient.MultiCall multiCall) {
+        final ListenableFuture<MethodResponses> future = multiCall.call(
+                new SetEmailMethodCall(accountId, objectsState.emailState, new String[]{email.getId()})
+        ).getMethodResponses();
+        if (objectsState.emailState != null) {
+            updateEmails(objectsState.emailState, multiCall);
+        }
+        return Futures.transformAsync(future, new AsyncFunction<MethodResponses, Boolean>() {
+            @Override
+            public ListenableFuture<Boolean> apply(@NullableDecl MethodResponses methodResponses) throws Exception {
+                SetEmailMethodResponse setEmailMethodResponse = methodResponses.getMain(SetEmailMethodResponse.class);
+                SetEmailException.throwIfFailed(setEmailMethodResponse);
+                final String[] destroyed = setEmailMethodResponse.getDestroyed();
+                return Futures.immediateFuture(destroyed != null && destroyed.length > 0);
+            }
+        }, MoreExecutors.directExecutor());
     }
 
     public ListenableFuture<Boolean> removeKeyword(final Collection<? extends IdentifiableEmailWithKeywords> emails, final String keyword) {
@@ -1313,7 +1312,13 @@ public class Mua {
 
         final Call queryCall = multiCall.call(new QueryEmailMethodCall(accountId, query, afterEmailId, this.queryPageSize));
         final ListenableFuture<MethodResponses> queryResponsesFuture = queryCall.getMethodResponses();
-        final ListenableFuture<MethodResponses> getThreadIdsResponsesFuture = multiCall.call(new GetEmailMethodCall(accountId, queryCall.createResultReference(Request.Invocation.ResultReference.Path.IDS), new String[]{"threadId"})).getMethodResponses();
+        final ListenableFuture<MethodResponses> getThreadIdsResponsesFuture = multiCall.call(
+                new GetEmailMethodCall(
+                        accountId,
+                        queryCall.createResultReference(Request.Invocation.ResultReference.Path.IDS),
+                        Email.Properties.THREAD_ID
+                )
+        ).getMethodResponses();
 
         queryResponsesFuture.addListener(new Runnable() {
             @Override
@@ -1389,7 +1394,13 @@ public class Mua {
 
         final Call queryChangesCall = multiCall.call(new QueryChangesEmailMethodCall(accountId, queryStateWrapper.queryState, query)); //TODO do we want to include upTo?
         final ListenableFuture<MethodResponses> queryChangesResponsesFuture = queryChangesCall.getMethodResponses();
-        final ListenableFuture<MethodResponses> getThreadIdResponsesFuture = multiCall.call(new GetEmailMethodCall(accountId, queryChangesCall.createResultReference(Request.Invocation.ResultReference.Path.ADDED_IDS), new String[]{"threadId"})).getMethodResponses();
+        final ListenableFuture<MethodResponses> getThreadIdResponsesFuture = multiCall.call(
+                new GetEmailMethodCall(
+                        accountId,
+                        queryChangesCall.createResultReference(Request.Invocation.ResultReference.Path.ADDED_IDS),
+                        Email.Properties.THREAD_ID
+                )
+        ).getMethodResponses();
 
         queryChangesResponsesFuture.addListener(new Runnable() {
             @Override
@@ -1475,7 +1486,13 @@ public class Mua {
 
         final Call queryCall = multiCall.call(new QueryEmailMethodCall(accountId, query, queryPageSize));
         final ListenableFuture<MethodResponses> queryResponsesFuture = queryCall.getMethodResponses();
-        final Call threadIdsCall = multiCall.call(new GetEmailMethodCall(accountId, queryCall.createResultReference(Request.Invocation.ResultReference.Path.IDS), new String[]{"threadId"}));
+        final Call threadIdsCall = multiCall.call(
+                new GetEmailMethodCall(
+                        accountId,
+                        queryCall.createResultReference(Request.Invocation.ResultReference.Path.IDS),
+                        Email.Properties.THREAD_ID
+                )
+        );
         final ListenableFuture<MethodResponses> getThreadIdsResponsesFuture = threadIdsCall.getMethodResponses();
 
 
