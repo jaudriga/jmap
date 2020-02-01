@@ -34,6 +34,7 @@ import rs.ltt.jmap.client.event.CloseAfter;
 import rs.ltt.jmap.client.session.Session;
 import rs.ltt.jmap.common.entity.Email;
 import rs.ltt.jmap.common.entity.Mailbox;
+import rs.ltt.jmap.common.entity.capability.WebSocketCapability;
 import rs.ltt.jmap.common.method.MethodErrorResponse;
 import rs.ltt.jmap.common.method.call.core.EchoMethodCall;
 import rs.ltt.jmap.common.method.call.mailbox.GetMailboxMethodCall;
@@ -257,5 +258,20 @@ public class HttpJmapClientTest {
         session.getUploadUrl(USERNAME);
 
         server.shutdown();
+    }
+
+    @Test
+    public void webSocketUrl() throws IOException, ExecutionException, InterruptedException {
+        final MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setBody(readResourceAsString("session-urls/01-session.json")));
+        server.start();
+        final JmapClient jmapClient = new JmapClient(
+                USERNAME,
+                PASSWORD,
+                server.url(WELL_KNOWN_PATH)
+        );
+
+        final Session session = jmapClient.getSession().get();
+        Assert.assertNotNull(session.getCapability(WebSocketCapability.class).getWebSocketUrl());
     }
 }
