@@ -17,6 +17,7 @@
 package rs.ltt.jmap.mua.util;
 
 import com.google.common.base.CaseFormat;
+import com.google.common.base.Preconditions;
 import rs.ltt.jmap.common.entity.Role;
 
 import java.io.Serializable;
@@ -34,7 +35,6 @@ public class KeywordLabel implements Label, Serializable {
     @Override
     public String getName() {
         return CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, role.name());
-
     }
 
     @Override
@@ -49,5 +49,11 @@ public class KeywordLabel implements Label, Serializable {
 
     public String getKeyword() {
         return keyword;
+    }
+
+    public static KeywordLabel of(final String keyword) {
+        final Role role = KeywordUtil.KEYWORD_ROLE.get(keyword);
+        Preconditions.checkArgument(role != null, "Keyword has no known mailbox mapping");
+        return new KeywordLabel(keyword, role);
     }
 }
