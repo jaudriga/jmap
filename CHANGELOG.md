@@ -1,3 +1,8 @@
+### 0.2.4 (2020-02-09)
+
+* add support for discovering websocket capability
+* add PushSubscription object (including get+set)
+
 ### 0.2.3 (2020-01-23)
 
 * Provide easier access to User-Agent and Autocrypt headers in Email entity
