@@ -16,13 +16,29 @@
 
 package rs.ltt.jmap.common.method.call.submission;
 
+import lombok.Builder;
+import lombok.NonNull;
 import rs.ltt.jmap.annotation.JmapMethod;
+import rs.ltt.jmap.common.entity.Comparator;
 import rs.ltt.jmap.common.entity.EmailSubmission;
+import rs.ltt.jmap.common.entity.filter.Filter;
+import rs.ltt.jmap.common.entity.query.EmailSubmissionQuery;
 import rs.ltt.jmap.common.method.call.standard.QueryMethodCall;
 
 @JmapMethod("EmailSubmission/query")
 public class QueryEmailSubmissionMethodCall extends QueryMethodCall<EmailSubmission> {
-    public QueryEmailSubmissionMethodCall(String accountId) {
-        super(accountId);
+
+    @Builder
+    public QueryEmailSubmissionMethodCall(@NonNull String accountId, Filter<EmailSubmission> filter, Comparator[] sort,
+                                          Long position, String anchor, Long anchorOffset, Long limit) {
+        super(accountId, filter, sort, position, anchor, anchorOffset, limit);
+    }
+
+    public static class QueryEmailSubmissionMethodCallBuilder {
+        public QueryEmailSubmissionMethodCallBuilder query(EmailSubmissionQuery query) {
+            this.filter = query.filter;
+            this.sort = query.comparators;
+            return this;
+        }
     }
 }

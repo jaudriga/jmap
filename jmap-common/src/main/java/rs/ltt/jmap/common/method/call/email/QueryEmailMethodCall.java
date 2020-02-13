@@ -16,10 +16,12 @@
 
 package rs.ltt.jmap.common.method.call.email;
 
+import lombok.Builder;
 import rs.ltt.jmap.annotation.JmapMethod;
+import rs.ltt.jmap.common.entity.Comparator;
 import rs.ltt.jmap.common.entity.Email;
-import rs.ltt.jmap.common.entity.query.EmailQuery;
 import rs.ltt.jmap.common.entity.filter.Filter;
+import rs.ltt.jmap.common.entity.query.EmailQuery;
 import rs.ltt.jmap.common.method.call.standard.QueryMethodCall;
 
 @JmapMethod("Email/query")
@@ -27,31 +29,19 @@ public class QueryEmailMethodCall extends QueryMethodCall<Email> {
 
     private Boolean collapseThreads;
 
-    public QueryEmailMethodCall(String accountId) {
-        super(accountId);
+    @Builder
+    public QueryEmailMethodCall(String accountId, Filter<Email> filter, Comparator[] sort, Long position, String anchor,
+                                Long anchorOffset, Long limit, Boolean collapseThreads) {
+        super(accountId, filter, sort, position, anchor, anchorOffset, limit);
+        this.collapseThreads = collapseThreads;
     }
 
-    public QueryEmailMethodCall(String accountId, Filter<Email> filter) {
-        super(accountId, filter);
-    }
-
-    public QueryEmailMethodCall(String accountId, EmailQuery query) {
-        super(accountId, query);
-        this.collapseThreads = query.collapseThreads;
-    }
-
-    public QueryEmailMethodCall(String accountId, EmailQuery query, Long limit) {
-        super(accountId, query, limit);
-        this.collapseThreads = query.collapseThreads;
-    }
-
-    public QueryEmailMethodCall(String accountId, EmailQuery query, String afterEmailId) {
-        super(accountId, query, afterEmailId);
-        this.collapseThreads = query.collapseThreads;
-    }
-
-    public QueryEmailMethodCall(String accountId, EmailQuery query, String afterEmailId, Long limit) {
-        super(accountId, query, afterEmailId, limit);
-        this.collapseThreads = query.collapseThreads;
+    public static class QueryEmailMethodCallBuilder {
+        public QueryEmailMethodCallBuilder query(EmailQuery query) {
+            this.filter = query.filter;
+            this.sort = query.comparators;
+            this.collapseThreads = query.collapseThreads;
+            return this;
+        }
     }
 }

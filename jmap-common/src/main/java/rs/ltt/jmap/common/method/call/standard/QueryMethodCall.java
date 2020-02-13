@@ -16,15 +16,15 @@
 
 package rs.ltt.jmap.common.method.call.standard;
 
+import lombok.NonNull;
 import rs.ltt.jmap.common.entity.AbstractIdentifiableEntity;
 import rs.ltt.jmap.common.entity.Comparator;
-import rs.ltt.jmap.common.entity.query.Query;
 import rs.ltt.jmap.common.entity.filter.Filter;
 import rs.ltt.jmap.common.method.MethodCall;
 
-
 public abstract class QueryMethodCall<T extends AbstractIdentifiableEntity> implements MethodCall {
 
+    @NonNull
     private String accountId;
     private Filter filter;
     private Comparator[] sort;
@@ -33,43 +33,18 @@ public abstract class QueryMethodCall<T extends AbstractIdentifiableEntity> impl
     private Long anchorOffset;
     private Long limit;
 
-    public QueryMethodCall(String accountId) {
-        this.accountId = accountId;
-    }
-
-    public QueryMethodCall(String accountId, Filter<T> filter) {
+    public QueryMethodCall(@NonNull String accountId, Filter<T> filter, Comparator[] sort, Long position, String anchor,
+                           Long anchorOffset, Long limit) {
         this.accountId = accountId;
         this.filter = filter;
-    }
-
-    public QueryMethodCall(String accountId, Query<T> query) {
-        this.accountId = accountId;
-        this.filter = query.filter;
-        this.sort = query.comparators;
-    }
-
-    public QueryMethodCall(String accountId, Query<T> query, Long limit) {
-        this.accountId = accountId;
-        this.filter = query.filter;
-        this.sort = query.comparators;
+        this.sort = sort;
+        this.position = position;
+        this.anchor = anchor;
+        if (anchor != null) {
+            this.anchorOffset = (anchorOffset != null) ? anchorOffset : 1L;
+        } else {
+            this.anchorOffset = null;
+        }
         this.limit = limit;
     }
-
-    public QueryMethodCall(String accountId, Query<T> query, String afterId) {
-        this.accountId = accountId;
-        this.filter = query.filter;
-        this.sort = query.comparators;
-        this.anchor = afterId;
-        this.anchorOffset = 1L;
-    }
-
-    public QueryMethodCall(String accountId, Query<T> query, String afterId, Long limit) {
-        this.accountId = accountId;
-        this.filter = query.filter;
-        this.sort = query.comparators;
-        this.anchor = afterId;
-        this.anchorOffset = 1L;
-        this.limit = limit;
-    }
-
 }

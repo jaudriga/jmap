@@ -16,7 +16,10 @@
 
 package rs.ltt.jmap.common.method.call.mailbox;
 
+import lombok.Builder;
+import lombok.NonNull;
 import rs.ltt.jmap.annotation.JmapMethod;
+import rs.ltt.jmap.common.entity.Comparator;
 import rs.ltt.jmap.common.entity.Mailbox;
 import rs.ltt.jmap.common.entity.filter.Filter;
 import rs.ltt.jmap.common.entity.query.MailboxQuery;
@@ -26,35 +29,23 @@ import rs.ltt.jmap.common.method.call.standard.QueryMethodCall;
 public class QueryMailboxMethodCall extends QueryMethodCall<Mailbox> {
 
     private Boolean sortAsTree;
-
     private Boolean filterAsTree;
 
-    public QueryMailboxMethodCall(String accountId, Filter<Mailbox> filter) {
-        super(accountId, filter);
+    @Builder
+    public QueryMailboxMethodCall(@NonNull String accountId, Filter<Mailbox> filter, Comparator[] sort, Long position,
+                                  String anchor, Long anchorOffset, Long limit, Boolean sortAsTree, Boolean filterAsTree) {
+        super(accountId, filter, sort, position, anchor, anchorOffset, limit);
+        this.sortAsTree = sortAsTree;
+        this.filterAsTree = filterAsTree;
     }
 
-    public QueryMailboxMethodCall(String accountId, MailboxQuery query) {
-        super(accountId, query);
-        this.sortAsTree = query.sortAsTree;
-        this.filterAsTree = query.filterAsTree;
+    public static class QueryMailboxMethodCallBuilder {
+        public QueryMailboxMethodCallBuilder query(MailboxQuery query) {
+            this.filter = query.filter;
+            this.sort = query.comparators;
+            this.sortAsTree = query.sortAsTree;
+            this.filterAsTree = query.filterAsTree;
+            return this;
+        }
     }
-
-    public QueryMailboxMethodCall(String accountId, MailboxQuery query, String afterId) {
-        super(accountId, query, afterId);
-        this.sortAsTree = query.sortAsTree;
-        this.filterAsTree = query.filterAsTree;
-    }
-
-    public QueryMailboxMethodCall(String accountId, MailboxQuery query, Long limit) {
-        super(accountId, query, limit);
-        this.sortAsTree = query.sortAsTree;
-        this.filterAsTree = query.filterAsTree;
-    }
-
-    public QueryMailboxMethodCall(String accountId, MailboxQuery query, String afterId, Long limit) {
-        super(accountId, query, afterId, limit);
-        this.sortAsTree = query.sortAsTree;
-        this.filterAsTree = query.filterAsTree;
-    }
-
 }
