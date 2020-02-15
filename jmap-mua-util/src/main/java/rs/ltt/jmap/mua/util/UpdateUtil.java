@@ -34,7 +34,12 @@ import rs.ltt.jmap.common.method.call.thread.GetThreadMethodCall;
 public class UpdateUtil {
 
     public static MethodResponsesFuture emails(JmapClient.MultiCall multiCall, String accountId, String state) {
-        final JmapRequest.Call changesCallInfo = multiCall.call(new ChangesEmailMethodCall(accountId, state));
+        final JmapRequest.Call changesCallInfo = multiCall.call(
+                ChangesEmailMethodCall.builder()
+                        .accountId(accountId)
+                        .sinceState(state)
+                        .build()
+        );
         final ListenableFuture<MethodResponses> changes = changesCallInfo.getMethodResponses();
         final ListenableFuture<MethodResponses> created = multiCall.call(new GetEmailMethodCall(
                 accountId,
@@ -51,7 +56,12 @@ public class UpdateUtil {
     }
 
     public static MethodResponsesFuture identities(JmapClient.MultiCall multiCall, String accountId, String state) {
-        final JmapRequest.Call changesCallInfo = multiCall.call(new ChangesIdentityMethodCall(accountId, state));
+        final JmapRequest.Call changesCallInfo = multiCall.call(
+                ChangesIdentityMethodCall.builder()
+                        .accountId(accountId)
+                        .sinceState(state)
+                        .build()
+        );
         final ListenableFuture<MethodResponses> changes = changesCallInfo.getMethodResponses();
         final ListenableFuture<MethodResponses> created = multiCall.call(new GetIdentityMethodCall(
                 accountId,
@@ -66,7 +76,12 @@ public class UpdateUtil {
     }
 
     public static MethodResponsesFuture mailboxes(JmapClient.MultiCall multiCall, String accountId, String state) {
-        final JmapRequest.Call changesCallInfo = multiCall.call(new ChangesMailboxMethodCall(accountId, state));
+        final JmapRequest.Call changesCallInfo = multiCall.call(
+                ChangesMailboxMethodCall.builder()
+                        .accountId(accountId)
+                        .sinceState(state)
+                        .build()
+        );
         final ListenableFuture<MethodResponses> changes = changesCallInfo.getMethodResponses();
         final ListenableFuture<MethodResponses> created = multiCall.call(new GetMailboxMethodCall(
                 accountId,
@@ -82,7 +97,12 @@ public class UpdateUtil {
     }
 
     public static MethodResponsesFuture threads(JmapClient.MultiCall multiCall, String accountId, String state) {
-        final JmapRequest.Call changesCallInfo = multiCall.call(new ChangesThreadMethodCall(accountId, state));
+        final JmapRequest.Call changesCallInfo = multiCall.call(
+                ChangesThreadMethodCall.builder()
+                        .accountId(accountId)
+                        .sinceState(state)
+                        .build()
+        );
         final ListenableFuture<MethodResponses> changes = changesCallInfo.getMethodResponses();
         final ListenableFuture<MethodResponses> created = multiCall.call(new GetThreadMethodCall(
                 accountId,

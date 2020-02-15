@@ -16,13 +16,16 @@
 
 package rs.ltt.jmap.common.method.call.thread;
 
+import lombok.Builder;
 import rs.ltt.jmap.annotation.JmapMethod;
 import rs.ltt.jmap.common.entity.Thread;
 import rs.ltt.jmap.common.method.call.standard.ChangesMethodCall;
 
 @JmapMethod("Thread/changes")
 public class ChangesThreadMethodCall extends ChangesMethodCall<Thread> {
-    public ChangesThreadMethodCall(String accountId, String sinceState) {
-        super(accountId, sinceState);
+
+    @Builder
+    public ChangesThreadMethodCall(String accountId, String sinceState, Long maxChanges) {
+        super(accountId, sinceState, maxChanges);
     }
 }

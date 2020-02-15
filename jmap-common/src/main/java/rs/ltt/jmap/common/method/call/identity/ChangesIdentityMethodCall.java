@@ -16,13 +16,16 @@
 
 package rs.ltt.jmap.common.method.call.identity;
 
+import lombok.Builder;
 import rs.ltt.jmap.annotation.JmapMethod;
 import rs.ltt.jmap.common.entity.Identity;
 import rs.ltt.jmap.common.method.call.standard.ChangesMethodCall;
 
 @JmapMethod("Identity/changes")
 public class ChangesIdentityMethodCall extends ChangesMethodCall<Identity> {
-    public ChangesIdentityMethodCall(String accountId, String sinceState) {
-        super(accountId, sinceState);
+
+    @Builder
+    public ChangesIdentityMethodCall(String accountId, String sinceState, Long maxChanges) {
+        super(accountId, sinceState, maxChanges);
     }
 }

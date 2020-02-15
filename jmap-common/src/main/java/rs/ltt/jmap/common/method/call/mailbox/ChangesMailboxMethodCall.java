@@ -16,13 +16,16 @@
 
 package rs.ltt.jmap.common.method.call.mailbox;
 
+import lombok.Builder;
 import rs.ltt.jmap.annotation.JmapMethod;
 import rs.ltt.jmap.common.entity.Mailbox;
 import rs.ltt.jmap.common.method.call.standard.ChangesMethodCall;
 
 @JmapMethod("Mailbox/changes")
 public class ChangesMailboxMethodCall extends ChangesMethodCall<Mailbox> {
-    public ChangesMailboxMethodCall(String accountId, String sinceState) {
-        super(accountId, sinceState);
+
+    @Builder
+    public ChangesMailboxMethodCall(String accountId, String sinceState, Long maxChanges) {
+        super(accountId, sinceState, maxChanges);
     }
 }

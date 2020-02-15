@@ -16,6 +16,7 @@
 
 package rs.ltt.jmap.common.method.call.submission;
 
+import lombok.Builder;
 import rs.ltt.jmap.annotation.JmapMethod;
 import rs.ltt.jmap.common.entity.EmailSubmission;
 import rs.ltt.jmap.common.method.call.standard.ChangesMethodCall;
@@ -23,7 +24,8 @@ import rs.ltt.jmap.common.method.call.standard.ChangesMethodCall;
 @JmapMethod("EmailSubmission/changes")
 public class ChangesEmailSubmissionMethodCall extends ChangesMethodCall<EmailSubmission> {
 
-    public ChangesEmailSubmissionMethodCall(String accountId, String sinceState) {
-        super(accountId, sinceState);
+    @Builder
+    public ChangesEmailSubmissionMethodCall(String accountId, String sinceState, Long maxChanges) {
+        super(accountId, sinceState, maxChanges);
     }
 }
