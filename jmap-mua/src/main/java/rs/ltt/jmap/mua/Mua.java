@@ -328,7 +328,12 @@ public class Mua {
         }
         emailBuilder.keyword(Keyword.DRAFT, true);
         emailBuilder.keyword(Keyword.SEEN, true);
-        final ListenableFuture<MethodResponses> future = multiCall.call(new SetEmailMethodCall(accountId, ImmutableMap.of(CreateUtil.EMAIL_CREATION_ID, emailBuilder.build()))).getMethodResponses();
+        final ListenableFuture<MethodResponses> future = multiCall.call(
+                SetEmailMethodCall.builder()
+                        .accountId(accountId)
+                        .create(ImmutableMap.of(CreateUtil.EMAIL_CREATION_ID, emailBuilder.build()))
+                        .build()
+        ).getMethodResponses();
         return Futures.transformAsync(future, new AsyncFunction<MethodResponses, String>() {
             @Override
             public ListenableFuture<String> apply(MethodResponses methodResponses) throws Exception {
@@ -365,13 +370,11 @@ public class Mua {
      * @return
      */
     private ListenableFuture<MethodResponses> createMailbox(@NonNullDecl final Role role, @NullableDecl ObjectsState objectsState, final JmapClient.MultiCall multiCall) {
-        final SetMailboxMethodCall setMailboxMethodCall = new SetMailboxMethodCall(
-                this.accountId,
-                objectsState == null ? null : objectsState.mailboxState,
-                ImmutableMap.of(CreateUtil.createId(role), MailboxUtil.create(role)),
-                null,
-                null
-        );
+        final SetMailboxMethodCall setMailboxMethodCall = SetMailboxMethodCall.builder()
+                .accountId(this.accountId)
+                .ifInState(objectsState == null ? null : objectsState.mailboxState)
+                .create(ImmutableMap.of(CreateUtil.createId(role), MailboxUtil.create(role)))
+                .build();
         final ListenableFuture<MethodResponses> future = multiCall.call(setMailboxMethodCall).getMethodResponses();
         if (objectsState != null && objectsState.mailboxState != null) {
             updateMailboxes(objectsState.mailboxState, multiCall);
@@ -431,20 +434,26 @@ public class Mua {
         final Patches.Builder patchesBuilder = Patches.builder();
         patchesBuilder.remove("keywords/" + Keyword.DRAFT);
         patchesBuilder.set("mailboxIds", ImmutableMap.of(sent == null ? CreateUtil.createIdReference(Role.SENT) : sent.getId(), true));
-        final ListenableFuture<MethodResponses> setEmailSubmissionFuture = multiCall.call(new SetEmailSubmissionMethodCall(
-                accountId,
-                ImmutableMap.of(
-                        "es0",
-                        EmailSubmission.builder()
-                                .emailId(emailId)
-                                .identityId(identity.getId())
-                                .build()
-                ),
-                ImmutableMap.of(
-                        "#es0",
-                        patchesBuilder.build()
-                )
-        )).getMethodResponses();
+        final ListenableFuture<MethodResponses> setEmailSubmissionFuture = multiCall.call(
+                SetEmailSubmissionMethodCall.builder()
+                        .accountId(accountId)
+                        .create(
+                                ImmutableMap.of(
+                                        "es0",
+                                        EmailSubmission.builder()
+                                                .emailId(emailId)
+                                                .identityId(identity.getId())
+                                                .build()
+                                )
+                        )
+                        .onSuccessUpdateEmail(
+                                ImmutableMap.of(
+                                        "#es0",
+                                        patchesBuilder.build()
+                                )
+                        )
+                        .build()
+        ).getMethodResponses();
         return Futures.transformAsync(setEmailSubmissionFuture, new AsyncFunction<MethodResponses, Boolean>() {
             @Override
             public ListenableFuture<Boolean> apply(@NullableDecl MethodResponses methodResponses) throws Exception {
@@ -557,7 +566,13 @@ public class Mua {
         if (ifInState) {
             Preconditions.checkNotNull(objectsState);
         }
-        final ListenableFuture<MethodResponses> future = multiCall.call(new SetEmailMethodCall(accountId, ifInState ? objectsState.emailState : null, patches)).getMethodResponses();
+        final ListenableFuture<MethodResponses> future = multiCall.call(
+                SetEmailMethodCall.builder()
+                        .accountId(accountId)
+                        .ifInState(ifInState ? objectsState.emailState : null)
+                        .update(patches)
+                        .build()
+        ).getMethodResponses();
         if (ifInState && objectsState.emailState != null) {
             updateEmails(objectsState.emailState, multiCall);
         }
@@ -626,7 +641,11 @@ public class Mua {
 
     private ListenableFuture<Boolean> discardDraft(final @NonNullDecl IdentifiableEmailWithKeywords email, final ObjectsState objectsState, JmapClient.MultiCall multiCall) {
         final ListenableFuture<MethodResponses> future = multiCall.call(
-                new SetEmailMethodCall(accountId, objectsState.emailState, new String[]{email.getId()})
+                SetEmailMethodCall.builder()
+                        .accountId(accountId)
+                        .ifInState(objectsState.emailState)
+                        .destroy(new String[]{email.getId()})
+                        .build()
         ).getMethodResponses();
         if (objectsState.emailState != null) {
             updateEmails(objectsState.emailState, multiCall);
@@ -663,7 +682,12 @@ public class Mua {
     }
 
     public ListenableFuture<Boolean> createMailbox(Mailbox mailbox) {
-        ListenableFuture<MethodResponses> future = jmapClient.call(new SetMailboxMethodCall(accountId, ImmutableMap.of("new-mailbox-0", mailbox)));
+        ListenableFuture<MethodResponses> future = jmapClient.call(
+                SetMailboxMethodCall.builder()
+                        .accountId(accountId)
+                        .create(ImmutableMap.of("new-mailbox-0", mailbox))
+                        .build()
+        );
         return Futures.transformAsync(future, new AsyncFunction<MethodResponses, Boolean>() {
             @Override
             public ListenableFuture<Boolean> apply(@NullableDecl MethodResponses methodResponses) throws Exception {
@@ -1158,7 +1182,12 @@ public class Mua {
                         .filter(filter)
                         .build()
         );
-        final ListenableFuture<MethodResponses> setFuture = multiCall.call(new SetEmailMethodCall(accountId, null, queryCall.createResultReference(Request.Invocation.ResultReference.Path.IDS))).getMethodResponses();
+        final ListenableFuture<MethodResponses> setFuture = multiCall.call(
+                SetEmailMethodCall.builder()
+                        .accountId(accountId)
+                        .destroyReference(queryCall.createResultReference(Request.Invocation.ResultReference.Path.IDS))
+                        .build()
+        ).getMethodResponses();
         multiCall.execute();
         return Futures.transformAsync(setFuture, new AsyncFunction<MethodResponses, Boolean>() {
             @Override

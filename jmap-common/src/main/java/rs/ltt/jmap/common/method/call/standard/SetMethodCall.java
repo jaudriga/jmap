@@ -17,55 +17,24 @@
 package rs.ltt.jmap.common.method.call.standard;
 
 import com.google.gson.annotations.SerializedName;
+import lombok.AllArgsConstructor;
 import rs.ltt.jmap.common.Request;
 import rs.ltt.jmap.common.entity.AbstractIdentifiableEntity;
 import rs.ltt.jmap.common.method.MethodCall;
 
 import java.util.Map;
 
+@AllArgsConstructor
 public abstract class SetMethodCall<T extends AbstractIdentifiableEntity> implements MethodCall {
 
     private String accountId;
-
     private String ifInState;
-
     private Map<String, T> create;
-
     private Map<String, Map<String, Object>> update;
-
     private String[] destroy;
 
     @SerializedName("#destroy")
     private Request.Invocation.ResultReference destroyReference;
 
-    public SetMethodCall(String accountId, String ifInState, Map<String, T> create, Map<String, Map<String, Object>> update, String[] destroy) {
-        this.accountId = accountId;
-        this.ifInState = ifInState;
-        this.create = create;
-        this.update = update;
-        this.destroy = destroy;
-    }
 
-    public SetMethodCall(String accountId, String ifInState, String[] destroy) {
-        this.accountId = accountId;
-        this.ifInState = ifInState;
-        this.destroy = destroy;
-    }
-
-    public SetMethodCall(String accountId, String ifInState, Request.Invocation.ResultReference destroy) {
-        this.accountId = accountId;
-        this.ifInState = ifInState;
-        this.destroyReference = destroy;
-    }
-
-    public SetMethodCall(String accountId, String ifInState, Map<String, Map<String, Object>> update) {
-        this.accountId = accountId;
-        this.ifInState = ifInState;
-        this.update = update;
-    }
-
-    public SetMethodCall(String accountId, Map<String, T> create) {
-        this.accountId = accountId;
-        this.create = create;
-    }
 }

@@ -19,7 +19,13 @@ public class SetEmailMethodCallTest extends AbstractGsonTest {
         GsonBuilder builder = new GsonBuilder();
         JmapAdapters.register(builder);
         Gson gson = builder.create();
-        Request request = new Request.Builder().call(new SetEmailMethodCall("accountId", "state", ImmutableMap.of("M123", Patches.remove("keywords/$seen")))).build();
+        Request request = new Request.Builder().call(
+                SetEmailMethodCall.builder()
+                        .accountId("accountId")
+                        .ifInState("state")
+                        .update(ImmutableMap.of("M123", Patches.remove("keywords/$seen")))
+                        .build()
+        ).build();
         Assert.assertEquals(readResourceAsString("request/set-email.json"),gson.toJson(request));
     }
 

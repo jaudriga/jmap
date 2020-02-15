@@ -16,7 +16,9 @@
 
 package rs.ltt.jmap.common.method.call.mailbox;
 
+import lombok.Builder;
 import rs.ltt.jmap.annotation.JmapMethod;
+import rs.ltt.jmap.common.Request;
 import rs.ltt.jmap.common.entity.Mailbox;
 import rs.ltt.jmap.common.method.call.standard.SetMethodCall;
 
@@ -27,29 +29,11 @@ public class SetMailboxMethodCall extends SetMethodCall<Mailbox> {
 
     private Boolean onDestroyRemoveEmails;
 
-    public SetMailboxMethodCall(String accountId, String ifInState, Map<String, Mailbox> create, Map<String, Map<String, Object>> update, String[] destroy) {
-        super(accountId, ifInState, create, update, destroy);
-    }
-
-    public SetMailboxMethodCall(String accountId, String ifInState, Map<String, Mailbox> create, Map<String, Map<String, Object>> update, String[] destroy, Boolean onDestroyRemoveEmails) {
-        super(accountId, ifInState, create, update, destroy);
+    @Builder
+    public SetMailboxMethodCall(String accountId, String ifInState, Map<String, Mailbox> create,
+                                Map<String, Map<String, Object>> update, String[] destroy,
+                                Request.Invocation.ResultReference destroyReference, Boolean onDestroyRemoveEmails) {
+        super(accountId, ifInState, create, update, destroy, destroyReference);
         this.onDestroyRemoveEmails = onDestroyRemoveEmails;
-    }
-
-    public SetMailboxMethodCall(String accountId, String ifInState, String[] destroy) {
-        super(accountId, ifInState, destroy);
-    }
-
-    public SetMailboxMethodCall(String accountId, String ifInState, String[] destroy, Boolean onDestroyRemoveEmails) {
-        super(accountId, ifInState, destroy);
-        this.onDestroyRemoveEmails = onDestroyRemoveEmails;
-    }
-
-    public SetMailboxMethodCall(String accountId, String ifInState, Map<String, Map<String, Object>> update) {
-        super(accountId, ifInState, update);
-    }
-
-    public SetMailboxMethodCall(String accountId, Map<String, Mailbox> create) {
-        super(accountId, create);
     }
 }

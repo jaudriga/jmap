@@ -16,10 +16,12 @@
 
 package rs.ltt.jmap.common.method.call.submission;
 
+import lombok.Builder;
 import lombok.Getter;
 import rs.ltt.jmap.Namespace;
 import rs.ltt.jmap.annotation.JmapImplicitNamespace;
 import rs.ltt.jmap.annotation.JmapMethod;
+import rs.ltt.jmap.common.Request;
 import rs.ltt.jmap.common.entity.EmailSubmission;
 import rs.ltt.jmap.common.method.call.standard.SetMethodCall;
 
@@ -34,36 +36,14 @@ public class SetEmailSubmissionMethodCall extends SetMethodCall<EmailSubmission>
     private Map<String, Map<String, Object>> onSuccessUpdateEmail;
     private List<String> onSuccessDestroyEmail;
 
-    public SetEmailSubmissionMethodCall(String accountId, String ifInState, Map<String, EmailSubmission> create, Map<String, Map<String, Object>> update, String[] destroy, Map<String, Map<String, Object>> onSuccessUpdateEmail, List<String> onSuccessDestroyEmail) {
-        super(accountId, ifInState, create, update, destroy);
+    @Builder
+    public SetEmailSubmissionMethodCall(String accountId, String ifInState, Map<String, EmailSubmission> create,
+                                        Map<String, Map<String, Object>> update, String[] destroy,
+                                        Request.Invocation.ResultReference destroyReference,
+                                        Map<String, Map<String, Object>> onSuccessUpdateEmail,
+                                        List<String> onSuccessDestroyEmail) {
+        super(accountId, ifInState, create, update, destroy, destroyReference);
         this.onSuccessUpdateEmail = onSuccessUpdateEmail;
         this.onSuccessDestroyEmail = onSuccessDestroyEmail;
-    }
-
-    public SetEmailSubmissionMethodCall(String accountId, String ifInState, String[] destroy) {
-        super(accountId, ifInState, destroy);
-    }
-
-    public SetEmailSubmissionMethodCall(String accountId, String ifInState, String[] destroy, List<String> onSuccessDestroyEmail) {
-        super(accountId, ifInState, destroy);
-        this.onSuccessDestroyEmail = onSuccessDestroyEmail;
-    }
-
-    public SetEmailSubmissionMethodCall(String accountId, String ifInState, Map<String, Map<String, Object>> update) {
-        super(accountId, ifInState, update);
-    }
-
-    public SetEmailSubmissionMethodCall(String accountId, String ifInState, Map<String, Map<String, Object>> update, Map<String, Map<String, Object>> onSuccessUpdateEmail) {
-        super(accountId, ifInState, update);
-        this.onSuccessUpdateEmail = onSuccessUpdateEmail;
-    }
-
-    public SetEmailSubmissionMethodCall(String accountId, Map<String, EmailSubmission> create) {
-        super(accountId, create);
-    }
-
-    public SetEmailSubmissionMethodCall(String accountId, Map<String, EmailSubmission> create, Map<String, Map<String, Object>> onSuccessUpdateEmail) {
-        super(accountId, create);
-        this.onSuccessUpdateEmail = onSuccessUpdateEmail;
     }
 }

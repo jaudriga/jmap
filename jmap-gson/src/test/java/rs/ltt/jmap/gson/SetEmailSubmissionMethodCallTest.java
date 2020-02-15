@@ -40,20 +40,24 @@ public class SetEmailSubmissionMethodCallTest extends AbstractGsonTest {
         final Patches.Builder patchesBuilder = Patches.builder();
         patchesBuilder.remove("keywords/" + Keyword.DRAFT);
         patchesBuilder.set("mailboxIds/MB3", true);
-        SetEmailSubmissionMethodCall submissionCall = new SetEmailSubmissionMethodCall(
-                "accountId",
-                ImmutableMap.of(
-                        "es0",
-                        EmailSubmission.builder()
-                                .emailId("M1234")
-                                .identityId("I0")
-                                .build()
-                ),
-                ImmutableMap.of(
-                        "#es0",
-                        patchesBuilder.build()
+        SetEmailSubmissionMethodCall submissionCall = SetEmailSubmissionMethodCall.builder()
+                .accountId("accountId")
+                .create(
+                        ImmutableMap.of(
+                                "es0",
+                                EmailSubmission.builder()
+                                        .emailId("M1234")
+                                        .identityId("I0")
+                                        .build()
+                        )
                 )
-        );
+                .onSuccessUpdateEmail(
+                        ImmutableMap.of(
+                                "#es0",
+                                patchesBuilder.build()
+                        )
+                )
+                .build();
         Request request = new Request.Builder().call(submissionCall).build();
         Assert.assertEquals(readResourceAsString("request/set-email-submission.json"),gson.toJson(request));
     }
