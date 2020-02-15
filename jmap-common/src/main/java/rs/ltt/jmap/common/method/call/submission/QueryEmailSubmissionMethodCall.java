@@ -36,8 +36,8 @@ public class QueryEmailSubmissionMethodCall extends QueryMethodCall<EmailSubmiss
 
     public static class QueryEmailSubmissionMethodCallBuilder {
         public QueryEmailSubmissionMethodCallBuilder query(EmailSubmissionQuery query) {
-            this.filter = query.filter;
-            this.sort = query.comparators;
+            filter(query.filter);
+            sort(query.comparators);
             return this;
         }
     }

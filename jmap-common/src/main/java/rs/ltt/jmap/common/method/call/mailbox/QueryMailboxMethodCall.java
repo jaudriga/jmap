@@ -41,10 +41,10 @@ public class QueryMailboxMethodCall extends QueryMethodCall<Mailbox> {
 
     public static class QueryMailboxMethodCallBuilder {
         public QueryMailboxMethodCallBuilder query(MailboxQuery query) {
-            this.filter = query.filter;
-            this.sort = query.comparators;
-            this.sortAsTree = query.sortAsTree;
-            this.filterAsTree = query.filterAsTree;
+            filter(query.filter);
+            sort(query.comparators);
+            sortAsTree(query.sortAsTree);
+            filterAsTree(query.filterAsTree);
             return this;
         }
     }
