@@ -16,6 +16,7 @@
 
 package rs.ltt.jmap.common.method.call.email;
 
+import lombok.Builder;
 import rs.ltt.jmap.annotation.JmapMethod;
 import rs.ltt.jmap.common.entity.Email;
 import rs.ltt.jmap.common.method.call.standard.CopyMethodCall;
@@ -25,12 +26,9 @@ import java.util.Map;
 @JmapMethod("Email/copy")
 public class CopyEmailMethodCall extends CopyMethodCall<Email> {
 
-    public CopyEmailMethodCall(String fromAccountId, String accountId, Map<String, Email> create) {
-        super(fromAccountId, accountId, create);
-    }
-
-    public CopyEmailMethodCall(String fromAccountId, String ifFromInState, String accountId, String ifInState, Map<String, Email> create, Boolean onSuccessDestroyOriginal, String destroyFromIfInState) {
+    @Builder
+    public CopyEmailMethodCall(String fromAccountId, String ifFromInState, String accountId, String ifInState,
+                               Map<String, Email> create, Boolean onSuccessDestroyOriginal, String destroyFromIfInState) {
         super(fromAccountId, ifFromInState, accountId, ifInState, create, onSuccessDestroyOriginal, destroyFromIfInState);
     }
-
 }

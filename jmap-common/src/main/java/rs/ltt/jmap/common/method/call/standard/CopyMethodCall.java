@@ -16,41 +16,21 @@
 
 package rs.ltt.jmap.common.method.call.standard;
 
+import lombok.AllArgsConstructor;
 import rs.ltt.jmap.common.entity.AbstractIdentifiableEntity;
 import rs.ltt.jmap.common.method.MethodCall;
 
 import java.util.Map;
 
+@AllArgsConstructor
 public abstract class CopyMethodCall<T extends AbstractIdentifiableEntity> implements MethodCall {
 
     private String fromAccountId;
-
     private String ifFromInState;
-
     private String accountId;
-
     private String ifInState;
-
     private Map<String, T> create;
-
     private Boolean onSuccessDestroyOriginal;
-
     private String destroyFromIfInState;
-
-    protected CopyMethodCall(String fromAccountId, String accountId, Map<String, T> create) {
-        this.fromAccountId = fromAccountId;
-        this.accountId = accountId;
-        this.create = create;
-    }
-
-    protected CopyMethodCall(String fromAccountId, String ifFromInState, String accountId, String ifInState, Map<String, T> create, Boolean onSuccessDestroyOriginal, String destroyFromIfInState) {
-        this.fromAccountId = fromAccountId;
-        this.ifFromInState = ifFromInState;
-        this.accountId = accountId;
-        this.ifInState = ifInState;
-        this.create = create;
-        this.onSuccessDestroyOriginal = onSuccessDestroyOriginal;
-        this.destroyFromIfInState = destroyFromIfInState;
-    }
 
 }

@@ -36,10 +36,11 @@ public class CopyEmailMethodCallTest extends AbstractGsonTest {
         GsonBuilder builder = new GsonBuilder();
         JmapAdapters.register(builder);
         Gson gson = builder.create();
-        CopyEmailMethodCall copyEmailMethodCall = new CopyEmailMethodCall("from@domain.tld",
-                "to@domain.tld",
-                ImmutableMap.of("a", Email.of("M1001"))
-        );
+        CopyEmailMethodCall copyEmailMethodCall = CopyEmailMethodCall.builder()
+                .fromAccountId("from@domain.tld")
+                .accountId("to@domain.tld")
+                .create(ImmutableMap.of("a", Email.of("M1001")))
+                .build();
         Request request = new Request.Builder().call(copyEmailMethodCall).build();
         Assert.assertEquals(readResourceAsString("request/copy-email.json"),gson.toJson(request));
     }
