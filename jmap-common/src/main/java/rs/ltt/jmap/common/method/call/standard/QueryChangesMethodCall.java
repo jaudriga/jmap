@@ -17,6 +17,7 @@
 package rs.ltt.jmap.common.method.call.standard;
 
 import lombok.AllArgsConstructor;
+import lombok.NonNull;
 import rs.ltt.jmap.common.entity.AbstractIdentifiableEntity;
 import rs.ltt.jmap.common.entity.Comparator;
 import rs.ltt.jmap.common.entity.filter.Filter;
@@ -25,12 +26,20 @@ import rs.ltt.jmap.common.method.MethodCall;
 @AllArgsConstructor
 public abstract class QueryChangesMethodCall<T extends AbstractIdentifiableEntity> implements MethodCall {
 
+    @NonNull
     private String accountId;
+
     private Filter filter;
+
     private Comparator[] sort;
+
+    @NonNull
     private String sinceQueryState;
+
     private Long maxChanges;
+
     private String upToId;
+
     private Boolean calculateTotal;
 
 }

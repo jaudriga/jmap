@@ -34,6 +34,7 @@ public class SetEmailSubmissionMethodCall extends SetMethodCall<EmailSubmission>
 
     @JmapImplicitNamespace(Namespace.MAIL)
     private Map<String, Map<String, Object>> onSuccessUpdateEmail;
+
     private List<String> onSuccessDestroyEmail;
 
     @Builder

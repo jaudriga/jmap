@@ -17,14 +17,19 @@
 package rs.ltt.jmap.common.method.call.standard;
 
 import lombok.AllArgsConstructor;
+import lombok.NonNull;
 import rs.ltt.jmap.common.entity.AbstractIdentifiableEntity;
 import rs.ltt.jmap.common.method.MethodCall;
 
 @AllArgsConstructor
 public abstract class ChangesMethodCall<T extends AbstractIdentifiableEntity> implements MethodCall {
 
+    @NonNull
     private String accountId;
+
+    @NonNull
     private String sinceState;
+
     private Long maxChanges;
 
 }

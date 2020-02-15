@@ -18,6 +18,7 @@ package rs.ltt.jmap.common.method.call.standard;
 
 import com.google.gson.annotations.SerializedName;
 import lombok.AllArgsConstructor;
+import lombok.NonNull;
 import rs.ltt.jmap.common.Request;
 import rs.ltt.jmap.common.entity.AbstractIdentifiableEntity;
 import rs.ltt.jmap.common.method.MethodCall;
@@ -27,14 +28,18 @@ import java.util.Map;
 @AllArgsConstructor
 public abstract class SetMethodCall<T extends AbstractIdentifiableEntity> implements MethodCall {
 
+    @NonNull
     private String accountId;
+
     private String ifInState;
+
     private Map<String, T> create;
+
     private Map<String, Map<String, Object>> update;
+
     private String[] destroy;
 
     @SerializedName("#destroy")
     private Request.Invocation.ResultReference destroyReference;
-
 
 }

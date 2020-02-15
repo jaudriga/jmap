@@ -26,11 +26,17 @@ public abstract class QueryMethodCall<T extends AbstractIdentifiableEntity> impl
 
     @NonNull
     private String accountId;
+
     private Filter filter;
+
     private Comparator[] sort;
+
     private Long position;
+
     private String anchor;
+
     private Long anchorOffset;
+
     private Long limit;
 
     public QueryMethodCall(@NonNull String accountId, Filter<T> filter, Comparator[] sort, Long position, String anchor,

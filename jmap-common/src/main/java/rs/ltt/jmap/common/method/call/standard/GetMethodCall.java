@@ -18,6 +18,7 @@ package rs.ltt.jmap.common.method.call.standard;
 
 import com.google.gson.annotations.SerializedName;
 import lombok.AllArgsConstructor;
+import lombok.NonNull;
 import rs.ltt.jmap.common.Request;
 import rs.ltt.jmap.common.entity.AbstractIdentifiableEntity;
 import rs.ltt.jmap.common.method.MethodCall;
@@ -25,8 +26,11 @@ import rs.ltt.jmap.common.method.MethodCall;
 @AllArgsConstructor
 public abstract class GetMethodCall<T extends AbstractIdentifiableEntity> implements MethodCall {
 
+    @NonNull
     private String accountId;
+
     private String[] ids;
+
     protected String[] properties;
 
     @SerializedName("#ids")

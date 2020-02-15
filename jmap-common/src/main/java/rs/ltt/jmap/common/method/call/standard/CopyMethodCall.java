@@ -17,6 +17,7 @@
 package rs.ltt.jmap.common.method.call.standard;
 
 import lombok.AllArgsConstructor;
+import lombok.NonNull;
 import rs.ltt.jmap.common.entity.AbstractIdentifiableEntity;
 import rs.ltt.jmap.common.method.MethodCall;
 
@@ -25,12 +26,21 @@ import java.util.Map;
 @AllArgsConstructor
 public abstract class CopyMethodCall<T extends AbstractIdentifiableEntity> implements MethodCall {
 
+    @NonNull
     private String fromAccountId;
+
     private String ifFromInState;
+
+    @NonNull
     private String accountId;
+
     private String ifInState;
+
+    @NonNull
     private Map<String, T> create;
+
     private Boolean onSuccessDestroyOriginal;
+
     private String destroyFromIfInState;
 
 }
