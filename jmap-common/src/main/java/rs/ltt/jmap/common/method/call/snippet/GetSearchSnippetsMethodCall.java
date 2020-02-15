@@ -17,6 +17,7 @@
 package rs.ltt.jmap.common.method.call.snippet;
 
 import com.google.gson.annotations.SerializedName;
+import lombok.Builder;
 import rs.ltt.jmap.annotation.JmapMethod;
 import rs.ltt.jmap.common.Request;
 import rs.ltt.jmap.common.entity.Email;
@@ -34,16 +35,11 @@ public class GetSearchSnippetsMethodCall implements MethodCall {
     @SerializedName("#ids")
     private Request.Invocation.ResultReference idsReference;
 
-    public GetSearchSnippetsMethodCall(String accountId, Request.Invocation.ResultReference idsReference, Filter<Email> filter) {
-        this.accountId = accountId;
-        this.idsReference = idsReference;
-        this.filter = filter;
-    }
-
-    public GetSearchSnippetsMethodCall(String accountId, String[] ids, Filter<Email> filter) {
+    @Builder
+    public GetSearchSnippetsMethodCall(String accountId, String[] ids, Filter filter, Request.Invocation.ResultReference idsReference) {
         this.accountId = accountId;
         this.ids = ids;
         this.filter = filter;
+        this.idsReference = idsReference;
     }
-
 }
