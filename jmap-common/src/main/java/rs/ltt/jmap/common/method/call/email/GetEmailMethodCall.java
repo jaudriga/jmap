@@ -25,15 +25,19 @@ import rs.ltt.jmap.common.method.call.standard.GetMethodCall;
 @JmapMethod("Email/get")
 public class GetEmailMethodCall extends GetMethodCall<Email> {
 
+    private String[] bodyProperties;
     private Boolean fetchTextBodyValues;
     private Boolean fetchHTMLBodyValues;
     private Boolean fetchAllBodyValues;
     private Long maxBodyValueBytes;
 
     @Builder
-    public GetEmailMethodCall(String accountId, String[] ids, String[] properties, Request.Invocation.ResultReference idsReference,
-                              Boolean fetchTextBodyValues, Boolean fetchHTMLBodyValues, Boolean fetchAllBodyValues, Long maxBodyValueBytes) {
+    public GetEmailMethodCall(String accountId, String[] ids, String[] properties,
+                              Request.Invocation.ResultReference idsReference,
+                              String[] bodyProperties, Boolean fetchTextBodyValues, Boolean fetchHTMLBodyValues,
+                              Boolean fetchAllBodyValues, Long maxBodyValueBytes) {
         super(accountId, ids, properties, idsReference);
+        this.bodyProperties = bodyProperties;
         this.fetchTextBodyValues = fetchTextBodyValues;
         this.fetchHTMLBodyValues = fetchHTMLBodyValues;
         this.fetchAllBodyValues = fetchAllBodyValues;
