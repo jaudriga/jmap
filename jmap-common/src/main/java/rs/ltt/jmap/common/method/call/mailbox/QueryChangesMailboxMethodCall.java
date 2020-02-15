@@ -16,24 +16,28 @@
 
 package rs.ltt.jmap.common.method.call.mailbox;
 
+import lombok.Builder;
 import rs.ltt.jmap.annotation.JmapMethod;
+import rs.ltt.jmap.common.entity.Comparator;
 import rs.ltt.jmap.common.entity.Mailbox;
 import rs.ltt.jmap.common.entity.filter.Filter;
-import rs.ltt.jmap.common.entity.query.Query;
+import rs.ltt.jmap.common.entity.query.MailboxQuery;
 import rs.ltt.jmap.common.method.call.standard.QueryChangesMethodCall;
 
 @JmapMethod("Mailbox/queryChanges")
 public class QueryChangesMailboxMethodCall extends QueryChangesMethodCall<Mailbox> {
 
-    public QueryChangesMailboxMethodCall(String accountId, String sinceQueryState, Filter<Mailbox> filter) {
-        super(accountId, sinceQueryState, filter);
+    @Builder
+    public QueryChangesMailboxMethodCall(String accountId, Filter<Mailbox> filter, Comparator[] sort,
+                                         String sinceQueryState, Long maxChanges, String upToId, Boolean calculateTotal) {
+        super(accountId, filter, sort, sinceQueryState, maxChanges, upToId, calculateTotal);
     }
 
-    public QueryChangesMailboxMethodCall(String accountId, String sinceQueryState, Query<Mailbox> query) {
-        super(accountId, sinceQueryState, query);
-    }
-
-    public QueryChangesMailboxMethodCall(String accountId, String sinceQueryState) {
-        super(accountId, sinceQueryState);
+    public static class QueryChangesMailboxMethodCallBuilder {
+        public QueryChangesMailboxMethodCallBuilder query(MailboxQuery query) {
+            filter(query.filter);
+            sort(query.comparators);
+            return this;
+        }
     }
 }

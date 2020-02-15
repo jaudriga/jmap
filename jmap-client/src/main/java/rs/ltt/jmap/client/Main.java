@@ -98,7 +98,13 @@ public class Main {
                 Thread.sleep(5000);
                 final JmapClient.MultiCall updateMultiCall = client.newMultiCall();
 
-                Call emailQueryChangesCall = updateMultiCall.call(new QueryChangesEmailMethodCall(accountId, currentState, emailFilter));
+                Call emailQueryChangesCall = updateMultiCall.call(
+                        QueryChangesEmailMethodCall.builder()
+                                .accountId(accountId)
+                                .sinceQueryState(currentState)
+                                .filter(emailFilter)
+                                .build()
+                );
                 Future<MethodResponses> emailQueryChangesResponseFuture = emailQueryChangesCall.getMethodResponses();
 
                 Future<MethodResponses> emailGetAddedResponseFuture = updateMultiCall.call(new GetEmailMethodCall(accountId, emailQueryChangesCall.createResultReference(Request.Invocation.ResultReference.Path.ADDED_IDS))).getMethodResponses();

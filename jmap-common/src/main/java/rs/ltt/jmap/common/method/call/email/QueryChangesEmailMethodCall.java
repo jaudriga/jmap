@@ -16,7 +16,9 @@
 
 package rs.ltt.jmap.common.method.call.email;
 
+import lombok.Builder;
 import rs.ltt.jmap.annotation.JmapMethod;
+import rs.ltt.jmap.common.entity.Comparator;
 import rs.ltt.jmap.common.entity.Email;
 import rs.ltt.jmap.common.entity.query.EmailQuery;
 import rs.ltt.jmap.common.entity.filter.Filter;
@@ -27,16 +29,19 @@ public class QueryChangesEmailMethodCall extends QueryChangesMethodCall<Email> {
 
     private Boolean collapseThreads;
 
-    public QueryChangesEmailMethodCall(String accountId, String sinceQueryState, Filter<Email> filter) {
-        super(accountId, sinceQueryState, filter);
+    @Builder
+    public QueryChangesEmailMethodCall(String accountId, Filter<Email> filter, Comparator[] sort, String sinceQueryState,
+                                       Long maxChanges, String upToId, Boolean calculateTotal, Boolean collapseThreads) {
+        super(accountId, filter, sort, sinceQueryState, maxChanges, upToId, calculateTotal);
+        this.collapseThreads = collapseThreads;
     }
 
-    public QueryChangesEmailMethodCall(String accountId, String sinceQueryState, EmailQuery query) {
-        super(accountId, sinceQueryState, query);
-        this.collapseThreads = query.collapseThreads;
-    }
-
-    public QueryChangesEmailMethodCall(String accountId, String sinceQueryState) {
-        super(accountId, sinceQueryState);
+    public static class QueryChangesEmailMethodCallBuilder {
+        public QueryChangesEmailMethodCallBuilder query(EmailQuery query) {
+            filter(query.filter);
+            sort(query.comparators);
+            collapseThreads(query.collapseThreads);
+            return this;
+        }
     }
 }

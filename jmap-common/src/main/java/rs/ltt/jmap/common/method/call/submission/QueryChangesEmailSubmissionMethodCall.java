@@ -16,23 +16,28 @@
 
 package rs.ltt.jmap.common.method.call.submission;
 
+import lombok.Builder;
 import rs.ltt.jmap.annotation.JmapMethod;
+import rs.ltt.jmap.common.entity.Comparator;
 import rs.ltt.jmap.common.entity.EmailSubmission;
 import rs.ltt.jmap.common.entity.filter.Filter;
-import rs.ltt.jmap.common.entity.query.Query;
+import rs.ltt.jmap.common.entity.query.EmailSubmissionQuery;
 import rs.ltt.jmap.common.method.call.standard.QueryChangesMethodCall;
 
 @JmapMethod("EmailSubmission/queryChanges")
 public class QueryChangesEmailSubmissionMethodCall extends QueryChangesMethodCall<EmailSubmission> {
-    public QueryChangesEmailSubmissionMethodCall(String accountId, String sinceQueryState, Filter<EmailSubmission> filter) {
-        super(accountId, sinceQueryState, filter);
+
+    @Builder
+    public QueryChangesEmailSubmissionMethodCall(String accountId, Filter<EmailSubmission> filter, Comparator[] sort,
+                                                 String sinceQueryState, Long maxChanges, String upToId, Boolean calculateTotal) {
+        super(accountId, filter, sort, sinceQueryState, maxChanges, upToId, calculateTotal);
     }
 
-    public QueryChangesEmailSubmissionMethodCall(String accountId, String sinceQueryState, Query<EmailSubmission> query) {
-        super(accountId, sinceQueryState, query);
-    }
-
-    public QueryChangesEmailSubmissionMethodCall(String accountId, String sinceQueryState) {
-        super(accountId, sinceQueryState);
+    public static class QueryChangesEmailSubmissionMethodCallBuilder {
+        public QueryChangesEmailSubmissionMethodCallBuilder query(EmailSubmissionQuery query) {
+            filter(query.filter);
+            sort(query.comparators);
+            return this;
+        }
     }
 }

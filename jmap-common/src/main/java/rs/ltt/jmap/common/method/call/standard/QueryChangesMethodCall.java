@@ -16,12 +16,13 @@
 
 package rs.ltt.jmap.common.method.call.standard;
 
+import lombok.AllArgsConstructor;
 import rs.ltt.jmap.common.entity.AbstractIdentifiableEntity;
 import rs.ltt.jmap.common.entity.Comparator;
-import rs.ltt.jmap.common.entity.query.Query;
 import rs.ltt.jmap.common.entity.filter.Filter;
 import rs.ltt.jmap.common.method.MethodCall;
 
+@AllArgsConstructor
 public abstract class QueryChangesMethodCall<T extends AbstractIdentifiableEntity> implements MethodCall {
 
     private String accountId;
@@ -31,23 +32,5 @@ public abstract class QueryChangesMethodCall<T extends AbstractIdentifiableEntit
     private Long maxChanges;
     private String upToId;
     private Boolean calculateTotal;
-
-    public QueryChangesMethodCall(String accountId, String sinceQueryState, final Filter<T> filter) {
-        this.accountId = accountId;
-        this.sinceQueryState = sinceQueryState;
-        this.filter = filter;
-    }
-
-    public QueryChangesMethodCall(String accountId, String sinceQueryState, final Query<T> query) {
-        this.accountId = accountId;
-        this.sinceQueryState = sinceQueryState;
-        this.filter = query.filter;
-        this.sort = query.comparators;
-    }
-
-    public QueryChangesMethodCall(String accountId, String sinceQueryState) {
-        this.accountId = accountId;
-        this.sinceQueryState = sinceQueryState;
-    }
 
 }

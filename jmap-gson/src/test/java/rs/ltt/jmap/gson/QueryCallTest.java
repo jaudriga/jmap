@@ -25,7 +25,13 @@ public class QueryCallTest extends AbstractGsonTest {
                         .query(query)
                         .build()
         ));
-        Assert.assertEquals(readResourceAsString("request/query-changes-email.json"), gson.toJson(new QueryChangesEmailMethodCall("accountId", "first", query)));
+        Assert.assertEquals(readResourceAsString("request/query-changes-email.json"), gson.toJson(
+                QueryChangesEmailMethodCall.builder()
+                        .accountId("accountId")
+                        .sinceQueryState("first")
+                        .query(query)
+                        .build()
+        ));
     }
 
 }
