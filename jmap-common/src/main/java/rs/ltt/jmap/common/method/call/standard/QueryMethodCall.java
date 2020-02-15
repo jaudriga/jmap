@@ -39,8 +39,10 @@ public abstract class QueryMethodCall<T extends AbstractIdentifiableEntity> impl
 
     private Long limit;
 
+    private Boolean calculateTotal;
+
     public QueryMethodCall(@NonNull String accountId, Filter<T> filter, Comparator[] sort, Long position, String anchor,
-                           Long anchorOffset, Long limit) {
+                           Long anchorOffset, Long limit, Boolean calculateTotal) {
         this.accountId = accountId;
         this.filter = filter;
         this.sort = sort;
@@ -52,5 +54,6 @@ public abstract class QueryMethodCall<T extends AbstractIdentifiableEntity> impl
             this.anchorOffset = null;
         }
         this.limit = limit;
+        this.calculateTotal = calculateTotal;
     }
 }

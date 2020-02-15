@@ -30,8 +30,9 @@ public class QueryEmailSubmissionMethodCall extends QueryMethodCall<EmailSubmiss
 
     @Builder
     public QueryEmailSubmissionMethodCall(@NonNull String accountId, Filter<EmailSubmission> filter, Comparator[] sort,
-                                          Long position, String anchor, Long anchorOffset, Long limit) {
-        super(accountId, filter, sort, position, anchor, anchorOffset, limit);
+                                          Long position, String anchor, Long anchorOffset, Long limit,
+                                          Boolean calculateTotal) {
+        super(accountId, filter, sort, position, anchor, anchorOffset, limit, calculateTotal);
     }
 
     public static class QueryEmailSubmissionMethodCallBuilder {
