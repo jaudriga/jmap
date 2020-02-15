@@ -16,6 +16,7 @@
 
 package rs.ltt.jmap.common.method.call.snippet;
 
+import com.google.common.base.Preconditions;
 import com.google.gson.annotations.SerializedName;
 import lombok.Builder;
 import lombok.NonNull;
@@ -40,6 +41,7 @@ public class GetSearchSnippetsMethodCall implements MethodCall {
 
     @Builder
     public GetSearchSnippetsMethodCall(String accountId, String[] ids, Filter filter, Request.Invocation.ResultReference idsReference) {
+        Preconditions.checkArgument(ids == null || idsReference == null, "Can't set both 'ids' and 'idsReference'");
         this.accountId = accountId;
         this.ids = ids;
         this.filter = filter;

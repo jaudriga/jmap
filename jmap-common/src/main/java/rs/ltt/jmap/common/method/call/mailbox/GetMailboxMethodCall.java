@@ -16,6 +16,7 @@
 
 package rs.ltt.jmap.common.method.call.mailbox;
 
+import com.google.common.base.Preconditions;
 import com.google.gson.annotations.SerializedName;
 import lombok.Builder;
 import rs.ltt.jmap.annotation.JmapMethod;
@@ -33,6 +34,10 @@ public class GetMailboxMethodCall extends GetMethodCall<Mailbox> {
     public GetMailboxMethodCall(String accountId, String[] ids, String[] properties, Request.Invocation.ResultReference idsReference,
                                 Request.Invocation.ResultReference propertiesReference) {
         super(accountId, ids, properties, idsReference);
+        Preconditions.checkArgument(
+                properties == null || propertiesReference == null,
+                "Can't set both 'properties' and 'propertiesReference'"
+        );
         this.propertiesReference = propertiesReference;
     }
 }

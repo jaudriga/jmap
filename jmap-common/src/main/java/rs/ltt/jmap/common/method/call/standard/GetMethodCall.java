@@ -16,6 +16,7 @@
 
 package rs.ltt.jmap.common.method.call.standard;
 
+import com.google.common.base.Preconditions;
 import com.google.gson.annotations.SerializedName;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
@@ -23,7 +24,6 @@ import rs.ltt.jmap.common.Request;
 import rs.ltt.jmap.common.entity.AbstractIdentifiableEntity;
 import rs.ltt.jmap.common.method.MethodCall;
 
-@AllArgsConstructor
 public abstract class GetMethodCall<T extends AbstractIdentifiableEntity> implements MethodCall {
 
     @NonNull
@@ -36,4 +36,11 @@ public abstract class GetMethodCall<T extends AbstractIdentifiableEntity> implem
     @SerializedName("#ids")
     private Request.Invocation.ResultReference idsReference;
 
+    public GetMethodCall(@NonNull String accountId, String[] ids, String[] properties, Request.Invocation.ResultReference idsReference) {
+        Preconditions.checkArgument(ids == null || idsReference == null, "Can't set both 'ids' and 'idsReference'");
+        this.accountId = accountId;
+        this.ids = ids;
+        this.properties = properties;
+        this.idsReference = idsReference;
+    }
 }
