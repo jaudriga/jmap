@@ -28,19 +28,16 @@ public class GetSnippetMethodResponse implements MethodResponse {
 
     protected String accountId;
 
-    protected String state;
+    protected SearchSnippet[] list;
 
     protected String[] notFound;
-
-    protected SearchSnippet[] list;
 
     @Override
     public String toString() {
         return MoreObjects.toStringHelper(this)
                 .add("accountId", accountId)
-                .add("state", state)
-                .add("notFound", notFound)
                 .add("list", list)
+                .add("notFound", notFound)
                 .toString();
     }
 }

@@ -32,19 +32,23 @@ public class GetSearchSnippetsMethodCall implements MethodCall {
     @NonNull
     private String accountId;
 
-    private String[] ids;
-
     private Filter filter;
 
-    @SerializedName("#ids")
-    private Request.Invocation.ResultReference idsReference;
+    private String[] emailIds;
+
+    @SerializedName("#emailIds")
+    private Request.Invocation.ResultReference emailIdsReference;
 
     @Builder
-    public GetSearchSnippetsMethodCall(String accountId, String[] ids, Filter filter, Request.Invocation.ResultReference idsReference) {
-        Preconditions.checkArgument(ids == null || idsReference == null, "Can't set both 'ids' and 'idsReference'");
+    public GetSearchSnippetsMethodCall(String accountId, String[] emailIds, Filter<Email> filter,
+                                       Request.Invocation.ResultReference emailIdsReference) {
+        Preconditions.checkArgument(
+                emailIds == null || emailIdsReference == null,
+                "Can't set both 'emailIds' and 'emailIdsReference'"
+        );
         this.accountId = accountId;
-        this.ids = ids;
+        this.emailIds = emailIds;
         this.filter = filter;
-        this.idsReference = idsReference;
+        this.emailIdsReference = emailIdsReference;
     }
 }
