@@ -23,6 +23,6 @@ import rs.ltt.jmap.common.method.call.standard.GetMethodCall;
 public class GetDummyMethodCall extends GetMethodCall<Dummy> {
 
     public GetDummyMethodCall(String accountId) {
-        super(accountId);
+        super(accountId, null, null, null);
     }
 }

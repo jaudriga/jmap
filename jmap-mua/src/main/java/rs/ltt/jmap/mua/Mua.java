@@ -125,7 +125,9 @@ public class Mua {
 
     private ListenableFuture<Status> loadIdentities(JmapClient.MultiCall multiCall) {
         final SettableFuture<Status> settableFuture = SettableFuture.create();
-        final ListenableFuture<MethodResponses> responseFuture = multiCall.call(new GetIdentityMethodCall(accountId)).getMethodResponses();
+        final ListenableFuture<MethodResponses> responseFuture = multiCall.call(
+                GetIdentityMethodCall.builder().accountId(accountId).build()
+        ).getMethodResponses();
         responseFuture.addListener(new Runnable() {
             @Override
             public void run() {
@@ -213,7 +215,9 @@ public class Mua {
     private ListenableFuture<Status> loadMailboxes(JmapClient.MultiCall multiCall) {
         LOGGER.info("Fetching mailboxes");
         final SettableFuture<Status> settableFuture = SettableFuture.create();
-        final ListenableFuture<MethodResponses> getMailboxMethodResponsesFuture = multiCall.call(new GetMailboxMethodCall(accountId)).getMethodResponses();
+        final ListenableFuture<MethodResponses> getMailboxMethodResponsesFuture = multiCall.call(
+                GetMailboxMethodCall.builder().accountId(accountId).build()
+        ).getMethodResponses();
         getMailboxMethodResponsesFuture.addListener(new Runnable() {
             @Override
             public void run() {
@@ -1325,11 +1329,11 @@ public class Mua {
         );
         final ListenableFuture<MethodResponses> queryResponsesFuture = queryCall.getMethodResponses();
         final ListenableFuture<MethodResponses> getThreadIdsResponsesFuture = multiCall.call(
-                new GetEmailMethodCall(
-                        accountId,
-                        queryCall.createResultReference(Request.Invocation.ResultReference.Path.IDS),
-                        Email.Properties.THREAD_ID
-                )
+                GetEmailMethodCall.builder()
+                        .accountId(accountId)
+                        .idsReference(queryCall.createResultReference(Request.Invocation.ResultReference.Path.IDS))
+                        .properties(Email.Properties.THREAD_ID)
+                        .build()
         ).getMethodResponses();
 
         queryResponsesFuture.addListener(new Runnable() {
@@ -1414,11 +1418,11 @@ public class Mua {
         );
         final ListenableFuture<MethodResponses> queryChangesResponsesFuture = queryChangesCall.getMethodResponses();
         final ListenableFuture<MethodResponses> getThreadIdResponsesFuture = multiCall.call(
-                new GetEmailMethodCall(
-                        accountId,
-                        queryChangesCall.createResultReference(Request.Invocation.ResultReference.Path.ADDED_IDS),
-                        Email.Properties.THREAD_ID
-                )
+                GetEmailMethodCall.builder()
+                        .accountId(accountId)
+                        .idsReference(queryChangesCall.createResultReference(Request.Invocation.ResultReference.Path.ADDED_IDS))
+                        .properties(Email.Properties.THREAD_ID)
+                        .build()
         ).getMethodResponses();
 
         queryChangesResponsesFuture.addListener(new Runnable() {
@@ -1512,11 +1516,11 @@ public class Mua {
         );
         final ListenableFuture<MethodResponses> queryResponsesFuture = queryCall.getMethodResponses();
         final Call threadIdsCall = multiCall.call(
-                new GetEmailMethodCall(
-                        accountId,
-                        queryCall.createResultReference(Request.Invocation.ResultReference.Path.IDS),
-                        Email.Properties.THREAD_ID
-                )
+                GetEmailMethodCall.builder()
+                        .accountId(accountId)
+                        .idsReference(queryCall.createResultReference(Request.Invocation.ResultReference.Path.IDS))
+                        .properties(Email.Properties.THREAD_ID)
+                        .build()
         );
         final ListenableFuture<MethodResponses> getThreadIdsResponsesFuture = threadIdsCall.getMethodResponses();
 
@@ -1524,9 +1528,20 @@ public class Mua {
         final ListenableFuture<MethodResponses> getThreadsResponsesFuture;
         final ListenableFuture<MethodResponses> getEmailResponsesFuture;
         if (queryStateWrapper.objectsState.threadState == null && queryStateWrapper.objectsState.emailState == null) {
-            final Call threadCall = multiCall.call(new GetThreadMethodCall(accountId, threadIdsCall.createResultReference(Request.Invocation.ResultReference.Path.LIST_THREAD_IDS)));
+            final Call threadCall = multiCall.call(
+                    GetThreadMethodCall.builder()
+                            .accountId(accountId)
+                            .idsReference(threadIdsCall.createResultReference(Request.Invocation.ResultReference.Path.LIST_THREAD_IDS))
+                            .build()
+            );
             getThreadsResponsesFuture = threadCall.getMethodResponses();
-            getEmailResponsesFuture = multiCall.call(new GetEmailMethodCall(accountId, threadCall.createResultReference(Request.Invocation.ResultReference.Path.LIST_EMAIL_IDS), true)).getMethodResponses();
+            getEmailResponsesFuture = multiCall.call(
+                    GetEmailMethodCall.builder()
+                            .accountId(accountId)
+                            .idsReference(threadCall.createResultReference(Request.Invocation.ResultReference.Path.LIST_EMAIL_IDS))
+                            .fetchTextBodyValues(true)
+                            .build()
+            ).getMethodResponses();
         } else {
             getThreadsResponsesFuture = null;
             getEmailResponsesFuture = null;
@@ -1596,9 +1611,20 @@ public class Mua {
         final JmapClient.MultiCall multiCall = jmapClient.newMultiCall();
         final ListenableFuture<Status> updateThreadsFuture = updateThreads(missing.threadState, multiCall);
         final ListenableFuture<Status> updateEmailsFuture = updateEmails(missing.emailState, multiCall);
-        final Call threadsCall = multiCall.call(new GetThreadMethodCall(accountId, missing.threadIds.toArray(new String[0])));
+        final Call threadsCall = multiCall.call(
+                GetThreadMethodCall.builder()
+                        .accountId(accountId)
+                        .ids(missing.threadIds.toArray(new String[0]))
+                        .build()
+        );
         final ListenableFuture<MethodResponses> getThreadsResponsesFuture = threadsCall.getMethodResponses();
-        final ListenableFuture<MethodResponses> getEmailsResponsesFuture = multiCall.call(new GetEmailMethodCall(accountId, threadsCall.createResultReference(Request.Invocation.ResultReference.Path.LIST_EMAIL_IDS), true)).getMethodResponses();
+        final ListenableFuture<MethodResponses> getEmailsResponsesFuture = multiCall.call(
+                GetEmailMethodCall.builder()
+                        .accountId(accountId)
+                        .idsReference(threadsCall.createResultReference(Request.Invocation.ResultReference.Path.LIST_EMAIL_IDS))
+                        .fetchTextBodyValues(true)
+                        .build()
+        ).getMethodResponses();
         multiCall.execute();
         getThreadsResponsesFuture.addListener(new Runnable() {
             @Override

@@ -17,6 +17,7 @@
 package rs.ltt.jmap.common.method.call.mailbox;
 
 import com.google.gson.annotations.SerializedName;
+import lombok.Builder;
 import rs.ltt.jmap.annotation.JmapMethod;
 import rs.ltt.jmap.common.Request;
 import rs.ltt.jmap.common.entity.Mailbox;
@@ -28,20 +29,10 @@ public class GetMailboxMethodCall extends GetMethodCall<Mailbox> {
     @SerializedName("#properties")
     private Request.Invocation.ResultReference propertiesReference;
 
-    public GetMailboxMethodCall(String accountId) {
-        super(accountId);
-    }
-
-    public GetMailboxMethodCall(String accountId, Request.Invocation.ResultReference resultReference) {
-        super(accountId, resultReference);
-    }
-
-    public GetMailboxMethodCall(String accountId, Request.Invocation.ResultReference idsReference, Request.Invocation.ResultReference propertiesReference) {
-        super(accountId, idsReference);
+    @Builder
+    public GetMailboxMethodCall(String accountId, String[] ids, String[] properties, Request.Invocation.ResultReference idsReference,
+                                Request.Invocation.ResultReference propertiesReference) {
+        super(accountId, ids, properties, idsReference);
         this.propertiesReference = propertiesReference;
-    }
-
-    public GetMailboxMethodCall(String accountId, String[] ids) {
-        super(accountId, ids);
     }
 }

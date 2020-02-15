@@ -84,7 +84,12 @@ public class Main {
             );
             Future<MethodResponses> emailQueryResponseFuture = emailQueryCall.getMethodResponses();
 
-            Future<MethodResponses> emailGetResponseFuture = multiCall.call(new GetEmailMethodCall(accountId, emailQueryCall.createResultReference(Request.Invocation.ResultReference.Path.IDS))).getMethodResponses();
+            Future<MethodResponses> emailGetResponseFuture = multiCall.call(
+                    GetEmailMethodCall.builder()
+                            .accountId(accountId)
+                            .idsReference(emailQueryCall.createResultReference(Request.Invocation.ResultReference.Path.IDS))
+                            .build()
+            ).getMethodResponses();
 
             multiCall.execute();
             final QueryEmailMethodResponse emailQueryResponse = emailQueryResponseFuture.get().getMain(QueryEmailMethodResponse.class);
@@ -107,7 +112,12 @@ public class Main {
                 );
                 Future<MethodResponses> emailQueryChangesResponseFuture = emailQueryChangesCall.getMethodResponses();
 
-                Future<MethodResponses> emailGetAddedResponseFuture = updateMultiCall.call(new GetEmailMethodCall(accountId, emailQueryChangesCall.createResultReference(Request.Invocation.ResultReference.Path.ADDED_IDS))).getMethodResponses();
+                Future<MethodResponses> emailGetAddedResponseFuture = updateMultiCall.call(
+                        GetEmailMethodCall.builder()
+                                .accountId(accountId)
+                                .idsReference(emailQueryChangesCall.createResultReference(Request.Invocation.ResultReference.Path.ADDED_IDS))
+                                .build()
+                ).getMethodResponses();
 
                 updateMultiCall.execute();
                 QueryChangesEmailMethodResponse emailQueryChangesResponse = emailQueryChangesResponseFuture.get().getMain(QueryChangesEmailMethodResponse.class);

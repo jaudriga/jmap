@@ -71,7 +71,9 @@ public class HttpJmapClientTest {
         );
 
 
-        final ListenableFuture<MethodResponses> future = jmapClient.call(new GetMailboxMethodCall(ACCOUNT_ID));
+        final ListenableFuture<MethodResponses> future = jmapClient.call(
+                GetMailboxMethodCall.builder().accountId(ACCOUNT_ID).build()
+        );
 
 
         final GetMailboxMethodResponse mailboxResponse = future.get().getMain(GetMailboxMethodResponse.class);
@@ -99,7 +101,9 @@ public class HttpJmapClientTest {
         );
 
 
-        ListenableFuture<MethodResponses> future = jmapClient.call(new GetMailboxMethodCall(ACCOUNT_ID));
+        ListenableFuture<MethodResponses> future = jmapClient.call(
+                GetMailboxMethodCall.builder().accountId(ACCOUNT_ID).build()
+        );
 
 
         try {
@@ -129,7 +133,9 @@ public class HttpJmapClientTest {
 
         thrown.expect(ExecutionException.class);
         thrown.expectCause(CoreMatchers.<Throwable>instanceOf(MethodResponseNotFoundException.class));
-        jmapClient.call(new GetMailboxMethodCall(ACCOUNT_ID)).get();
+        jmapClient.call(
+                GetMailboxMethodCall.builder().accountId(ACCOUNT_ID).build()
+        ).get();
 
         server.shutdown();
     }
@@ -168,7 +174,9 @@ public class HttpJmapClientTest {
                 server.url(WELL_KNOWN_PATH)
         );
 
-        final ListenableFuture<MethodResponses> mailboxFuture = jmapClient.call(new GetMailboxMethodCall(ACCOUNT_ID));
+        final ListenableFuture<MethodResponses> mailboxFuture = jmapClient.call(
+                GetMailboxMethodCall.builder().accountId(ACCOUNT_ID).build()
+        );
 
         // Wait for result
         mailboxFuture.get();

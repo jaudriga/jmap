@@ -41,16 +41,20 @@ public class UpdateUtil {
                         .build()
         );
         final ListenableFuture<MethodResponses> changes = changesCallInfo.getMethodResponses();
-        final ListenableFuture<MethodResponses> created = multiCall.call(new GetEmailMethodCall(
-                accountId,
-                changesCallInfo.createResultReference(Request.Invocation.ResultReference.Path.CREATED),
-                true
-        )).getMethodResponses();
-        final ListenableFuture<MethodResponses> updated = multiCall.call(new GetEmailMethodCall(
-                accountId,
-                changesCallInfo.createResultReference(Request.Invocation.ResultReference.Path.UPDATED),
-                Email.Properties.MUTABLE
-        )).getMethodResponses();
+        final ListenableFuture<MethodResponses> created = multiCall.call(
+                GetEmailMethodCall.builder()
+                        .accountId(accountId)
+                        .idsReference(changesCallInfo.createResultReference(Request.Invocation.ResultReference.Path.CREATED))
+                        .fetchTextBodyValues(true)
+                        .build()
+        ).getMethodResponses();
+        final ListenableFuture<MethodResponses> updated = multiCall.call(
+                GetEmailMethodCall.builder()
+                        .accountId(accountId)
+                        .idsReference(changesCallInfo.createResultReference(Request.Invocation.ResultReference.Path.UPDATED))
+                        .properties(Email.Properties.MUTABLE)
+                        .build()
+        ).getMethodResponses();
 
         return new MethodResponsesFuture(changes, created, updated);
     }
@@ -63,14 +67,18 @@ public class UpdateUtil {
                         .build()
         );
         final ListenableFuture<MethodResponses> changes = changesCallInfo.getMethodResponses();
-        final ListenableFuture<MethodResponses> created = multiCall.call(new GetIdentityMethodCall(
-                accountId,
-                changesCallInfo.createResultReference(Request.Invocation.ResultReference.Path.CREATED)
-        )).getMethodResponses();
-        final ListenableFuture<MethodResponses> updated = multiCall.call(new GetIdentityMethodCall(
-                accountId,
-                changesCallInfo.createResultReference(Request.Invocation.ResultReference.Path.UPDATED)
-        )).getMethodResponses();
+        final ListenableFuture<MethodResponses> created = multiCall.call(
+                GetIdentityMethodCall.builder()
+                        .accountId(accountId)
+                        .idsReference(changesCallInfo.createResultReference(Request.Invocation.ResultReference.Path.CREATED))
+                        .build()
+        ).getMethodResponses();
+        final ListenableFuture<MethodResponses> updated = multiCall.call(
+                GetIdentityMethodCall.builder()
+                        .accountId(accountId)
+                        .idsReference(changesCallInfo.createResultReference(Request.Invocation.ResultReference.Path.UPDATED))
+                        .build()
+        ).getMethodResponses();
 
         return new MethodResponsesFuture(changes, created, updated);
     }
@@ -83,15 +91,19 @@ public class UpdateUtil {
                         .build()
         );
         final ListenableFuture<MethodResponses> changes = changesCallInfo.getMethodResponses();
-        final ListenableFuture<MethodResponses> created = multiCall.call(new GetMailboxMethodCall(
-                accountId,
-                changesCallInfo.createResultReference(Request.Invocation.ResultReference.Path.CREATED)
-        )).getMethodResponses();
-        final ListenableFuture<MethodResponses> updated = multiCall.call(new GetMailboxMethodCall(
-                accountId,
-                changesCallInfo.createResultReference(Request.Invocation.ResultReference.Path.UPDATED),
-                changesCallInfo.createResultReference(Request.Invocation.ResultReference.Path.UPDATED_PROPERTIES)
-        )).getMethodResponses();
+        final ListenableFuture<MethodResponses> created = multiCall.call(
+                GetMailboxMethodCall.builder()
+                        .accountId(accountId)
+                        .idsReference(changesCallInfo.createResultReference(Request.Invocation.ResultReference.Path.CREATED))
+                        .build()
+        ).getMethodResponses();
+        final ListenableFuture<MethodResponses> updated = multiCall.call(
+                GetMailboxMethodCall.builder()
+                        .accountId(accountId)
+                        .idsReference(changesCallInfo.createResultReference(Request.Invocation.ResultReference.Path.UPDATED))
+                        .propertiesReference(changesCallInfo.createResultReference(Request.Invocation.ResultReference.Path.UPDATED_PROPERTIES))
+                        .build()
+        ).getMethodResponses();
 
         return new MethodResponsesFuture(changes, created, updated);
     }
@@ -104,14 +116,18 @@ public class UpdateUtil {
                         .build()
         );
         final ListenableFuture<MethodResponses> changes = changesCallInfo.getMethodResponses();
-        final ListenableFuture<MethodResponses> created = multiCall.call(new GetThreadMethodCall(
-                accountId,
-                changesCallInfo.createResultReference(Request.Invocation.ResultReference.Path.CREATED)
-        )).getMethodResponses();
-        final ListenableFuture<MethodResponses> updated = multiCall.call(new GetThreadMethodCall(
-                accountId,
-                changesCallInfo.createResultReference(Request.Invocation.ResultReference.Path.UPDATED)
-        )).getMethodResponses();
+        final ListenableFuture<MethodResponses> created = multiCall.call(
+                GetThreadMethodCall.builder()
+                        .accountId(accountId)
+                        .idsReference(changesCallInfo.createResultReference(Request.Invocation.ResultReference.Path.CREATED))
+                        .build()
+        ).getMethodResponses();
+        final ListenableFuture<MethodResponses> updated = multiCall.call(
+                GetThreadMethodCall.builder()
+                        .accountId(accountId)
+                        .idsReference(changesCallInfo.createResultReference(Request.Invocation.ResultReference.Path.UPDATED))
+                        .build()
+        ).getMethodResponses();
 
         return new MethodResponsesFuture(changes, created, updated);
     }

@@ -16,6 +16,7 @@
 
 package rs.ltt.jmap.common.method.call.email;
 
+import lombok.Builder;
 import rs.ltt.jmap.annotation.JmapMethod;
 import rs.ltt.jmap.common.Request;
 import rs.ltt.jmap.common.entity.Email;
@@ -29,31 +30,13 @@ public class GetEmailMethodCall extends GetMethodCall<Email> {
     private Boolean fetchAllBodyValues;
     private Long maxBodyValueBytes;
 
-    public GetEmailMethodCall(String accountId, Request.Invocation.ResultReference resultReference) {
-        super(accountId, resultReference);
-    }
-
-    public GetEmailMethodCall(String accountId, Request.Invocation.ResultReference resultReference, boolean fetchTextBodyValues) {
-        super(accountId, resultReference);
+    @Builder
+    public GetEmailMethodCall(String accountId, String[] ids, String[] properties, Request.Invocation.ResultReference idsReference,
+                              Boolean fetchTextBodyValues, Boolean fetchHTMLBodyValues, Boolean fetchAllBodyValues, Long maxBodyValueBytes) {
+        super(accountId, ids, properties, idsReference);
         this.fetchTextBodyValues = fetchTextBodyValues;
-    }
-
-    public GetEmailMethodCall(String accountId, String[] ids) {
-        super(accountId, ids);
-    }
-
-    public GetEmailMethodCall(String accountId, String[] ids, boolean fetchTextBodyValues) {
-        super(accountId, ids);
-        this.fetchTextBodyValues = fetchTextBodyValues;
-    }
-
-    public GetEmailMethodCall(String accountId, Request.Invocation.ResultReference resultReference, String[] properties) {
-        super(accountId, resultReference);
-        this.properties = properties;
-    }
-
-    public GetEmailMethodCall(String accountId, String[] ids, String[] properties) {
-        super(accountId, ids);
-        this.properties = properties;
+        this.fetchHTMLBodyValues = fetchHTMLBodyValues;
+        this.fetchAllBodyValues = fetchAllBodyValues;
+        this.maxBodyValueBytes = maxBodyValueBytes;
     }
 }

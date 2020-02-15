@@ -16,6 +16,7 @@
 
 package rs.ltt.jmap.common.method.call.identity;
 
+import lombok.Builder;
 import rs.ltt.jmap.annotation.JmapMethod;
 import rs.ltt.jmap.common.Request;
 import rs.ltt.jmap.common.entity.Identity;
@@ -24,16 +25,8 @@ import rs.ltt.jmap.common.method.call.standard.GetMethodCall;
 @JmapMethod("Identity/get")
 public class GetIdentityMethodCall extends GetMethodCall<Identity> {
 
-    public GetIdentityMethodCall(String accountId, Request.Invocation.ResultReference resultReference) {
-        super(accountId, resultReference);
+    @Builder
+    public GetIdentityMethodCall(String accountId, String[] ids, String[] properties, Request.Invocation.ResultReference idsReference) {
+        super(accountId, ids, properties, idsReference);
     }
-
-    public GetIdentityMethodCall(String accountId, String[] ids) {
-        super(accountId, ids);
-    }
-
-    public GetIdentityMethodCall(String accountId) {
-        super(accountId);
-    }
-
 }

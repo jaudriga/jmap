@@ -16,13 +16,17 @@
 
 package rs.ltt.jmap.common.method.call.submission;
 
+import lombok.Builder;
 import rs.ltt.jmap.annotation.JmapMethod;
+import rs.ltt.jmap.common.Request;
 import rs.ltt.jmap.common.entity.EmailSubmission;
 import rs.ltt.jmap.common.method.call.standard.GetMethodCall;
 
 @JmapMethod("EmailSubmission/get")
 public class GetEmailSubmissionMethodCall extends GetMethodCall<EmailSubmission> {
-    public GetEmailSubmissionMethodCall(String accountId) {
-        super(accountId);
+
+    @Builder
+    public GetEmailSubmissionMethodCall(String accountId, String[] ids, String[] properties, Request.Invocation.ResultReference idsReference) {
+        super(accountId, ids, properties, idsReference);
     }
 }

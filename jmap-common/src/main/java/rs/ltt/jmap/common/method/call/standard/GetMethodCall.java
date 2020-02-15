@@ -17,10 +17,12 @@
 package rs.ltt.jmap.common.method.call.standard;
 
 import com.google.gson.annotations.SerializedName;
+import lombok.AllArgsConstructor;
 import rs.ltt.jmap.common.Request;
 import rs.ltt.jmap.common.entity.AbstractIdentifiableEntity;
 import rs.ltt.jmap.common.method.MethodCall;
 
+@AllArgsConstructor
 public abstract class GetMethodCall<T extends AbstractIdentifiableEntity> implements MethodCall {
 
     private String accountId;
@@ -29,20 +31,5 @@ public abstract class GetMethodCall<T extends AbstractIdentifiableEntity> implem
 
     @SerializedName("#ids")
     private Request.Invocation.ResultReference idsReference;
-
-    public GetMethodCall(String accountId, Request.Invocation.ResultReference idsReference) {
-        this.accountId = accountId;
-        this.idsReference = idsReference;
-    }
-
-
-    public GetMethodCall(String accountId, String[] ids) {
-        this.accountId = accountId;
-        this.ids = ids;
-    }
-
-    public GetMethodCall(String accountId) {
-        this.accountId = accountId;
-    }
 
 }
