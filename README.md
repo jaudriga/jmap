@@ -5,7 +5,7 @@ A library to synchronize data between a client and a server using the JSON Meta 
 
 The library is written in Java 7 to provide full compatibility with Android. It uses [GSON](https://github.com/google/gson) for JSON serialization and deserialization and makes heavy use of [Guava](https://github.com/google/guava) including its Futures. 
 
-Entities (Mailbox, Email, EmailSubmission, …) are annotated with Project Lombok’s `@Getter` and `@Builder` to make them immutable.
+Entities (Mailbox, Email, EmailSubmission, …) and method calls are annotated with Project Lombok’s `@Getter` and `@Builder` to make them immutable.
 
 **This library is work in progress. Not *all* specified methods and entities have been implemented yet. They will be added on a *as needed* basis. If you want to use this library and need a specific method you can add it very easily. Adding a new method is as simple as looking at the spec and creating a POJO that represents the data structure.**
 
@@ -40,14 +40,14 @@ A JMAP client library to make JMAP method calls and process the responses. It ha
 #### Dependencies
 ##### Gradle
 ```
-implementation 'rs.ltt.jmap:jmap-client:0.2.2'
+implementation 'rs.ltt.jmap:jmap-client:0.3.0'
 ```
 ##### Maven
 ```xml
 <dependency>
   <groupId>rs.ltt.jmap</groupId>
   <artifactId>jmap-client</artifactId>
-  <version>0.2.2</version>
+  <version>0.3.0</version>
 </dependency>
 ```
 
@@ -59,7 +59,9 @@ JmapClient client = new JmapClient("user@example.com", "password");
 Session session = client.getSession().get();
 String accountId = session.getPrimaryAccount(MailAccountCapability.class);
 
-Future<MethodResponses> future = client.call(new GetMailboxMethodCall(accountId));
+Future<MethodResponses> future = client.call(
+    GetMailboxMethodCall.builder().accountId(accountId).build()
+);
 
 GetMailboxMethodResponse mailboxMethodResponse = future.get().getMain(GetMailboxMethodResponse.class);
 
@@ -80,15 +82,18 @@ JmapClient.MultiCall multiCall = client.newMultiCall();
 
 //create a query request
 Call queryEmailCall = multiCall.call(
-        new QueryEmailMethodCall(accountId, EmailQuery.unfiltered())
+        QueryEmailMethodCall.builder()
+                .accountId(accountId)
+                .query(EmailQuery.unfiltered())
+                .build()
 );
 
 //create a get email request with a back reference to the IDs found in the previous request
 Call getEmailCall = multiCall.call(
-        new GetEmailMethodCall(
-                accountId,
-                queryEmailCall.createResultReference(Request.Invocation.ResultReference.Path.IDS)
-        )
+        GetMailboxMethodCall.builder()
+                .accountId(accountId)
+                .idsReference(queryEmailCall.createResultReference(Request.Invocation.ResultReference.Path.IDS))
+                .build()
 );
 
 multiCall.execute();
@@ -118,14 +123,14 @@ A high level API to act as an email client. It handles everything an email clien
 #### Dependencies
 ##### Gradle
 ```
-implementation 'rs.ltt.jmap:jmap-mua:0.2.2'
+implementation 'rs.ltt.jmap:jmap-mua:0.3.0'
 ```
 ##### Maven
 ```xml
 <dependency>
   <groupId>rs.ltt.jmap</groupId>
   <artifactId>jmap-mua</artifactId>
-  <version>0.2.2</version>
+  <version>0.3.0</version>
 </dependency>
 ```
 
