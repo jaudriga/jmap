@@ -26,7 +26,6 @@ import rs.ltt.jmap.common.method.MethodCall;
 
 public abstract class GetMethodCall<T extends AbstractIdentifiableEntity> implements MethodCall {
 
-    @NonNull
     private String accountId;
 
     private String[] ids;

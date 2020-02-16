@@ -29,7 +29,6 @@ import rs.ltt.jmap.common.method.MethodCall;
 @JmapMethod("SearchSnippet/get")
 public class GetSearchSnippetsMethodCall implements MethodCall {
 
-    @NonNull
     private String accountId;
 
     private Filter filter;
@@ -40,11 +39,11 @@ public class GetSearchSnippetsMethodCall implements MethodCall {
     private Request.Invocation.ResultReference emailIdsReference;
 
     @Builder
-    public GetSearchSnippetsMethodCall(String accountId, String[] emailIds, Filter<Email> filter,
+    public GetSearchSnippetsMethodCall(@NonNull String accountId, String[] emailIds, Filter<Email> filter,
                                        Request.Invocation.ResultReference emailIdsReference) {
         Preconditions.checkArgument(
-                emailIds == null || emailIdsReference == null,
-                "Can't set both 'emailIds' and 'emailIdsReference'"
+                emailIds == null ^ emailIdsReference == null,
+                "Must set one, and only one, of emailIds or emailIdsReference"
         );
         this.accountId = accountId;
         this.emailIds = emailIds;
