@@ -1,3 +1,7 @@
+### 0.3.0 (2020-02-17)
+
+* Use builder pattern (instead of constructors) to create method calls
+
 ### 0.2.4 (2020-02-09)
 
 * add support for discovering websocket capability
