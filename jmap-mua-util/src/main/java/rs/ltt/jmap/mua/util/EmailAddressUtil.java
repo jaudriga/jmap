@@ -18,6 +18,7 @@ package rs.ltt.jmap.mua.util;
 import com.google.common.base.Function;
 import com.google.common.base.Strings;
 import com.google.common.collect.Collections2;
+import com.google.common.collect.ImmutableList;
 import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 import rs.ltt.jmap.common.entity.EmailAddress;
 
@@ -45,7 +46,7 @@ public class EmailAddressUtil {
 
     public static String toHeaderValue(Collection<EmailAddress> emailAddresses) {
         final StringBuilder builder = new StringBuilder();
-        for(EmailAddress emailAddress : emailAddresses) {
+        for (EmailAddress emailAddress : emailAddresses) {
             if (Strings.isNullOrEmpty(emailAddress.getName())) {
                 builder.append(emailAddress.getEmail());
             } else {
@@ -60,12 +61,12 @@ public class EmailAddressUtil {
         return new HashSet<>(a).equals(new HashSet<>(b));
     }
 
-    public static boolean isValid(final String email) {
-        return EMAIL_PATTERN.matcher(email).matches();
-    }
-
     public static boolean isValid(final EmailAddress emailAddress) {
         return isValid(emailAddress.getEmail());
+    }
+
+    public static boolean isValid(final String email) {
+        return EMAIL_PATTERN.matcher(email).matches();
     }
 
     public static Collection<EmailAddress> parse(final String userInput) {
@@ -81,7 +82,15 @@ public class EmailAddressUtil {
         );
     }
 
-     public static String shorten(final String input) {
+    public static Collection<EmailAddress> parseAddresses(final String userInput) {
+        final ImmutableList.Builder<EmailAddress> emailAddressesBuilder = new ImmutableList.Builder<>();
+        for(final String part : userInput.split(",")) {
+            emailAddressesBuilder.add(EmailAddress.builder().email(part.trim()).build());
+        }
+        return emailAddressesBuilder.build();
+    }
+
+    public static String shorten(final String input) {
         final String[] parts = removeInvalidShorts(input.split("\\s"));
         if (parts.length == 0) {
             return input;
@@ -92,7 +101,7 @@ public class EmailAddressUtil {
 
     private static String[] removeInvalidShorts(final String[] input) {
         final ArrayList<String> output = new ArrayList<>(input.length);
-        for(String part : input) {
+        for (String part : input) {
             if (isInitial(part)) {
                 continue;
             }
@@ -105,11 +114,11 @@ public class EmailAddressUtil {
     }
 
     private static boolean isInitial(final String input) {
-         return input.length() == 1 || (input.length() == 2 && input.charAt(1) == '.');
+        return input.length() == 1 || (input.length() == 2 && input.charAt(1) == '.');
     }
 
     private static boolean isStopWord(final String input) {
-         return STOP_WORDS.contains(input.toLowerCase(Locale.US));
+        return STOP_WORDS.contains(input.toLowerCase(Locale.US));
     }
 
 }
