@@ -34,7 +34,7 @@ public class MailToUriTest {
                 MailToUri.builder()
                         .to(EmailAddress.builder().email(EXAMPLE_ADDRESS_ALPHA).build())
                         .build(),
-                MailToUri.parse(String.format("mailto:%s", EXAMPLE_ADDRESS_ALPHA))
+                MailToUri.get(String.format("mailto:%s", EXAMPLE_ADDRESS_ALPHA))
         );
     }
 
@@ -45,7 +45,7 @@ public class MailToUriTest {
                         .to(EmailAddress.builder().email(EXAMPLE_ADDRESS_ALPHA).build())
                         .subject(EXAMPLE_SUBJECT)
                         .build(),
-                MailToUri.parse(String.format("mailto:%s?subject=%s", EXAMPLE_ADDRESS_ALPHA, EXAMPLE_SUBJECT))
+                MailToUri.get(String.format("mailto:%s?subject=%s", EXAMPLE_ADDRESS_ALPHA, EXAMPLE_SUBJECT))
         );
     }
 
@@ -55,7 +55,7 @@ public class MailToUriTest {
                 MailToUri.builder()
                         .subject(EXAMPLE_SUBJECT)
                         .build(),
-                MailToUri.parse(String.format("mailto:?subject=%s", EXAMPLE_SUBJECT))
+                MailToUri.get(String.format("mailto:?subject=%s", EXAMPLE_SUBJECT))
         );
     }
 
@@ -69,7 +69,7 @@ public class MailToUriTest {
                         .bcc((EmailAddress.builder().email(EXAMPLE_ADDRESS_DELTA).build()))
                         .subject(EXAMPLE_SUBJECT)
                         .build(),
-                MailToUri.parse(String.format(
+                MailToUri.get(String.format(
                         "mailto:%s?cc=%s,%s&bcc=%s&subject=%s",
                         EXAMPLE_ADDRESS_ALPHA,
                         EXAMPLE_ADDRESS_BETA,
@@ -87,7 +87,55 @@ public class MailToUriTest {
                         .to(EmailAddress.builder().email("list@example.com").build())
                         .inReplyTo("<3469A91.D10AF4C@example.com>")
                         .build(),
-                MailToUri.parse("mailto:list@example.com?In-Reply-To=%3C3469A91.D10AF4C@example.com%3E")
+                MailToUri.get("mailto:list@example.com?In-Reply-To=%3C3469A91.D10AF4C@example.com%3E")
+        );
+    }
+
+    @Test
+    public void specialCharacterEmailAddress() {
+        Assert.assertEquals(
+                MailToUri.builder()
+                        .to(EmailAddress.builder().email("\",\"@example.com").build())
+                        .build(),
+                MailToUri.get("mailto:\",\"@example.com")
+        );
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void unknownScheme() {
+        MailToUri.get("xmpp:test@example.com");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void noScheme() {
+        MailToUri.get("mailto");
+    }
+
+    @Test
+    public void emptyQuery() {
+        Assert.assertEquals(
+                MailToUri.builder()
+                        .to(EmailAddress.builder().email(EXAMPLE_ADDRESS_ALPHA).build())
+                        .build(),
+                MailToUri.get(String.format("mailto:%s?", EXAMPLE_ADDRESS_ALPHA))
+        );
+    }
+
+    @Test
+    public void emptyMailto() {
+        Assert.assertEquals(
+                MailToUri.builder()
+                        .build(),
+                MailToUri.get("mailto:")
+        );
+    }
+
+    @Test
+    public void emptyMailtoEmptyQuery() {
+        Assert.assertEquals(
+                MailToUri.builder()
+                        .build(),
+                MailToUri.get("mailto:?")
         );
     }
 }

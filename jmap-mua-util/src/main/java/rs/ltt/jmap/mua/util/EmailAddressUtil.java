@@ -82,14 +82,6 @@ public class EmailAddressUtil {
         );
     }
 
-    public static Collection<EmailAddress> parseAddresses(final String userInput) {
-        final ImmutableList.Builder<EmailAddress> emailAddressesBuilder = new ImmutableList.Builder<>();
-        for(final String part : userInput.split(",")) {
-            emailAddressesBuilder.add(EmailAddress.builder().email(part.trim()).build());
-        }
-        return emailAddressesBuilder.build();
-    }
-
     public static String shorten(final String input) {
         final String[] parts = removeInvalidShorts(input.split("\\s"));
         if (parts.length == 0) {

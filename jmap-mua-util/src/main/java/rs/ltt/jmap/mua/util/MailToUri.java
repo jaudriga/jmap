@@ -16,11 +16,16 @@
 
 package rs.ltt.jmap.mua.util;
 
+import com.google.common.base.Function;
 import com.google.common.base.Strings;
+import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableMap;
 import lombok.*;
+import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 import rs.ltt.jmap.common.entity.EmailAddress;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.Collection;
@@ -52,21 +57,35 @@ public class MailToUri {
     private final String subject;
     private final String body;
 
-
-    public static MailToUri parse(final String input) throws IllegalArgumentException {
-        final int schemaDelimiter = input.indexOf(":");
-        if (schemaDelimiter < 0) {
-            throw new IllegalArgumentException();
+    @Nullable
+    public static MailToUri parse(final String input) {
+        try {
+            return get(input);
+        } catch (IllegalArgumentException e) {
+            return null;
         }
-        if (input.substring(0, schemaDelimiter).equals(MAIL_TO)) {
-            final int queryDelimiter = input.length() > schemaDelimiter ? input.indexOf("?", schemaDelimiter + 1) : -1;
+    }
+
+    @Nonnull
+    public static MailToUri get(final String input) throws IllegalArgumentException {
+        return get(input, true);
+    }
+
+    @Nonnull
+    public static MailToUri get(final String input, final boolean stripNames) throws IllegalArgumentException {
+        final int schemeDelimiter = input.indexOf(":");
+        if (schemeDelimiter < 0) {
+            throw new IllegalArgumentException("No scheme detected");
+        }
+        if (input.substring(0, schemeDelimiter).equals(MAIL_TO)) {
+            final int queryDelimiter = input.length() > schemeDelimiter ? input.indexOf("?", schemeDelimiter + 1) : -1;
             final String to;
             final String query;
             if (queryDelimiter > 0) {
-                to = input.substring(schemaDelimiter + 1, queryDelimiter);
+                to = input.substring(schemeDelimiter + 1, queryDelimiter);
                 query = input.substring(queryDelimiter + 1);
             } else {
-                to = input.substring(schemaDelimiter + 1);
+                to = input.substring(schemeDelimiter + 1);
                 query = null;
             }
             final Map<String, String> parameters = parseQuery(query);
@@ -79,16 +98,16 @@ public class MailToUri {
             if (Strings.isNullOrEmpty(to)) {
                 final String toParameter = parameters.get(TO);
                 if (toParameter != null) {
-                    mailToUriBuilder.to(EmailAddressUtil.parseAddresses(toParameter));
+                    mailToUriBuilder.to(parseEmailAddress(toParameter, stripNames));
                 }
             } else {
-                mailToUriBuilder.to(EmailAddressUtil.parseAddresses(to));
+                mailToUriBuilder.to(parseEmailAddress(to, stripNames));
             }
             if (cc != null) {
-                mailToUriBuilder.cc(EmailAddressUtil.parseAddresses(cc));
+                mailToUriBuilder.cc(parseEmailAddress(cc, stripNames));
             }
             if (bcc != null) {
-                mailToUriBuilder.bcc(EmailAddressUtil.parseAddresses(bcc));
+                mailToUriBuilder.bcc(parseEmailAddress(bcc, stripNames));
             }
             mailToUriBuilder.inReplyTo(inReplyTo);
             mailToUriBuilder.subject(subject);
@@ -119,6 +138,24 @@ public class MailToUri {
         } catch (UnsupportedEncodingException e) {
             throw new IllegalStateException(e);
         }
+    }
+
+    private static Collection<EmailAddress> parseEmailAddress(final String address, final boolean stripNames) {
+        return stripNames ? stripNames(EmailAddressUtil.parse(address)) : EmailAddressUtil.parse(address);
+    }
+
+    private static Collection<EmailAddress> stripNames(Collection<EmailAddress> emailAddresses) {
+        return Collections2.transform(emailAddresses, new Function<EmailAddress, EmailAddress>() {
+            @NullableDecl
+            @Override
+            public EmailAddress apply(@NullableDecl EmailAddress emailAddress) {
+                if (emailAddress == null || Strings.isNullOrEmpty(emailAddress.getName())) {
+                    return emailAddress;
+                } else {
+                    return EmailAddress.builder().email(emailAddress.getEmail()).build();
+                }
+            }
+        });
     }
 
 }
