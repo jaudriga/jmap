@@ -1,3 +1,7 @@
+### 0.3.1 (2020-02-24)
+
+* Add MailToUri class to jmap-mua-utils
+
 ### 0.3.0 (2020-02-17)
 
 * Use builder pattern (instead of constructors) to create method calls
