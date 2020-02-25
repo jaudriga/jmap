@@ -101,7 +101,9 @@ public class MailToUri {
                     mailToUriBuilder.to(parseEmailAddress(toParameter, stripNames));
                 }
             } else {
-                mailToUriBuilder.to(parseEmailAddress(to, stripNames));
+                final Collection<EmailAddress> addresses = EmailAddressUtil.parse(decode(to));
+                throwOnName(addresses);
+                mailToUriBuilder.to(addresses);
             }
             if (cc != null) {
                 mailToUriBuilder.cc(parseEmailAddress(cc, stripNames));
@@ -116,6 +118,15 @@ public class MailToUri {
 
         }
         throw new IllegalArgumentException("Unknown scheme");
+    }
+
+    private static void throwOnName(final Collection<EmailAddress> addresses) throws IllegalArgumentException {
+        for(final EmailAddress address : addresses) {
+            if (Strings.isNullOrEmpty(address.getName())) {
+                continue;
+            }
+            throw new IllegalArgumentException("Mailto address must not have a name");
+        }
     }
 
     private static Map<String, String> parseQuery(final String query) {

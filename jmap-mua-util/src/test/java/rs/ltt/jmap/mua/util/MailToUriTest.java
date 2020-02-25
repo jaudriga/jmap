@@ -20,6 +20,9 @@ import org.junit.Assert;
 import org.junit.Test;
 import rs.ltt.jmap.common.entity.EmailAddress;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+
 public class MailToUriTest {
 
     private static final String EXAMPLE_SUBJECT = "Foo";
@@ -136,6 +139,21 @@ public class MailToUriTest {
                 MailToUri.builder()
                         .build(),
                 MailToUri.get("mailto:?")
+        );
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void namedEmailAddressInMailto() throws UnsupportedEncodingException {
+        MailToUri.get(
+                String.format(
+                        "mailto:%s",
+                        URLEncoder.encode(
+                                EmailAddressUtil.toString(
+                                        EmailAddress.builder().name("Alpha").email(EXAMPLE_ADDRESS_ALPHA).build()
+                                ),
+                                "UTF-8"
+                        )
+                )
         );
     }
 }
