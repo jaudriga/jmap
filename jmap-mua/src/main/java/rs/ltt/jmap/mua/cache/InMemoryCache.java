@@ -17,7 +17,6 @@
 package rs.ltt.jmap.mua.cache;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
 import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

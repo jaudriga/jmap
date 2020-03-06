@@ -20,8 +20,8 @@ import lombok.Builder;
 import rs.ltt.jmap.annotation.JmapMethod;
 import rs.ltt.jmap.common.entity.Comparator;
 import rs.ltt.jmap.common.entity.Email;
-import rs.ltt.jmap.common.entity.query.EmailQuery;
 import rs.ltt.jmap.common.entity.filter.Filter;
+import rs.ltt.jmap.common.entity.query.EmailQuery;
 import rs.ltt.jmap.common.method.call.standard.QueryChangesMethodCall;
 
 @JmapMethod("Email/queryChanges")

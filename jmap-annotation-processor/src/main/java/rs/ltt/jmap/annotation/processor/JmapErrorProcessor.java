@@ -18,10 +18,8 @@ package rs.ltt.jmap.annotation.processor;
 
 
 import com.google.auto.service.AutoService;
-import rs.ltt.jmap.annotation.JmapCapability;
 import rs.ltt.jmap.annotation.JmapError;
 import rs.ltt.jmap.common.Utils;
-import rs.ltt.jmap.common.entity.Capability;
 import rs.ltt.jmap.common.method.MethodErrorResponse;
 
 import javax.annotation.processing.*;

@@ -19,10 +19,7 @@ package rs.ltt.jmap.common.method.call.email;
 import lombok.Builder;
 import lombok.NonNull;
 import rs.ltt.jmap.annotation.JmapMethod;
-import rs.ltt.jmap.common.entity.EmailImport;
 import rs.ltt.jmap.common.method.MethodCall;
-
-import java.util.Map;
 
 @JmapMethod("Email/parse")
 @Builder

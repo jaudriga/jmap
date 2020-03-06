@@ -1,7 +1,6 @@
 package rs.ltt.jmap.gson;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import org.junit.Assert;
 import org.junit.Test;
 import rs.ltt.jmap.common.entity.Email;

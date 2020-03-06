@@ -20,7 +20,10 @@ import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableList;
 import rs.ltt.jmap.common.entity.EmailAddress;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 public class EmailAddressTokenizer {
 

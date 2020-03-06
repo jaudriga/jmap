@@ -24,8 +24,6 @@ import org.junit.Test;
 import rs.ltt.jmap.common.Request;
 import rs.ltt.jmap.common.entity.Email;
 import rs.ltt.jmap.common.method.call.email.CopyEmailMethodCall;
-import rs.ltt.jmap.common.method.call.email.SetEmailMethodCall;
-import rs.ltt.jmap.common.util.Patches;
 
 import java.io.IOException;
 

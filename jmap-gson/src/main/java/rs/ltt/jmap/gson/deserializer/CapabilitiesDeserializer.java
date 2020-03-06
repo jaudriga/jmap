@@ -19,8 +19,8 @@ package rs.ltt.jmap.gson.deserializer;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
-import rs.ltt.jmap.common.util.Mapper;
 import rs.ltt.jmap.common.entity.Capability;
+import rs.ltt.jmap.common.util.Mapper;
 
 import java.lang.reflect.Type;
 import java.util.Map;

@@ -22,9 +22,7 @@ import rs.ltt.jmap.annotation.JmapMethod;
 import rs.ltt.jmap.common.entity.Email;
 import rs.ltt.jmap.common.entity.SetError;
 import rs.ltt.jmap.common.method.MethodResponse;
-import rs.ltt.jmap.common.method.response.standard.ChangesMethodResponse;
 
-import java.util.List;
 import java.util.Map;
 
 @JmapMethod("Email/import")

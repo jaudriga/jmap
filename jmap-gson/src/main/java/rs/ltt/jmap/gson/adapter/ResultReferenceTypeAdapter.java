@@ -20,8 +20,8 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
-import rs.ltt.jmap.common.util.Mapper;
 import rs.ltt.jmap.common.Request;
+import rs.ltt.jmap.common.util.Mapper;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;

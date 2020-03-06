@@ -17,10 +17,10 @@
 package rs.ltt.jmap.gson.deserializer;
 
 import com.google.gson.*;
-import rs.ltt.jmap.common.util.Mapper;
 import rs.ltt.jmap.common.Response;
 import rs.ltt.jmap.common.method.MethodErrorResponse;
 import rs.ltt.jmap.common.method.MethodResponse;
+import rs.ltt.jmap.common.util.Mapper;
 
 import java.lang.reflect.Type;
 

@@ -3,9 +3,9 @@ package rs.ltt.jmap.gson;
 import com.google.gson.GsonBuilder;
 import org.junit.Assert;
 import org.junit.Test;
-import rs.ltt.jmap.gson.adapter.ResultReferenceTypeAdapter;
 import rs.ltt.jmap.common.Request;
 import rs.ltt.jmap.common.method.call.email.QueryEmailMethodCall;
+import rs.ltt.jmap.gson.adapter.ResultReferenceTypeAdapter;
 
 public class ResultReferenceTypeAdapterTest {
 

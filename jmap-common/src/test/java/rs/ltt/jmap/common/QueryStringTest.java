@@ -3,7 +3,6 @@ package rs.ltt.jmap.common;
 import org.junit.Assert;
 import org.junit.Test;
 import rs.ltt.jmap.common.entity.Email;
-import rs.ltt.jmap.common.entity.EmailSubmission;
 import rs.ltt.jmap.common.entity.UndoStatus;
 import rs.ltt.jmap.common.entity.filter.*;
 import rs.ltt.jmap.common.entity.query.EmailSubmissionQuery;

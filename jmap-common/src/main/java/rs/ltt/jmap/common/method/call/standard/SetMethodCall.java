@@ -18,7 +18,6 @@ package rs.ltt.jmap.common.method.call.standard;
 
 import com.google.common.base.Preconditions;
 import com.google.gson.annotations.SerializedName;
-import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import rs.ltt.jmap.common.Request;
 import rs.ltt.jmap.common.entity.AbstractIdentifiableEntity;
