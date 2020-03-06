@@ -1,5 +1,5 @@
 # Java JMAP library
-[![Build Status](https://travis-ci.org/inputmice/jmap.svg?branch=master)](https://travis-ci.org/inputmice/jmap) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/rs.ltt.jmap/jmap/badge.svg)](https://maven-badges.herokuapp.com/maven-central/rs.ltt.jmap/jmap)
+[![Build Status](https://travis-ci.org/inputmice/jmap.svg?branch=master)](https://travis-ci.org/inputmice/jmap) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/329b10e923d74c9881f9e8cf53616735)](https://www.codacy.com/manual/iNPUTmice/jmap?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=iNPUTmice/jmap&amp;utm_campaign=Badge_Grade) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/rs.ltt.jmap/jmap/badge.svg)](https://maven-badges.herokuapp.com/maven-central/rs.ltt.jmap/jmap)
 
 A library to synchronize data between a client and a server using the JSON Meta Application Protocol. The current focus is on acting as a client library to retrieve emails from a server however it is easily extensible to also synchronize contacts and calendars. It might even be extended to act as a server library.
 
@@ -37,17 +37,16 @@ GSON serializer and deserializer to convert the POJOs from `jmap-common` into JM
 
 A JMAP client library to make JMAP method calls and process the responses. It handles multiples calls in one request (including back references) and multiple method responses per call. Currently it only supports requests over HTTP but it has been designed with the possibility in mind to eventually support requests over WebSockets.
 
-#### Dependencies
-##### Gradle
+Gradle:
+```groovy
+implementation 'rs.ltt.jmap:jmap-client:0.3.1'
 ```
-implementation 'rs.ltt.jmap:jmap-client:0.3.0'
-```
-##### Maven
+Maven:
 ```xml
 <dependency>
   <groupId>rs.ltt.jmap</groupId>
   <artifactId>jmap-client</artifactId>
-  <version>0.3.0</version>
+  <version>0.3.1</version>
 </dependency>
 ```
 
@@ -120,22 +119,21 @@ One more thing to look out for: **If you are building a fat jar (shaded jar) the
 
 A high level API to act as an email client. It handles everything an email client is supposed to handle minus storage backend and GUI. The storage (caching) backend is accessed via an interface that different email clients on different platforms can implement. It comes with a reference in-memory implementation of that interface. `jmap-mua` only ever *writes* to that storage backend. Accessing data in that storage backend and displaying it in a GUI is up to the specific email client.
 
-#### Dependencies
-##### Gradle
+Gradle:
+```groovy
+implementation 'rs.ltt.jmap:jmap-mua:0.3.1'
 ```
-implementation 'rs.ltt.jmap:jmap-mua:0.3.0'
-```
-##### Maven
+Maven:
 ```xml
 <dependency>
   <groupId>rs.ltt.jmap</groupId>
   <artifactId>jmap-mua</artifactId>
-  <version>0.3.0</version>
+  <version>0.3.1</version>
 </dependency>
 ```
 
 #### Users
 
 jmap-mua serves as the backend for:
-* [Ltt.rs for Unix](https://github.com/inputmice/lttrs-cli)
-* [Ltt.rs for Android](https://github.com/inputmice/lttrs-android).
+*  [Ltt.rs for Unix](https://github.com/inputmice/lttrs-cli)
+*  [Ltt.rs for Android](https://github.com/inputmice/lttrs-android).
