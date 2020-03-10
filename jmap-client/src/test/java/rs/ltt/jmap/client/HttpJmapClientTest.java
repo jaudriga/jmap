@@ -280,6 +280,6 @@ public class HttpJmapClientTest {
         );
 
         final Session session = jmapClient.getSession().get();
-        Assert.assertNotNull(session.getCapability(WebSocketCapability.class).getWebSocketUrl());
+        Assert.assertNotNull(session.getCapability(WebSocketCapability.class).getUrl());
     }
 }

@@ -28,6 +28,6 @@ import rs.ltt.jmap.common.entity.Capability;
 @Getter
 @ToString
 public class WebSocketCapability implements Capability {
-    private String webSocketUrl;
-    private Boolean supportsWebSocketPush;
+    private String url;
+    private Boolean supportsPush;
 }

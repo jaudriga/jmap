@@ -20,8 +20,8 @@
     "urn:ietf:params:jmap:submission": {},
     "urn:ietf:params:jmap:vacationresponse": {},
     "urn:ietf:params:jmap:websocket": {
-      "webSocketUrl": "/jmap/ws/",
-      "supportsWebSocketPush": false
+      "url": "/jmap/ws/",
+      "supportsPush": false
     }
   },
   "accounts": {
