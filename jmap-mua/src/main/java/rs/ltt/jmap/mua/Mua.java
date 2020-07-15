@@ -63,12 +63,13 @@ import rs.ltt.jmap.common.util.Patches;
 import rs.ltt.jmap.mua.cache.*;
 import rs.ltt.jmap.mua.util.*;
 
+import java.io.Closeable;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 
 @SuppressWarnings("UnstableApiUsage")
-public class Mua {
+public class Mua implements Closeable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Mua.class);
     private final JmapClient jmapClient;
@@ -91,7 +92,8 @@ public class Mua {
         return jmapClient;
     }
 
-    public void shutdown() {
+    @Override
+    public void close() {
         ioExecutorService.shutdown();
         jmapClient.close();
     }

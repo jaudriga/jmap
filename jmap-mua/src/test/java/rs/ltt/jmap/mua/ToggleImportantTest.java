@@ -45,22 +45,26 @@ public class ToggleImportantTest {
         server.enqueue(new MockResponse().setBody(readResourceAsString("common/01-session.json")));
         server.enqueue(new MockResponse().setBody(readResourceAsString("common/02-mailboxes.json")));
 
-        final Mua mua = Mua.builder()
+        try (final Mua mua = Mua.builder()
                 .sessionResource(server.url(WELL_KNOWN_PATH))
                 .username(USERNAME)
                 .password(PASSWORD)
                 .accountId(ACCOUNT_ID)
-                .build();
+                .build()) {
+            mua.refreshMailboxes().get();
 
-        mua.refreshMailboxes().get();
+            final Collection<MyIdentifiableEmailWithMailboxes> emails = ImmutableSet.of(
+                    new MyIdentifiableEmailWithMailboxes("e0", "mb2")
+            );
 
-        final Collection<MyIdentifiableEmailWithMailboxes> emails = ImmutableSet.of(
-                new MyIdentifiableEmailWithMailboxes("e0","mb2")
-        );
-
-        Assert.assertFalse(mua.copyToImportant(emails).get());
+            Assert.assertFalse(mua.copyToImportant(emails).get());
+        }
 
         server.shutdown();
+    }
+
+    private static String readResourceAsString(String filename) throws IOException {
+        return Resources.asCharSource(Resources.getResource(filename), Charsets.UTF_8).read().trim();
     }
 
     @Test
@@ -72,31 +76,27 @@ public class ToggleImportantTest {
 
         final InMemoryCache inMemoryCache = new InMemoryCache();
 
-        final Mua mua = Mua.builder()
+        try (final Mua mua = Mua.builder()
                 .sessionResource(server.url(WELL_KNOWN_PATH))
                 .username(USERNAME)
                 .password(PASSWORD)
                 .accountId(ACCOUNT_ID)
                 .cache(inMemoryCache)
-                .build();
+                .build()) {
+            mua.refreshMailboxes().get();
 
-        mua.refreshMailboxes().get();
+            IdentifiableMailboxWithRole mailbox = MailboxUtil.find(inMemoryCache.getSpecialMailboxes(), Role.IMPORTANT);
 
-        IdentifiableMailboxWithRole mailbox = MailboxUtil.find(inMemoryCache.getSpecialMailboxes(), Role.IMPORTANT);
+            Assert.assertNotNull(mailbox);
 
-        Assert.assertNotNull(mailbox);
+            final Collection<MyIdentifiableEmailWithMailboxes> emails = ImmutableSet.of(
+                    new MyIdentifiableEmailWithMailboxes("e0", "mb0")
+            );
 
-        final Collection<MyIdentifiableEmailWithMailboxes> emails = ImmutableSet.of(
-                new MyIdentifiableEmailWithMailboxes("e0","mb0")
-        );
-
-        Assert.assertFalse(mua.removeFromMailbox(emails, mailbox.getId()).get());
-
+            Assert.assertFalse(mua.removeFromMailbox(emails, mailbox.getId()).get());
+        }
+        
         server.shutdown();
-    }
-
-    private static String readResourceAsString(String filename) throws IOException {
-        return Resources.asCharSource(Resources.getResource(filename), Charsets.UTF_8).read().trim();
     }
 
 
