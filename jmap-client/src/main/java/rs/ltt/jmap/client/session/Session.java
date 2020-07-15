@@ -17,14 +17,10 @@
 package rs.ltt.jmap.client.session;
 
 import com.damnhandy.uri.template.UriTemplate;
-import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Predicate;
-import com.google.common.collect.Collections2;
 import com.google.common.collect.Maps;
 import okhttp3.HttpUrl;
 import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
-import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 import rs.ltt.jmap.client.event.CloseAfter;
 import rs.ltt.jmap.common.SessionResource;
 import rs.ltt.jmap.common.entity.AbstractIdentifiableEntity;
@@ -82,14 +78,7 @@ public class Session {
         if (types.size() == 0) {
             uriTemplate.set("types", "*");
         } else {
-            final Collection<String> strings = Collections2.transform(types, new Function<Class<? extends AbstractIdentifiableEntity>, String>() {
-                @NullableDecl
-                @Override
-                public String apply(Class<? extends AbstractIdentifiableEntity> clazz) {
-                    return clazz.getSimpleName();
-                }
-            });
-            uriTemplate.set("types", strings.toArray(new String[0]));
+            uriTemplate.set("types", types.stream().map(Class::getSimpleName).toArray(String[]::new));
         }
         final HttpUrl.Builder builder = base.newBuilder(uriTemplate.expand());
         Preconditions.checkState(builder != null, String.format("Unable to assemble final eventSource Url from base=%s and eventSourceUrl=%s", base, eventSourceUrl));
@@ -115,12 +104,7 @@ public class Session {
     }
 
     public Map<String, Account> getAccounts(final Class<? extends AccountCapability> clazz) {
-        return Maps.filterEntries(sessionResource.getAccounts(), new Predicate<Map.Entry<String, Account>>() {
-            @Override
-            public boolean apply(@NullableDecl Map.Entry<String, Account> entry) {
-                return entry != null && entry.getValue().hasCapability(clazz);
-            }
-        });
+        return Maps.filterEntries(sessionResource.getAccounts(), entry -> entry != null && entry.getValue().hasCapability(clazz));
     }
 
     public <T extends Capability> T getCapability(Class<T> clazz) {

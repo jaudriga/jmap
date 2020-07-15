@@ -33,7 +33,6 @@ import rs.ltt.jmap.client.session.SessionClient;
 import rs.ltt.jmap.common.method.MethodCall;
 
 import java.io.Closeable;
-import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 
 public class JmapClient implements Closeable {
@@ -74,12 +73,7 @@ public class JmapClient implements Closeable {
     }
 
     public ListenableFuture<Session> getSession() {
-        return executorService.submit(new Callable<Session>() {
-            @Override
-            public Session call() throws Exception {
-                return sessionClient.get();
-            }
-        });
+        return executorService.submit(sessionClient::get);
     }
 
     public ListenableFuture<MethodResponses> call(MethodCall methodCall) {

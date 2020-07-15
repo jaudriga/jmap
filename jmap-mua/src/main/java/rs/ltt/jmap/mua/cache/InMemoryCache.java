@@ -375,12 +375,7 @@ public class InMemoryCache implements Cache {
             }
         }
         synchronized (this.threads) {
-            Iterator<String> iterator = threadIds.iterator();
-            while (iterator.hasNext()) {
-                if (this.threads.containsKey(iterator.next())) {
-                    iterator.remove();
-                }
-            }
+            threadIds.removeIf(this.threads::containsKey);
             return new Missing(this.threadState, this.emailState, threadIds);
         }
     }
