@@ -155,11 +155,11 @@ public class Mua implements Closeable {
         Preconditions.checkNotNull(state, "State can not be null when updating identities");
         final SettableFuture<Status> settableFuture = SettableFuture.create();
         final UpdateUtil.MethodResponsesFuture methodResponsesFuture = UpdateUtil.identities(multiCall, accountId, state);
-        methodResponsesFuture.changes.addListener(() -> {
+        methodResponsesFuture.addListener(() -> {
             try {
-                ChangesIdentityMethodResponse changesResponse = methodResponsesFuture.changes.get().getMain(ChangesIdentityMethodResponse.class);
-                GetIdentityMethodResponse createdResponse = methodResponsesFuture.created.get().getMain(GetIdentityMethodResponse.class);
-                GetIdentityMethodResponse updatedResponse = methodResponsesFuture.updated.get().getMain(GetIdentityMethodResponse.class);
+                ChangesIdentityMethodResponse changesResponse = methodResponsesFuture.changes(ChangesIdentityMethodResponse.class);
+                GetIdentityMethodResponse createdResponse = methodResponsesFuture.created(GetIdentityMethodResponse.class);
+                GetIdentityMethodResponse updatedResponse = methodResponsesFuture.updated(GetIdentityMethodResponse.class);
                 final Update<Identity> update = Update.of(changesResponse, createdResponse, updatedResponse);
                 if (update.hasChanges()) {
                     cache.updateIdentities(update);
@@ -223,11 +223,11 @@ public class Mua implements Closeable {
         LOGGER.info("Refreshing mailboxes since state {}", state);
         final SettableFuture<Status> settableFuture = SettableFuture.create();
         final UpdateUtil.MethodResponsesFuture methodResponsesFuture = UpdateUtil.mailboxes(multiCall, accountId, state);
-        methodResponsesFuture.changes.addListener(() -> {
+        methodResponsesFuture.addListener(() -> {
             try {
-                final ChangesMailboxMethodResponse changesResponse = methodResponsesFuture.changes.get().getMain(ChangesMailboxMethodResponse.class);
-                final GetMailboxMethodResponse createdResponse = methodResponsesFuture.created.get().getMain(GetMailboxMethodResponse.class);
-                final GetMailboxMethodResponse updatedResponse = methodResponsesFuture.updated.get().getMain(GetMailboxMethodResponse.class);
+                final ChangesMailboxMethodResponse changesResponse = methodResponsesFuture.changes(ChangesMailboxMethodResponse.class);
+                final GetMailboxMethodResponse createdResponse = methodResponsesFuture.created(GetMailboxMethodResponse.class);
+                final GetMailboxMethodResponse updatedResponse = methodResponsesFuture.updated(GetMailboxMethodResponse.class);
                 final Update<Mailbox> update = Update.of(changesResponse, createdResponse, updatedResponse);
                 if (update.hasChanges()) {
                     cache.updateMailboxes(update, changesResponse.getUpdatedProperties());
@@ -536,11 +536,11 @@ public class Mua implements Closeable {
         LOGGER.info("Refreshing emails since state {}", state);
         final SettableFuture<Status> settableFuture = SettableFuture.create();
         final UpdateUtil.MethodResponsesFuture methodResponsesFuture = UpdateUtil.emails(multiCall, accountId, state);
-        methodResponsesFuture.changes.addListener(() -> {
+        methodResponsesFuture.addListener(() -> {
             try {
-                final ChangesEmailMethodResponse changesResponse = methodResponsesFuture.changes.get().getMain(ChangesEmailMethodResponse.class);
-                final GetEmailMethodResponse createdResponse = methodResponsesFuture.created.get().getMain(GetEmailMethodResponse.class);
-                final GetEmailMethodResponse updatedResponse = methodResponsesFuture.updated.get().getMain(GetEmailMethodResponse.class);
+                final ChangesEmailMethodResponse changesResponse = methodResponsesFuture.changes(ChangesEmailMethodResponse.class);
+                final GetEmailMethodResponse createdResponse = methodResponsesFuture.created(GetEmailMethodResponse.class);
+                final GetEmailMethodResponse updatedResponse = methodResponsesFuture.updated(GetEmailMethodResponse.class);
                 final Update<Email> update = Update.of(changesResponse, createdResponse, updatedResponse);
                 if (update.hasChanges()) {
                     cache.updateEmails(update, Email.Properties.MUTABLE);
@@ -1140,11 +1140,11 @@ public class Mua implements Closeable {
         LOGGER.info("Refreshing threads since state {}", state);
         final SettableFuture<Status> settableFuture = SettableFuture.create();
         final UpdateUtil.MethodResponsesFuture methodResponsesFuture = UpdateUtil.threads(multiCall, accountId, state);
-        methodResponsesFuture.changes.addListener(() -> {
+        methodResponsesFuture.addListener(() -> {
             try {
-                final ChangesThreadMethodResponse changesResponse = methodResponsesFuture.changes.get().getMain(ChangesThreadMethodResponse.class);
-                final GetThreadMethodResponse createdResponse = methodResponsesFuture.created.get().getMain(GetThreadMethodResponse.class);
-                final GetThreadMethodResponse updatedResponse = methodResponsesFuture.updated.get().getMain(GetThreadMethodResponse.class);
+                final ChangesThreadMethodResponse changesResponse = methodResponsesFuture.changes(ChangesThreadMethodResponse.class);
+                final GetThreadMethodResponse createdResponse = methodResponsesFuture.created(GetThreadMethodResponse.class);
+                final GetThreadMethodResponse updatedResponse = methodResponsesFuture.updated(GetThreadMethodResponse.class);
                 final Update<Thread> update = Update.of(changesResponse, createdResponse, updatedResponse);
                 if (update.hasChanges()) {
                     cache.updateThreads(update);

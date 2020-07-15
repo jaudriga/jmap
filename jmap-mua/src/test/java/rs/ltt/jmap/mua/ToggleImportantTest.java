@@ -95,7 +95,7 @@ public class ToggleImportantTest {
 
             Assert.assertFalse(mua.removeFromMailbox(emails, mailbox.getId()).get());
         }
-        
+
         server.shutdown();
     }
 

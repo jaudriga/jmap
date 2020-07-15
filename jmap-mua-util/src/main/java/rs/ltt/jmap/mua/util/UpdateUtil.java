@@ -16,12 +16,14 @@
 
 package rs.ltt.jmap.mua.util;
 
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import rs.ltt.jmap.client.JmapClient;
 import rs.ltt.jmap.client.JmapRequest;
 import rs.ltt.jmap.client.MethodResponses;
 import rs.ltt.jmap.common.Request;
 import rs.ltt.jmap.common.entity.Email;
+import rs.ltt.jmap.common.method.MethodResponse;
 import rs.ltt.jmap.common.method.call.email.ChangesEmailMethodCall;
 import rs.ltt.jmap.common.method.call.email.GetEmailMethodCall;
 import rs.ltt.jmap.common.method.call.identity.ChangesIdentityMethodCall;
@@ -30,6 +32,9 @@ import rs.ltt.jmap.common.method.call.mailbox.ChangesMailboxMethodCall;
 import rs.ltt.jmap.common.method.call.mailbox.GetMailboxMethodCall;
 import rs.ltt.jmap.common.method.call.thread.ChangesThreadMethodCall;
 import rs.ltt.jmap.common.method.call.thread.GetThreadMethodCall;
+
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 
 public class UpdateUtil {
 
@@ -133,15 +138,33 @@ public class UpdateUtil {
     }
 
     public static class MethodResponsesFuture {
-        public final ListenableFuture<MethodResponses> changes;
-        public final ListenableFuture<MethodResponses> created;
-        public final ListenableFuture<MethodResponses> updated;
+        private final ListenableFuture<MethodResponses> changes;
+        private final ListenableFuture<MethodResponses> created;
+        private final ListenableFuture<MethodResponses> updated;
 
         private MethodResponsesFuture(ListenableFuture<MethodResponses> changes, ListenableFuture<MethodResponses> created, ListenableFuture<MethodResponses> updated) {
             this.changes = changes;
             this.created = created;
             this.updated = updated;
         }
+
+
+        public <T extends MethodResponse> T changes(Class<T> clazz) throws ExecutionException, InterruptedException {
+            return changes.get().getMain(clazz);
+        }
+
+        public <T extends MethodResponse> T created(Class<T> clazz) throws ExecutionException, InterruptedException {
+            return created.get().getMain(clazz);
+        }
+
+        public <T extends MethodResponse> T updated(Class<T> clazz) throws ExecutionException, InterruptedException {
+            return updated.get().getMain(clazz);
+        }
+
+        public ListenableFuture<?> addListener(final Runnable runnable, final Executor executor) {
+            return Futures.whenAllComplete(changes, created, updated).run(runnable, executor);
+        }
+
     }
 
 }
