@@ -3,7 +3,7 @@
 
 A library to synchronize data between a client and a server using the JSON Meta Application Protocol. The current focus is on acting as a client library to retrieve emails from a server however it is easily extensible to also synchronize contacts and calendars. It might even be extended to act as a server library.
 
-The library is written in Java 7 to provide full compatibility with Android. It uses [GSON](https://github.com/google/gson) for JSON serialization and deserialization and makes heavy use of [Guava](https://github.com/google/guava) including its Futures. 
+The library is written in Java 8 to provide full compatibility with Android. It uses [GSON](https://github.com/google/gson) for JSON serialization and deserialization and makes heavy use of [Guava](https://github.com/google/guava) including its Futures. 
 
 Entities (Mailbox, Email, EmailSubmission, …) and method calls are annotated with Project Lombok’s `@Getter` and `@Builder` to make them immutable.
 
@@ -39,14 +39,14 @@ A JMAP client library to make JMAP method calls and process the responses. It ha
 
 Gradle:
 ```groovy
-implementation 'rs.ltt.jmap:jmap-client:0.3.1'
+implementation 'rs.ltt.jmap:jmap-client:0.4.0'
 ```
 Maven:
 ```xml
 <dependency>
   <groupId>rs.ltt.jmap</groupId>
   <artifactId>jmap-client</artifactId>
-  <version>0.3.1</version>
+  <version>0.4.0</version>
 </dependency>
 ```
 
@@ -121,14 +121,14 @@ A high level API to act as an email client. It handles everything an email clien
 
 Gradle:
 ```groovy
-implementation 'rs.ltt.jmap:jmap-mua:0.3.1'
+implementation 'rs.ltt.jmap:jmap-mua:0.4.0'
 ```
 Maven:
 ```xml
 <dependency>
   <groupId>rs.ltt.jmap</groupId>
   <artifactId>jmap-mua</artifactId>
-  <version>0.3.1</version>
+  <version>0.4.0</version>
 </dependency>
 ```
 
