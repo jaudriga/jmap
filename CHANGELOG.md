@@ -1,3 +1,8 @@
+### 0.4.0 (2020-07-16)
+
+* Internal code refactor and clean-ups
+* Library now requires Java 8+
+
 ### 0.3.1 (2020-02-24)
 
 * Add MailToUri class to jmap-mua-utils
