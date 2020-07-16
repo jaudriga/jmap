@@ -18,9 +18,14 @@
 package rs.ltt.jmap.mua.util;
 
 import com.google.common.base.MoreObjects;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
+import rs.ltt.jmap.client.MethodResponses;
 import rs.ltt.jmap.common.entity.AddedItem;
 import rs.ltt.jmap.common.entity.Email;
 import rs.ltt.jmap.common.entity.TypedState;
@@ -28,6 +33,7 @@ import rs.ltt.jmap.common.method.response.email.GetEmailMethodResponse;
 import rs.ltt.jmap.common.method.response.email.QueryChangesEmailMethodResponse;
 import rs.ltt.jmap.common.method.response.email.QueryEmailMethodResponse;
 
+import javax.annotation.Nonnull;
 import java.util.List;
 
 public class QueryResult {
@@ -50,6 +56,24 @@ public class QueryResult {
         this.objectState = objectState;
     }
 
+    @Nonnull
+    public static ListenableFuture<QueryResult> of(final ListenableFuture<MethodResponses> queryResponsesFuture,
+                                                   final ListenableFuture<MethodResponses> getThreadIdsResponsesFuture) {
+        return Futures.transform(
+                Futures.allAsList(queryResponsesFuture, getThreadIdsResponsesFuture),
+                methodResponses -> {
+                    Preconditions.checkState(
+                            methodResponses != null && methodResponses.size() == 2,
+                            "Unable to create QueryResult. Invalid number of input method responses"
+                    );
+                    final QueryEmailMethodResponse queryResponse = methodResponses.get(0).getMain(QueryEmailMethodResponse.class);
+                    final GetEmailMethodResponse getThreadIdsResponse = methodResponses.get(1).getMain(GetEmailMethodResponse.class);
+
+                    return QueryResult.of(queryResponse, getThreadIdsResponse);
+                },
+                MoreExecutors.directExecutor()
+        );
+    }
 
     public static QueryResult of(QueryEmailMethodResponse queryEmailMethodResponse, GetEmailMethodResponse emailMethodResponse) {
         final String[] emailIds = queryEmailMethodResponse.getIds();
