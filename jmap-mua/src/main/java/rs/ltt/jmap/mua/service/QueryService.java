@@ -154,7 +154,7 @@ public class QueryService extends MuaService {
             throw new InconsistentQueryStateException("upToId from QueryState needs to match the supplied afterEmailId");
         }
         final SettableFuture<Status> settableFuture = SettableFuture.create();
-        JmapClient.MultiCall multiCall = jmapClient.newMultiCall();
+        final JmapClient.MultiCall multiCall = jmapClient.newMultiCall();
         final ListenableFuture<Status> queryRefreshFuture;
         if (queryStateWrapper.canCalculateChanges) {
             queryRefreshFuture = refreshQuery(query, queryStateWrapper, multiCall);
@@ -180,14 +180,11 @@ public class QueryService extends MuaService {
                         .build()
         ).getMethodResponses();
 
-        queryResponsesFuture.addListener(() -> {
-            try {
-                //This needs to be the first response that we get in order to properly process a potential
-                //anchorNotFound in the catch block
-                final QueryEmailMethodResponse queryResponse = queryResponsesFuture.get().getMain(QueryEmailMethodResponse.class);
-                final GetEmailMethodResponse getThreadIdsResponse = getThreadIdsResponsesFuture.get().getMain(GetEmailMethodResponse.class);
+        final ListenableFuture<QueryResult> queryResultFuture = QueryResult.of(queryResponsesFuture, getThreadIdsResponsesFuture);
 
-                final QueryResult queryResult = QueryResult.of(queryResponse, getThreadIdsResponse);
+        queryResultFuture.addListener(() -> {
+            try {
+                final QueryResult queryResult = queryResultFuture.get();
 
                 //processing order is:
                 //  1) refresh the existent query (which in our implementation also piggybacks email and thread updates)
@@ -197,37 +194,53 @@ public class QueryService extends MuaService {
                     queryRefreshFuture.get();
                 }
 
-                try {
-                    cache.addQueryResult(query.toQueryString(), afterEmailId, queryResult);
-                } catch (CorruptCacheException e) {
-                    LOGGER.info("Invalidating query result cache after cache corruption", e);
-                    cache.invalidateQueryResult(query.toQueryString());
-                    throw e;
-                }
+                addQueryResult(query, afterEmailId, queryResult);
 
-                fetchMissing(query.toQueryString()).addListener(() -> settableFuture.set(queryResult.items.length > 0 ? Status.UPDATED : Status.UNCHANGED), MoreExecutors.directExecutor());
-            } catch (ExecutionException e) {
-                final Throwable cause = e.getCause();
-                if (cause instanceof MethodErrorResponseException) {
-                    final MethodErrorResponse methodError = ((MethodErrorResponseException) cause).getMethodErrorResponse();
-                    if (methodError instanceof AnchorNotFoundMethodErrorResponse) {
-                        if (queryRefreshFuture == null || Status.unchanged(queryRefreshFuture)) {
-                            LOGGER.info("Invalidating query result cache after receiving AnchorNotFound response");
-                            cache.invalidateQueryResult(query.toQueryString());
-                        } else {
-                            LOGGER.info(
-                                    "Holding back on invaliding query result cache despite AnchorNotFound response because query refresh had changes"
-                            );
-                        }
-                    }
-                }
-                settableFuture.setException(extractException(e));
+                fetchMissing(query.toQueryString())
+                        .addListener(
+                                () -> settableFuture.set(queryResult.items.length > 0 ? Status.UPDATED : Status.UNCHANGED),
+                                MoreExecutors.directExecutor()
+                        );
+            } catch (ExecutionException exception) {
+                invalidateQueryCache(queryRefreshFuture, query, exception);
+                settableFuture.setException(extractException(exception));
             } catch (Exception e) {
                 settableFuture.setException(extractException(e));
             }
         }, ioExecutorService);
         multiCall.execute();
         return settableFuture;
+    }
+
+    private void addQueryResult(final EmailQuery query, String afterEmailId, final QueryResult queryResult) throws CacheWriteException {
+        try {
+            cache.addQueryResult(query.toQueryString(), afterEmailId, queryResult);
+        } catch (final CorruptCacheException e) {
+            LOGGER.info("Invalidating query result cache after cache corruption", e);
+            cache.invalidateQueryResult(query.toQueryString());
+            throw e;
+        }
+    }
+
+    private void invalidateQueryCache(final ListenableFuture<Status> queryRefreshFuture,
+                                      final EmailQuery query,
+                                      final ExecutionException exception) {
+        final Throwable cause = exception.getCause();
+        //check if cache needs invalidation pull into separate method
+        if (cause instanceof MethodErrorResponseException) {
+            final MethodErrorResponse methodError = ((MethodErrorResponseException) cause).getMethodErrorResponse();
+            if (methodError instanceof AnchorNotFoundMethodErrorResponse) {
+                if (queryRefreshFuture == null || Status.unchanged(queryRefreshFuture)) {
+                    LOGGER.info("Invalidating query result cache after receiving AnchorNotFound response");
+                    cache.invalidateQueryResult(query.toQueryString());
+                } else {
+                    LOGGER.info(
+                            "Holding back on invaliding query result cache despite AnchorNotFound response because query refresh had changes"
+                    );
+                }
+            }
+        }
+
     }
 
     private ListenableFuture<Status> refreshQuery(@NonNullDecl final EmailQuery query, @NonNullDecl final QueryStateWrapper queryStateWrapper) {
@@ -366,7 +379,7 @@ public class QueryService extends MuaService {
                 QueryEmailMethodResponse queryResponse = queryResponsesFuture.get().getMain(QueryEmailMethodResponse.class);
                 GetEmailMethodResponse getThreadIdsResponse = getThreadIdsResponsesFuture.get().getMain(GetEmailMethodResponse.class);
 
-                QueryResult queryResult = QueryResult.of(queryResponse, getThreadIdsResponse);
+                final QueryResult queryResult = QueryResult.of(queryResponse, getThreadIdsResponse);
 
                 //processing order is:
                 //  1) update Objects (Email, Threads, and Mailboxes)
