@@ -16,10 +16,8 @@
 
 package rs.ltt.jmap.mua;
 
-import com.google.common.base.Function;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
-import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 import rs.ltt.jmap.common.entity.IdentifiableEmailWithMailboxIds;
 
 import java.util.Map;
@@ -43,12 +41,7 @@ class MyIdentifiableEmailWithMailboxes implements IdentifiableEmailWithMailboxId
 
     @Override
     public Map<String, Boolean> getMailboxIds() {
-       return  Maps.asMap(mailboxIds, new Function<String, Boolean>() {
-           @Override
-           public Boolean apply(@NullableDecl String s) {
-               return true;
-           }
-       });
+       return  Maps.asMap(mailboxIds, s -> true);
     }
 
     @Override

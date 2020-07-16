@@ -17,227 +17,65 @@
 package rs.ltt.jmap.mua;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.util.concurrent.*;
+import com.google.common.util.concurrent.ListenableFuture;
 import okhttp3.HttpUrl;
 import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rs.ltt.jmap.client.JmapClient;
-import rs.ltt.jmap.client.JmapRequest.Call;
-import rs.ltt.jmap.client.MethodResponses;
-import rs.ltt.jmap.client.api.MethodErrorResponseException;
 import rs.ltt.jmap.client.session.InMemorySessionCache;
-import rs.ltt.jmap.client.session.Session;
 import rs.ltt.jmap.client.session.SessionCache;
-import rs.ltt.jmap.common.Request;
-import rs.ltt.jmap.common.entity.Thread;
 import rs.ltt.jmap.common.entity.*;
-import rs.ltt.jmap.common.entity.capability.CoreCapability;
-import rs.ltt.jmap.common.entity.filter.EmailFilterCondition;
 import rs.ltt.jmap.common.entity.filter.Filter;
 import rs.ltt.jmap.common.entity.query.EmailQuery;
-import rs.ltt.jmap.common.method.MethodErrorResponse;
-import rs.ltt.jmap.common.method.call.email.GetEmailMethodCall;
-import rs.ltt.jmap.common.method.call.email.QueryChangesEmailMethodCall;
-import rs.ltt.jmap.common.method.call.email.QueryEmailMethodCall;
-import rs.ltt.jmap.common.method.call.email.SetEmailMethodCall;
-import rs.ltt.jmap.common.method.call.identity.GetIdentityMethodCall;
-import rs.ltt.jmap.common.method.call.mailbox.GetMailboxMethodCall;
-import rs.ltt.jmap.common.method.call.mailbox.SetMailboxMethodCall;
-import rs.ltt.jmap.common.method.call.submission.SetEmailSubmissionMethodCall;
-import rs.ltt.jmap.common.method.call.thread.GetThreadMethodCall;
-import rs.ltt.jmap.common.method.error.AnchorNotFoundMethodErrorResponse;
-import rs.ltt.jmap.common.method.response.email.*;
-import rs.ltt.jmap.common.method.response.identity.ChangesIdentityMethodResponse;
-import rs.ltt.jmap.common.method.response.identity.GetIdentityMethodResponse;
-import rs.ltt.jmap.common.method.response.mailbox.ChangesMailboxMethodResponse;
-import rs.ltt.jmap.common.method.response.mailbox.GetMailboxMethodResponse;
-import rs.ltt.jmap.common.method.response.mailbox.SetMailboxMethodResponse;
-import rs.ltt.jmap.common.method.response.submission.SetEmailSubmissionMethodResponse;
-import rs.ltt.jmap.common.method.response.thread.ChangesThreadMethodResponse;
-import rs.ltt.jmap.common.method.response.thread.GetThreadMethodResponse;
-import rs.ltt.jmap.common.util.Patches;
-import rs.ltt.jmap.mua.cache.*;
-import rs.ltt.jmap.mua.util.*;
+import rs.ltt.jmap.mua.cache.Cache;
+import rs.ltt.jmap.mua.cache.InMemoryCache;
+import rs.ltt.jmap.mua.service.EmailService;
+import rs.ltt.jmap.mua.service.IdentityService;
+import rs.ltt.jmap.mua.service.MailboxService;
+import rs.ltt.jmap.mua.service.QueryService;
 
-import java.io.Closeable;
-import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
+import java.util.Collection;
 
-@SuppressWarnings("UnstableApiUsage")
-public class Mua implements Closeable {
+public class Mua extends MuaSession {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Mua.class);
-    private final JmapClient jmapClient;
-    private final Cache cache;
-    private final String accountId;
-    private Long queryPageSize = null;
-    private ListeningExecutorService ioExecutorService = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor());
 
     private Mua(JmapClient jmapClient, Cache cache, String accountId) {
-        this.jmapClient = jmapClient;
-        this.cache = cache;
-        this.accountId = accountId;
+        super(jmapClient, cache, accountId);
     }
 
     public static Builder builder() {
         return new Builder();
     }
 
-    public JmapClient getJmapClient() {
-        return jmapClient;
-    }
-
-    @Override
-    public void close() {
-        ioExecutorService.shutdown();
-        jmapClient.close();
+    public ListenableFuture<Status> refresh() {
+        return getService(QueryService.class).refresh();
     }
 
     public ListenableFuture<Status> refreshIdentities() {
-        final ListenableFuture<String> identityStateFuture = ioExecutorService.submit(cache::getIdentityState);
-        return Futures.transformAsync(identityStateFuture, state -> {
-            if (state == null) {
-                return loadIdentities();
-            } else {
-                return updateIdentities(state);
-            }
-        }, MoreExecutors.directExecutor());
-    }
-
-    private ListenableFuture<Status> loadIdentities() {
-        final JmapClient.MultiCall multiCall = jmapClient.newMultiCall();
-        final ListenableFuture<Status> future = loadIdentities(multiCall);
-        multiCall.execute();
-        return future;
-    }
-
-    private ListenableFuture<Status> loadIdentities(final JmapClient.MultiCall multiCall) {
-        final SettableFuture<Status> settableFuture = SettableFuture.create();
-        final ListenableFuture<MethodResponses> responseFuture = multiCall.call(
-                GetIdentityMethodCall.builder().accountId(accountId).build()
-        ).getMethodResponses();
-        responseFuture.addListener(() -> {
-            try {
-                final GetIdentityMethodResponse response = responseFuture.get().getMain(GetIdentityMethodResponse.class);
-                final Identity[] identities = response.getList();
-                cache.setIdentities(response.getTypedState(), identities);
-                settableFuture.set(Status.of(identities.length > 0));
-            } catch (Exception e) {
-                settableFuture.setException(extractException(e));
-            }
-        }, ioExecutorService);
-        return settableFuture;
-    }
-
-    private static Throwable extractException(final Exception exception) {
-        if (exception instanceof ExecutionException) {
-            final Throwable cause = exception.getCause();
-            if (cause != null) {
-                return cause;
-            }
-        }
-        return exception;
-    }
-
-    private ListenableFuture<Status> updateIdentities(final String state) {
-        final JmapClient.MultiCall multiCall = jmapClient.newMultiCall();
-        final ListenableFuture<Status> future = updateIdentities(state, multiCall);
-        multiCall.execute();
-        return future;
-    }
-
-    private ListenableFuture<Status> updateIdentities(final String state, final JmapClient.MultiCall multiCall) {
-        Preconditions.checkNotNull(state, "State can not be null when updating identities");
-        final SettableFuture<Status> settableFuture = SettableFuture.create();
-        final UpdateUtil.MethodResponsesFuture methodResponsesFuture = UpdateUtil.identities(multiCall, accountId, state);
-        methodResponsesFuture.addListener(() -> {
-            try {
-                ChangesIdentityMethodResponse changesResponse = methodResponsesFuture.changes(ChangesIdentityMethodResponse.class);
-                GetIdentityMethodResponse createdResponse = methodResponsesFuture.created(GetIdentityMethodResponse.class);
-                GetIdentityMethodResponse updatedResponse = methodResponsesFuture.updated(GetIdentityMethodResponse.class);
-                final Update<Identity> update = Update.of(changesResponse, createdResponse, updatedResponse);
-                if (update.hasChanges()) {
-                    cache.updateIdentities(update);
-                }
-                settableFuture.set(Status.of(update));
-            } catch (Exception e) {
-                settableFuture.setException(extractException(e));
-            }
-        }, ioExecutorService);
-        return settableFuture;
+        return getService(IdentityService.class).refreshIdentities();
     }
 
     public ListenableFuture<Status> refreshMailboxes() {
-        final ListenableFuture<String> mailboxStateFuture = ioExecutorService.submit(cache::getMailboxState);
-
-        return Futures.transformAsync(mailboxStateFuture, state -> {
-            if (state == null) {
-                return loadMailboxes();
-            } else {
-                return updateMailboxes(state);
-            }
-        }, MoreExecutors.directExecutor());
+        return getService(MailboxService.class).refreshMailboxes();
     }
 
-    private ListenableFuture<Status> loadMailboxes() {
-        final JmapClient.MultiCall multiCall = jmapClient.newMultiCall();
-        final ListenableFuture<Status> future = loadMailboxes(multiCall);
-        multiCall.execute();
-        return future;
+    public ListenableFuture<Boolean> createMailbox(final Mailbox mailbox) {
+        return getService(MailboxService.class).createMailbox(mailbox);
     }
 
-    private ListenableFuture<Status> loadMailboxes(final JmapClient.MultiCall multiCall) {
-        LOGGER.info("Fetching mailboxes");
-        final SettableFuture<Status> settableFuture = SettableFuture.create();
-        final ListenableFuture<MethodResponses> getMailboxMethodResponsesFuture = multiCall.call(
-                GetMailboxMethodCall.builder().accountId(accountId).build()
-        ).getMethodResponses();
-        getMailboxMethodResponsesFuture.addListener(() -> {
-            try {
-                GetMailboxMethodResponse response = getMailboxMethodResponsesFuture.get().getMain(GetMailboxMethodResponse.class);
-                Mailbox[] mailboxes = response.getList();
-                cache.setMailboxes(response.getTypedState(), mailboxes);
-                settableFuture.set(Status.of(mailboxes.length > 0));
-            } catch (InterruptedException | ExecutionException | CacheWriteException e) {
-                settableFuture.setException(extractException(e));
-            }
-
-        }, ioExecutorService);
-        return settableFuture;
+    public ListenableFuture<Status> query(final Filter<Email> filter) {
+        return getService(QueryService.class).query(filter);
     }
 
-    private ListenableFuture<Status> updateMailboxes(final String state) {
-        final JmapClient.MultiCall multiCall = jmapClient.newMultiCall();
-        final ListenableFuture<Status> future = updateMailboxes(state, multiCall);
-        multiCall.execute();
-        return future;
+    public ListenableFuture<Status> query(@NonNullDecl final EmailQuery query) {
+        return getService(QueryService.class).query(query);
     }
 
-    private ListenableFuture<Status> updateMailboxes(final String state, final JmapClient.MultiCall multiCall) {
-        Preconditions.checkNotNull(state, "State can not be null when updating mailboxes");
-        LOGGER.info("Refreshing mailboxes since state {}", state);
-        final SettableFuture<Status> settableFuture = SettableFuture.create();
-        final UpdateUtil.MethodResponsesFuture methodResponsesFuture = UpdateUtil.mailboxes(multiCall, accountId, state);
-        methodResponsesFuture.addListener(() -> {
-            try {
-                final ChangesMailboxMethodResponse changesResponse = methodResponsesFuture.changes(ChangesMailboxMethodResponse.class);
-                final GetMailboxMethodResponse createdResponse = methodResponsesFuture.created(GetMailboxMethodResponse.class);
-                final GetMailboxMethodResponse updatedResponse = methodResponsesFuture.updated(GetMailboxMethodResponse.class);
-                final Update<Mailbox> update = Update.of(changesResponse, createdResponse, updatedResponse);
-                if (update.hasChanges()) {
-                    cache.updateMailboxes(update, changesResponse.getUpdatedProperties());
-                }
-                settableFuture.set(Status.of(update));
-            } catch (InterruptedException | ExecutionException | CacheWriteException | CacheConflictException e) {
-                settableFuture.setException(extractException(e));
-            }
-        }, ioExecutorService);
-        return settableFuture;
+    public ListenableFuture<Status> query(@NonNullDecl final EmailQuery query, final String afterEmailId) {
+        return getService(QueryService.class).query(query, afterEmailId);
     }
 
     /**
@@ -248,15 +86,7 @@ public class Mua implements Closeable {
      * @return String The id of the email that has been created
      */
     public ListenableFuture<String> draft(final Email email) {
-        return Futures.transformAsync(
-                getMailboxes(),
-                mailboxes -> draft(email, MailboxUtil.find(mailboxes, Role.DRAFTS)),
-                MoreExecutors.directExecutor()
-        );
-    }
-
-    private ListenableFuture<Collection<? extends IdentifiableMailboxWithRole>> getMailboxes() {
-        return ioExecutorService.submit(cache::getSpecialMailboxes);
+        return getService(EmailService.class).draft(email);
     }
 
     /**
@@ -270,95 +100,23 @@ public class Mua implements Closeable {
      * @return The id of the email that has been created
      */
     public ListenableFuture<String> draft(final Email email, final IdentifiableMailboxWithRole drafts) {
-        final JmapClient.MultiCall multiCall = jmapClient.newMultiCall();
-        final ListenableFuture<String> future = draft(email, drafts, multiCall);
-        multiCall.execute();
-        return future;
-    }
-
-    private ListenableFuture<String> draft(final Email email, final IdentifiableMailboxWithRole drafts, final JmapClient.MultiCall multiCall) {
-        Preconditions.checkNotNull(email, "Email can not be null when attempting to create a draft");
-        Preconditions.checkState(email.getId() == null, "id is a server-set property");
-        Preconditions.checkState(email.getBlobId() == null, "blobId is a server-set property");
-        Preconditions.checkState(email.getThreadId() == null, "threadId is a server-set property");
-        final Email.EmailBuilder emailBuilder = email.toBuilder();
-        final ListenableFuture<MethodResponses> mailboxCreateFuture;
-        if (drafts == null) {
-            mailboxCreateFuture = createMailbox(Role.DRAFTS, null, multiCall);
-        } else {
-            mailboxCreateFuture = null;
-        }
-        if (drafts == null) {
-            emailBuilder.mailboxId(CreateUtil.createIdReference(Role.DRAFTS), true);
-        } else {
-            emailBuilder.mailboxId(drafts.getId(), true);
-        }
-        emailBuilder.keyword(Keyword.DRAFT, true);
-        emailBuilder.keyword(Keyword.SEEN, true);
-        final ListenableFuture<MethodResponses> future = multiCall.call(
-                SetEmailMethodCall.builder()
-                        .accountId(accountId)
-                        .create(ImmutableMap.of(CreateUtil.EMAIL_CREATION_ID, emailBuilder.build()))
-                        .build()
-        ).getMethodResponses();
-        return Futures.transformAsync(future, methodResponses -> {
-            if (mailboxCreateFuture != null) {
-                SetMailboxMethodResponse setMailboxResponse = mailboxCreateFuture.get().getMain(SetMailboxMethodResponse.class);
-                SetMailboxException.throwIfFailed(setMailboxResponse);
-            }
-            final SetEmailMethodResponse setEmailMethodResponse = methodResponses.getMain(SetEmailMethodResponse.class);
-            SetEmailException.throwIfFailed(setEmailMethodResponse);
-            final Map<String, Email> created = setEmailMethodResponse.getCreated();
-            final Email email1 = created != null ? created.get(CreateUtil.EMAIL_CREATION_ID) : null;
-            if (email1 != null) {
-                return Futures.immediateFuture(email1.getId());
-            } else {
-                throw new IllegalStateException("Unable to find email id in method response");
-            }
-        }, MoreExecutors.directExecutor());
-
-    }
-
-    /**
-     * Utility method to create a mailbox of a certain role. This method is usually used in conjunction with a
-     * modification of emails in a thread. For example a generalized 'move to archive' method can call this method
-     * ahead of time to create the archive mailbox.
-     * <p>
-     * When called with an ObjectsState the SetMailboxMethodCall will be guarded with an ifInState parameter. In that case
-     * an automatic call to updateMailboxes is made as well - The idea behind that approach is that if the ifInState fails
-     * we will at least have an up to date state on the next attempt.
-     *
-     * @param role         The role of the mailbox we want to create.
-     * @param objectsState If an ObjectsState is giving the create call will be guarded with a ifInState
-     * @param multiCall    The MultiCall that will later have the SetEmailMethodCall added to it.
-     * @return
-     */
-    private ListenableFuture<MethodResponses> createMailbox(@NonNullDecl final Role role, @NullableDecl ObjectsState objectsState, final JmapClient.MultiCall multiCall) {
-        final SetMailboxMethodCall setMailboxMethodCall = SetMailboxMethodCall.builder()
-                .accountId(this.accountId)
-                .ifInState(objectsState == null ? null : objectsState.mailboxState)
-                .create(ImmutableMap.of(CreateUtil.createId(role), MailboxUtil.create(role)))
-                .build();
-        final ListenableFuture<MethodResponses> future = multiCall.call(setMailboxMethodCall).getMethodResponses();
-        if (objectsState != null && objectsState.mailboxState != null) {
-            updateMailboxes(objectsState.mailboxState, multiCall);
-        }
-        return future;
+        return getService(EmailService.class).draft(email, drafts);
     }
 
     public ListenableFuture<Boolean> submit(final Email email, final Identity identity) {
-        return Futures.transformAsync(getMailboxes(), mailboxes -> {
-            Preconditions.checkNotNull(mailboxes, "SpecialMailboxes collection must not be null but can be empty");
-            final IdentifiableMailboxWithRole drafts = MailboxUtil.find(mailboxes, Role.DRAFTS);
-            final String draftMailboxId;
-            if (drafts == null || !email.getMailboxIds().containsKey(drafts.getId())) {
-                draftMailboxId = null;
-            } else {
-                draftMailboxId = drafts.getId();
-            }
-            final IdentifiableMailboxWithRole sent = MailboxUtil.find(mailboxes, Role.SENT);
-            return submit(email.getId(), identity, draftMailboxId, sent);
-        }, MoreExecutors.directExecutor());
+        return getService(EmailService.class).submit(email, identity);
+    }
+
+    /**
+     * Submits (sends / EmailSubmission) a previously drafted email. The email will be removed from the Drafts mailbox
+     * and put into the Sent mailbox after successful submission. Additionally the draft keyword will be removed.
+     *
+     * @param emailId  The id of the email that should be submitted
+     * @param identity The identity used to submit that email
+     * @return
+     */
+    public ListenableFuture<Boolean> submit(final String emailId, final IdentifiableIdentity identity) {
+        return getService(EmailService.class).submit(emailId, identity);
     }
 
     /**
@@ -377,255 +135,24 @@ public class Mua implements Closeable {
      * @return
      */
     public ListenableFuture<Boolean> submit(final String emailId, final IdentifiableIdentity identity, @NullableDecl String draftMailboxId, final IdentifiableMailboxWithRole sent) {
-        final JmapClient.MultiCall multiCall = jmapClient.newMultiCall();
-        final ListenableFuture<Boolean> future = submit(emailId, identity, draftMailboxId, sent, multiCall);
-        multiCall.execute();
-        return future;
-    }
-
-    //TODO the draftMailboxId is unused
-    private ListenableFuture<Boolean> submit(@NonNullDecl final String emailId, @NonNullDecl final IdentifiableIdentity identity, @NullableDecl String draftMailboxId, @NullableDecl final IdentifiableMailboxWithRole sent, final JmapClient.MultiCall multiCall) {
-        Preconditions.checkNotNull(emailId, "emailId can not be null when attempting to submit");
-        Preconditions.checkNotNull(identity, "identity can not be null when attempting to submit an email");
-        final ListenableFuture<MethodResponses> mailboxCreateFuture;
-        if (sent == null) {
-            mailboxCreateFuture = createMailbox(Role.SENT, null, multiCall);
-        } else {
-            mailboxCreateFuture = null;
-        }
-        final Patches.Builder patchesBuilder = Patches.builder();
-        patchesBuilder.remove("keywords/" + Keyword.DRAFT);
-        patchesBuilder.set("mailboxIds", ImmutableMap.of(sent == null ? CreateUtil.createIdReference(Role.SENT) : sent.getId(), true));
-        final ListenableFuture<MethodResponses> setEmailSubmissionFuture = multiCall.call(
-                SetEmailSubmissionMethodCall.builder()
-                        .accountId(accountId)
-                        .create(
-                                ImmutableMap.of(
-                                        "es0",
-                                        EmailSubmission.builder()
-                                                .emailId(emailId)
-                                                .identityId(identity.getId())
-                                                .build()
-                                )
-                        )
-                        .onSuccessUpdateEmail(
-                                ImmutableMap.of(
-                                        "#es0",
-                                        patchesBuilder.build()
-                                )
-                        )
-                        .build()
-        ).getMethodResponses();
-        return Futures.transformAsync(setEmailSubmissionFuture, methodResponses -> {
-            if (mailboxCreateFuture != null) {
-                SetMailboxMethodResponse setMailboxResponse = mailboxCreateFuture.get().getMain(SetMailboxMethodResponse.class);
-                SetMailboxException.throwIfFailed(setMailboxResponse);
-            }
-            SetEmailSubmissionMethodResponse setEmailSubmissionMethodResponse = methodResponses.getMain(SetEmailSubmissionMethodResponse.class);
-            SetEmailSubmissionException.throwIfFailed(setEmailSubmissionMethodResponse);
-            return Futures.immediateFuture(setEmailSubmissionMethodResponse.getUpdatedCreatedCount() > 0);
-        }, MoreExecutors.directExecutor());
-
-    }
-
-    /**
-     * Submits (sends / EmailSubmission) a previously drafted email. The email will be removed from the Drafts mailbox
-     * and put into the Sent mailbox after successful submission. Additionally the draft keyword will be removed.
-     *
-     * @param emailId  The id of the email that should be submitted
-     * @param identity The identity used to submit that email
-     * @return
-     */
-    public ListenableFuture<Boolean> submit(final String emailId, final IdentifiableIdentity identity) {
-        return Futures.transformAsync(getMailboxes(), mailboxes -> {
-            Preconditions.checkNotNull(mailboxes, "SpecialMailboxes collection must not be null but can be empty");
-            final IdentifiableMailboxWithRole drafts = MailboxUtil.find(mailboxes, Role.DRAFTS);
-            final IdentifiableMailboxWithRole sent = MailboxUtil.find(mailboxes, Role.SENT);
-            return submit(emailId, identity, drafts == null ? null : drafts.getId(), sent);
-        }, MoreExecutors.directExecutor());
+        return getService(EmailService.class).submit(emailId, identity, draftMailboxId, sent);
     }
 
     public ListenableFuture<String> send(final Email email, final IdentifiableIdentity identity) {
-        return Futures.transformAsync(getMailboxes(), mailboxes -> {
-            Preconditions.checkNotNull(mailboxes, "SpecialMailboxes collection must not be null but can be empty");
-            final IdentifiableMailboxWithRole draft = MailboxUtil.find(mailboxes, Role.DRAFTS);
-            final IdentifiableMailboxWithRole sent = MailboxUtil.find(mailboxes, Role.SENT);
-            return send(email, identity, draft, sent);
-        }, MoreExecutors.directExecutor());
-    }
-
-    private ListenableFuture<String> send(final Email email,
-                                          final IdentifiableIdentity identity,
-                                          final IdentifiableMailboxWithRole drafts,
-                                          final IdentifiableMailboxWithRole sent) {
-        final JmapClient.MultiCall multiCall = jmapClient.newMultiCall();
-        final ListenableFuture<String> draftFuture = draft(email, drafts, multiCall);
-        final ListenableFuture<Boolean> submitFuture = submit(CreateUtil.EMAIL_CREATION_ID_REFERENCE, identity, drafts == null ? CreateUtil.createIdReference(Role.DRAFTS) : drafts.getId(), sent, multiCall);
-        multiCall.execute();
-        return Futures.transformAsync(submitFuture, success -> draftFuture, MoreExecutors.directExecutor());
+        return getService(EmailService.class).send(email, identity);
     }
 
     public ListenableFuture<Boolean> setKeyword(final Collection<? extends IdentifiableEmailWithKeywords> emails, final String keyword) {
-        return Futures.transformAsync(getObjectsState(), objectsState -> setKeyword(emails, keyword, objectsState), MoreExecutors.directExecutor());
-    }
-
-    private ListenableFuture<Boolean> setKeyword(final Collection<? extends IdentifiableEmailWithKeywords> emails,
-                                                 final String keyword,
-                                                 final ObjectsState objectsState) {
-        final ImmutableMap.Builder<String, Map<String, Object>> emailPatchObjectMapBuilder = ImmutableMap.builder();
-        for (IdentifiableEmailWithKeywords email : emails) {
-            if (!email.getKeywords().containsKey(keyword)) {
-                emailPatchObjectMapBuilder.put(email.getId(), Patches.set("keywords/" + keyword, true));
-            }
-        }
-        final ImmutableMap<String, Map<String, Object>> patches = emailPatchObjectMapBuilder.build();
-        return applyEmailPatches(patches, objectsState);
-    }
-
-    private ListenableFuture<Boolean> applyEmailPatches(final Map<String, Map<String, Object>> patches, final ObjectsState objectsState) {
-        if (patches.size() == 0) {
-            return Futures.immediateFuture(false);
-        }
-        JmapClient.MultiCall multiCall = jmapClient.newMultiCall();
-        ListenableFuture<Boolean> future = applyEmailPatches(patches, objectsState, true, multiCall);
-        multiCall.execute();
-        return future;
-    }
-
-    /**
-     * Utility method to update emails with a given patch set. Optionally this call will be guarded with an ifInState
-     * parameter. If it is this method will also chain an updateEmailCall right after it. The rational for that is that
-     * when the first call fails with a miss matched state a second attempt (not triggered automatically) will most likely
-     * succeed.
-     * <p>
-     * When calling this method after creating a mailbox ifInState should be set to false; Otherwise the createMailbox
-     * call will increase the state and the subsequent setEmail call would fail.
-     *
-     * @param patches      The map of patches
-     * @param objectsState An ObjectsState that will be used to guard the set call. Only used when ifInState is true
-     * @param ifInState    Whether or not to guard the call
-     * @param multiCall
-     * @return
-     */
-    private ListenableFuture<Boolean> applyEmailPatches(final Map<String, Map<String, Object>> patches,
-                                                        final ObjectsState objectsState,
-                                                        final boolean ifInState,
-                                                        final JmapClient.MultiCall multiCall) {
-        if (ifInState) {
-            Preconditions.checkNotNull(objectsState);
-        }
-        final ListenableFuture<MethodResponses> future = multiCall.call(
-                SetEmailMethodCall.builder()
-                        .accountId(accountId)
-                        .ifInState(ifInState ? objectsState.emailState : null)
-                        .update(patches)
-                        .build()
-        ).getMethodResponses();
-        if (ifInState && objectsState.emailState != null) {
-            updateEmails(objectsState.emailState, multiCall);
-        }
-        return Futures.transformAsync(future, methodResponses -> {
-            SetEmailMethodResponse setEmailMethodResponse = methodResponses.getMain(SetEmailMethodResponse.class);
-            SetEmailException.throwIfFailed(setEmailMethodResponse);
-            return Futures.immediateFuture(setEmailMethodResponse.getUpdatedCreatedCount() > 0);
-        }, ioExecutorService);
-    }
-
-    private ListenableFuture<Status> updateEmails(final String state, final JmapClient.MultiCall multiCall) {
-        Preconditions.checkNotNull(state, "state can not be null when updating emails");
-        LOGGER.info("Refreshing emails since state {}", state);
-        final SettableFuture<Status> settableFuture = SettableFuture.create();
-        final UpdateUtil.MethodResponsesFuture methodResponsesFuture = UpdateUtil.emails(multiCall, accountId, state);
-        methodResponsesFuture.addListener(() -> {
-            try {
-                final ChangesEmailMethodResponse changesResponse = methodResponsesFuture.changes(ChangesEmailMethodResponse.class);
-                final GetEmailMethodResponse createdResponse = methodResponsesFuture.created(GetEmailMethodResponse.class);
-                final GetEmailMethodResponse updatedResponse = methodResponsesFuture.updated(GetEmailMethodResponse.class);
-                final Update<Email> update = Update.of(changesResponse, createdResponse, updatedResponse);
-                if (update.hasChanges()) {
-                    cache.updateEmails(update, Email.Properties.MUTABLE);
-                }
-                settableFuture.set(Status.of(update));
-            } catch (InterruptedException | ExecutionException | CacheWriteException | CacheConflictException e) {
-                settableFuture.setException(extractException(e));
-            }
-        }, ioExecutorService);
-        return settableFuture;
-    }
-
-    private ListenableFuture<ObjectsState> getObjectsState() {
-        return ioExecutorService.submit(cache::getObjectsState);
+        return getService(EmailService.class).setKeyword(emails, keyword);
     }
 
     public ListenableFuture<Boolean> discardDraft(final @NonNullDecl IdentifiableEmailWithKeywords email) {
-        Preconditions.checkNotNull(email);
-        Preconditions.checkArgument(email.getKeywords().containsKey(Keyword.DRAFT), "Email does not have $draft keyword");
-        return Futures.transformAsync(getObjectsState(), objectsState -> discardDraft(email, objectsState), MoreExecutors.directExecutor());
-    }
-
-    private ListenableFuture<Boolean> discardDraft(final @NonNullDecl IdentifiableEmailWithKeywords email, final ObjectsState objectsState) {
-        Preconditions.checkNotNull(objectsState);
-        final JmapClient.MultiCall multiCall = jmapClient.newMultiCall();
-        final ListenableFuture<Boolean> future = discardDraft(email, objectsState, multiCall);
-        multiCall.execute();
-        return future;
-    }
-
-    private ListenableFuture<Boolean> discardDraft(final @NonNullDecl IdentifiableEmailWithKeywords email,
-                                                   final ObjectsState objectsState,
-                                                   final JmapClient.MultiCall multiCall) {
-        final ListenableFuture<MethodResponses> future = multiCall.call(
-                SetEmailMethodCall.builder()
-                        .accountId(accountId)
-                        .ifInState(objectsState.emailState)
-                        .destroy(new String[]{email.getId()})
-                        .build()
-        ).getMethodResponses();
-        if (objectsState.emailState != null) {
-            updateEmails(objectsState.emailState, multiCall);
-        }
-        return Futures.transformAsync(future, methodResponses -> {
-            SetEmailMethodResponse setEmailMethodResponse = methodResponses.getMain(SetEmailMethodResponse.class);
-            SetEmailException.throwIfFailed(setEmailMethodResponse);
-            final String[] destroyed = setEmailMethodResponse.getDestroyed();
-            return Futures.immediateFuture(destroyed != null && destroyed.length > 0);
-        }, MoreExecutors.directExecutor());
+        return getService(EmailService.class).discardDraft(email);
     }
 
     public ListenableFuture<Boolean> removeKeyword(final Collection<? extends IdentifiableEmailWithKeywords> emails,
                                                    final String keyword) {
-        return Futures.transformAsync(
-                getObjectsState(),
-                objectsState -> removeKeyword(emails, keyword, objectsState),
-                MoreExecutors.directExecutor()
-        );
-    }
-
-    private ListenableFuture<Boolean> removeKeyword(final Collection<? extends IdentifiableEmailWithKeywords> emails,
-                                                    final String keyword,
-                                                    final ObjectsState objectsState) {
-        final ImmutableMap.Builder<String, Map<String, Object>> emailPatchObjectMapBuilder = ImmutableMap.builder();
-        for (IdentifiableEmailWithKeywords email : emails) {
-            if (email.getKeywords().containsKey(keyword)) {
-                emailPatchObjectMapBuilder.put(email.getId(), Patches.remove("keywords/" + keyword));
-            }
-        }
-        final ImmutableMap<String, Map<String, Object>> patches = emailPatchObjectMapBuilder.build();
-        return applyEmailPatches(patches, objectsState);
-    }
-
-    public ListenableFuture<Boolean> createMailbox(final Mailbox mailbox) {
-        ListenableFuture<MethodResponses> future = jmapClient.call(
-                SetMailboxMethodCall.builder()
-                        .accountId(accountId)
-                        .create(ImmutableMap.of("new-mailbox-0", mailbox))
-                        .build()
-        );
-        return Futures.transformAsync(future, methodResponses -> {
-            SetMailboxMethodResponse response = methodResponses.getMain(SetMailboxMethodResponse.class);
-            SetMailboxException.throwIfFailed(response);
-            return Futures.immediateFuture(response.getUpdatedCreatedCount() > 0);
-        }, MoreExecutors.directExecutor());
+        return getService(EmailService.class).removeKeyword(emails, keyword);
     }
 
     /**
@@ -636,63 +163,7 @@ public class Mua implements Closeable {
      * @return
      */
     public ListenableFuture<Boolean> copyToImportant(@NonNullDecl final Collection<? extends IdentifiableEmailWithMailboxIds> emails) {
-        return Futures.transformAsync(getMailboxes(), mailboxes -> {
-            Preconditions.checkNotNull(mailboxes, "SpecialMailboxes collection must not be null but can be empty");
-            final IdentifiableMailboxWithRole important = MailboxUtil.find(mailboxes, Role.IMPORTANT);
-            return copyToImportant(emails, important);
-        }, MoreExecutors.directExecutor());
-    }
-
-    private ListenableFuture<Boolean> copyToImportant(@NonNullDecl final Collection<? extends IdentifiableEmailWithMailboxIds> emails, @NullableDecl final IdentifiableMailboxWithRole important) {
-        return Futures.transformAsync(getObjectsState(), objectsState -> copyToImportant(emails, important, objectsState), MoreExecutors.directExecutor());
-    }
-
-    private ListenableFuture<Boolean> copyToImportant(@NonNullDecl final Collection<? extends IdentifiableEmailWithMailboxIds> emails, @NullableDecl final IdentifiableMailboxWithRole important, final ObjectsState objectsState) {
-        Preconditions.checkNotNull(emails, "emails can not be null when attempting to copy them to important");
-        if (important != null) {
-            Preconditions.checkArgument(important.getRole() == Role.IMPORTANT, "Supplied important mailbox must have the role IMPORTANT");
-        }
-        final JmapClient.MultiCall multiCall = jmapClient.newMultiCall();
-
-        final ListenableFuture<MethodResponses> mailboxCreateFuture;
-        if (important == null) {
-            mailboxCreateFuture = createMailbox(Role.IMPORTANT, objectsState, multiCall);
-        } else {
-            mailboxCreateFuture = null;
-        }
-
-        ImmutableMap.Builder<String, Map<String, Object>> emailPatchObjectMapBuilder = ImmutableMap.builder();
-        for (IdentifiableEmailWithMailboxIds email : emails) {
-            final Map<String, Boolean> mailboxIds = new HashMap<>(email.getMailboxIds());
-            if (important == null) {
-                mailboxIds.put(CreateUtil.createIdReference(Role.IMPORTANT), true);
-            } else {
-                mailboxIds.put(important.getId(), true);
-            }
-            if (!mailboxIds.equals(email.getMailboxIds())) {
-                emailPatchObjectMapBuilder.put(email.getId(), Patches.set("mailboxIds", mailboxIds));
-            }
-        }
-        final ImmutableMap<String, Map<String, Object>> patches = emailPatchObjectMapBuilder.build();
-        if (patches.size() == 0) {
-            return Futures.immediateFuture(false);
-        }
-
-        final ListenableFuture<Boolean> patchesFuture = applyEmailPatches(patches,
-                objectsState,
-                important != null, //if do not have to create a mailbox in the same call, calling ifInState on the emails is fine
-                multiCall
-        );
-
-        multiCall.execute();
-
-        return Futures.transformAsync(patchesFuture, patchesResults -> {
-            if (mailboxCreateFuture != null) {
-                SetMailboxMethodResponse setMailboxResponse = mailboxCreateFuture.get().getMain(SetMailboxMethodResponse.class);
-                SetMailboxException.throwIfFailed(setMailboxResponse);
-            }
-            return Futures.immediateFuture(patchesResults);
-        }, MoreExecutors.directExecutor());
+        return getService(EmailService.class).copyToImportant(emails);
     }
 
     /**
@@ -707,25 +178,7 @@ public class Mua implements Closeable {
      */
     public ListenableFuture<Boolean> copyToMailbox(final Collection<? extends IdentifiableEmailWithMailboxIds> emails,
                                                    final IdentifiableMailboxWithRole mailbox) {
-        return Futures.transformAsync(
-                getObjectsState(), objectsState -> copyToMailbox(emails, mailbox, objectsState),
-                MoreExecutors.directExecutor()
-        );
-    }
-
-    private ListenableFuture<Boolean> copyToMailbox(final Collection<? extends IdentifiableEmailWithMailboxIds> emails, final IdentifiableMailboxWithRole mailbox, final ObjectsState objectsState) {
-        ImmutableMap.Builder<String, Map<String, Object>> emailPatchObjectMapBuilder = ImmutableMap.builder();
-        for (IdentifiableEmailWithMailboxIds email : emails) {
-            if (email.getMailboxIds().containsKey(mailbox.getId())) {
-                continue;
-            }
-            Patches.Builder patchesBuilder = Patches.builder();
-            patchesBuilder.set("mailboxIds/" + mailbox.getId(), true);
-            emailPatchObjectMapBuilder.put(email.getId(), patchesBuilder.build());
-        }
-        final ImmutableMap<String, Map<String, Object>> patches = emailPatchObjectMapBuilder.build();
-
-        return applyEmailPatches(patches, objectsState);
+        return getService(EmailService.class).copyToMailbox(emails, mailbox);
     }
 
     /**
@@ -736,80 +189,7 @@ public class Mua implements Closeable {
      * @return
      */
     public ListenableFuture<Boolean> moveToInbox(final Collection<? extends IdentifiableEmailWithMailboxIds> emails) {
-        return Futures.transformAsync(getMailboxes(), mailboxes -> {
-            Preconditions.checkNotNull(mailboxes, "SpecialMailboxes collection must not be null but can be empty");
-            final IdentifiableMailboxWithRole archive = MailboxUtil.find(mailboxes, Role.ARCHIVE);
-            final IdentifiableMailboxWithRole trash = MailboxUtil.find(mailboxes, Role.TRASH);
-            final IdentifiableMailboxWithRole inbox = MailboxUtil.find(mailboxes, Role.INBOX);
-            return moveToInbox(emails, archive, trash, inbox);
-        }, MoreExecutors.directExecutor());
-    }
-
-    private ListenableFuture<Boolean> moveToInbox(final Collection<? extends IdentifiableEmailWithMailboxIds> emails,
-                                                  final IdentifiableMailboxWithRole archive,
-                                                  final IdentifiableMailboxWithRole trash,
-                                                  final IdentifiableMailboxWithRole inbox) {
-        return Futures.transformAsync(
-                getObjectsState(), objectsState -> moveToInbox(emails, archive, trash, inbox, objectsState),
-                MoreExecutors.directExecutor()
-        );
-    }
-
-    private ListenableFuture<Boolean> moveToInbox(final Collection<? extends IdentifiableEmailWithMailboxIds> emails,
-                                                  final IdentifiableMailboxWithRole archive,
-                                                  final IdentifiableMailboxWithRole trash,
-                                                  final IdentifiableMailboxWithRole inbox,
-                                                  final ObjectsState objectsState) {
-        Preconditions.checkNotNull(emails, "emails can not be null when attempting to move them to inbox");
-
-        final JmapClient.MultiCall multiCall = jmapClient.newMultiCall();
-
-        final ListenableFuture<MethodResponses> mailboxCreateFuture;
-        if (inbox == null) {
-            mailboxCreateFuture = createMailbox(Role.INBOX, objectsState, multiCall);
-        } else {
-            mailboxCreateFuture = null;
-        }
-
-        final ImmutableMap.Builder<String, Map<String, Object>> emailPatchObjectMapBuilder = ImmutableMap.builder();
-        for (final IdentifiableEmailWithMailboxIds email : emails) {
-            final Map<String, Boolean> mailboxIds = new HashMap<>(email.getMailboxIds());
-            if (archive != null) {
-                mailboxIds.remove(archive.getId());
-            }
-            if (trash != null) {
-                mailboxIds.remove(trash.getId());
-            }
-            if (inbox == null) {
-                mailboxIds.put(CreateUtil.createIdReference(Role.INBOX), true);
-            } else {
-                mailboxIds.put(inbox.getId(), true);
-            }
-            if (!mailboxIds.equals(email.getMailboxIds())) {
-                emailPatchObjectMapBuilder.put(email.getId(), Patches.set("mailboxIds", mailboxIds));
-            }
-        }
-        final ImmutableMap<String, Map<String, Object>> patches = emailPatchObjectMapBuilder.build();
-        if (patches.size() == 0) {
-            return Futures.immediateFuture(false);
-        }
-
-        final ListenableFuture<Boolean> patchesFuture = applyEmailPatches(
-                patches,
-                objectsState,
-                inbox != null,
-                multiCall
-        );
-
-        multiCall.execute();
-
-        return Futures.transformAsync(patchesFuture, patchesResults -> {
-            if (mailboxCreateFuture != null) {
-                SetMailboxMethodResponse setMailboxResponse = mailboxCreateFuture.get().getMain(SetMailboxMethodResponse.class);
-                SetMailboxException.throwIfFailed(setMailboxResponse);
-            }
-            return Futures.immediateFuture(patchesResults);
-        }, MoreExecutors.directExecutor());
+        return getService(EmailService.class).moveToInbox(emails);
     }
 
     /**
@@ -820,74 +200,21 @@ public class Mua implements Closeable {
      * @return
      */
     public ListenableFuture<Boolean> archive(final Collection<? extends IdentifiableEmailWithMailboxIds> emails) {
-        return Futures.transformAsync(getMailboxes(), mailboxes -> {
-            Preconditions.checkNotNull(mailboxes, "SpecialMailboxes collection must not be null but can be empty");
-            final IdentifiableMailboxWithRole inbox = MailboxUtil.find(mailboxes, Role.INBOX);
-            Preconditions.checkState(inbox != null, "Inbox mailbox not found. Calling archive (remove from inbox) on a collection of emails even though there is no inbox does not make sense");
-            final IdentifiableMailboxWithRole archive = MailboxUtil.find(mailboxes, Role.ARCHIVE);
-            return archive(emails, inbox, archive);
-        }, MoreExecutors.directExecutor());
+        return getService(EmailService.class).archive(emails);
     }
 
-    private ListenableFuture<Boolean> archive(final Collection<? extends IdentifiableEmailWithMailboxIds> emails,
-                                              @NonNullDecl final IdentifiableMailboxWithRole inbox,
-                                              @NullableDecl final IdentifiableMailboxWithRole archive) {
-        return Futures.transformAsync(
-                getObjectsState(),
-                objectsState -> archive(emails, inbox, archive, objectsState),
-                MoreExecutors.directExecutor()
-        );
-    }
-
-    private ListenableFuture<Boolean> archive(final Collection<? extends IdentifiableEmailWithMailboxIds> emails,
-                                              @NonNullDecl final IdentifiableMailboxWithRole inbox,
-                                              @NullableDecl final IdentifiableMailboxWithRole archive,
-                                              final ObjectsState objectsState) {
-        Preconditions.checkNotNull(emails, "emails can not be null when attempting to archive them");
-
-        final JmapClient.MultiCall multiCall = jmapClient.newMultiCall();
-
-        final ListenableFuture<MethodResponses> mailboxCreateFuture;
-        if (archive == null) {
-            mailboxCreateFuture = createMailbox(Role.ARCHIVE, objectsState, multiCall);
-        } else {
-            mailboxCreateFuture = null;
-        }
-
-        ImmutableMap.Builder<String, Map<String, Object>> emailPatchObjectMapBuilder = ImmutableMap.builder();
-        for (IdentifiableEmailWithMailboxIds email : emails) {
-            if (!email.getMailboxIds().containsKey(inbox.getId())) {
-                continue;
-            }
-            Map<String, Boolean> mailboxIds = new HashMap<>(email.getMailboxIds());
-            mailboxIds.remove(inbox.getId());
-            if (archive == null) {
-                mailboxIds.put(CreateUtil.createIdReference(Role.ARCHIVE), true);
-            } else {
-                mailboxIds.put(archive.getId(), true);
-            }
-            emailPatchObjectMapBuilder.put(email.getId(), Patches.set("mailboxIds", mailboxIds));
-        }
-        final ImmutableMap<String, Map<String, Object>> patches = emailPatchObjectMapBuilder.build();
-        if (patches.size() == 0) {
-            return Futures.immediateFuture(false);
-        }
-
-        final ListenableFuture<Boolean> patchesFuture = applyEmailPatches(patches,
-                objectsState,
-                archive != null,
-                multiCall
-        );
-
-        multiCall.execute();
-
-        return Futures.transformAsync(patchesFuture, patchesResults -> {
-            if (mailboxCreateFuture != null) {
-                SetMailboxMethodResponse setMailboxResponse = mailboxCreateFuture.get().getMain(SetMailboxMethodResponse.class);
-                SetMailboxException.throwIfFailed(setMailboxResponse);
-            }
-            return Futures.immediateFuture(patchesResults);
-        }, MoreExecutors.directExecutor());
+    /**
+     * Removes the individual emails in this collection (usually applied to an entire thread) from a given mailbox. If a
+     * certain email was not in this mailbox it will be skipped. If removing an email from this mailbox would otherwise
+     * lead to the email having no mailbox it will be moved to the Archive mailbox.
+     *
+     * @param emails    A collection of emails. Usually all messages in a thread
+     * @param mailboxId The id of the mailbox from which those emails should be removed
+     * @return
+     */
+    public ListenableFuture<Boolean> removeFromMailbox(final Collection<? extends IdentifiableEmailWithMailboxIds> emails,
+                                                       final String mailboxId) {
+        return getService(EmailService.class).removeFromMailbox(emails, mailboxId);
     }
 
     /**
@@ -904,91 +231,10 @@ public class Mua implements Closeable {
      *                Do not pass null if an Archive mailbox exists on the server as this call will attempt to create
      *                one and fail.
      */
-    public ListenableFuture<Boolean> removeFromMailbox(Collection<? extends IdentifiableEmailWithMailboxIds> emails, @NonNullDecl Mailbox mailbox, @NullableDecl final IdentifiableMailboxWithRole archive) {
-        Preconditions.checkNotNull(mailbox, "Mailbox can not be null when attempting to remove it from a collection of emails");
-        if (archive != null) {
-            Preconditions.checkArgument(archive.getRole() == Role.ARCHIVE, "Supplied archive mailbox must have the role ARCHIVE");
-        }
-        return removeFromMailbox(emails, mailbox.getId(), archive);
-    }
-
-    private ListenableFuture<Boolean> removeFromMailbox(final Collection<? extends IdentifiableEmailWithMailboxIds> emails,
-                                                        final String mailboxId,
-                                                        @NullableDecl final IdentifiableMailboxWithRole archive) {
-        return Futures.transformAsync(
-                getObjectsState(),
-                objectsState -> removeFromMailbox(emails, mailboxId, archive, objectsState),
-                MoreExecutors.directExecutor()
-        );
-    }
-
-    private ListenableFuture<Boolean> removeFromMailbox(final Collection<? extends IdentifiableEmailWithMailboxIds> emails,
-                                                        final String mailboxId,
-                                                        @NullableDecl final IdentifiableMailboxWithRole archive,
-                                                        final ObjectsState objectsState) {
-        Preconditions.checkNotNull(emails, "emails can not be null when attempting to remove them from a mailbox");
-        Preconditions.checkNotNull(mailboxId, "mailboxId can not be null when attempting to remove emails");
-        final JmapClient.MultiCall multiCall = jmapClient.newMultiCall();
-        final ListenableFuture<MethodResponses> mailboxCreateFuture;
-        if (archive == null) {
-            mailboxCreateFuture = createMailbox(Role.ARCHIVE, objectsState, multiCall);
-        } else {
-            mailboxCreateFuture = null;
-        }
-        ImmutableMap.Builder<String, Map<String, Object>> emailPatchObjectMapBuilder = ImmutableMap.builder();
-        for (IdentifiableEmailWithMailboxIds email : emails) {
-            if (!email.getMailboxIds().containsKey(mailboxId)) {
-                continue;
-            }
-            Map<String, Boolean> mailboxIds = new HashMap<>(email.getMailboxIds());
-            mailboxIds.remove(mailboxId);
-            if (mailboxIds.size() == 0) {
-                if (archive == null) {
-                    mailboxIds.put(CreateUtil.createIdReference(Role.ARCHIVE), true);
-                } else {
-                    mailboxIds.put(archive.getId(), true);
-                }
-            }
-            emailPatchObjectMapBuilder.put(email.getId(), Patches.set("mailboxIds", mailboxIds));
-
-        }
-        final ImmutableMap<String, Map<String, Object>> patches = emailPatchObjectMapBuilder.build();
-        if (patches.size() == 0) {
-            return Futures.immediateFuture(false);
-        }
-
-        final ListenableFuture<Boolean> patchesFuture = applyEmailPatches(patches,
-                objectsState,
-                archive != null,
-                multiCall
-        );
-
-        multiCall.execute();
-
-        return Futures.transformAsync(patchesFuture, patchesResults -> {
-            if (mailboxCreateFuture != null) {
-                SetMailboxMethodResponse setMailboxResponse = mailboxCreateFuture.get().getMain(SetMailboxMethodResponse.class);
-                SetMailboxException.throwIfFailed(setMailboxResponse);
-            }
-            return Futures.immediateFuture(patchesResults);
-        }, MoreExecutors.directExecutor());
-    }
-
-    /**
-     * Removes the individual emails in this collection (usually applied to an entire thread) from a given mailbox. If a
-     * certain email was not in this mailbox it will be skipped. If removing an email from this mailbox would otherwise
-     * lead to the email having no mailbox it will be moved to the Archive mailbox.
-     *
-     * @param emails    A collection of emails. Usually all messages in a thread
-     * @param mailboxId The id of the mailbox from which those emails should be removed
-     * @return
-     */
-    public ListenableFuture<Boolean> removeFromMailbox(final Collection<? extends IdentifiableEmailWithMailboxIds> emails, final String mailboxId) {
-        return Futures.transformAsync(getMailboxes(), mailboxes -> {
-            Preconditions.checkNotNull(mailboxes, "SpecialMailboxes collection must not be null but can be empty");
-            final IdentifiableMailboxWithRole archive = MailboxUtil.find(mailboxes, Role.ARCHIVE);
-            return removeFromMailbox(emails, mailboxId, archive);
-        }, MoreExecutors.directExecutor());
+    public ListenableFuture<Boolean> removeFromMailbox(final Collection<? extends IdentifiableEmailWithMailboxIds> emails,
+                                                       @NonNullDecl final Mailbox mailbox,
+                                                       @NullableDecl final IdentifiableMailboxWithRole archive) {
+        return getService(EmailService.class).removeFromMailbox(emails, mailbox, archive);
     }
 
     /**
@@ -999,10 +245,7 @@ public class Mua implements Closeable {
      * @param emails A collection of emails. Usually all messages in a thread
      */
     public ListenableFuture<Boolean> moveToTrash(final Collection<? extends IdentifiableEmailWithMailboxIds> emails) {
-        return Futures.transformAsync(getMailboxes(), mailboxes -> {
-            Preconditions.checkNotNull(mailboxes, "SpecialMailboxes collection must not be null but can be empty");
-            return moveToTrash(emails, MailboxUtil.find(mailboxes, Role.TRASH));
-        }, MoreExecutors.directExecutor());
+        return getService(EmailService.class).moveToTrash(emails);
     }
 
     /**
@@ -1015,533 +258,17 @@ public class Mua implements Closeable {
      *               Do not pass null if a Trash mailbox exists on the server as this call will attempt to create one
      *               and fail.
      */
-
     public ListenableFuture<Boolean> moveToTrash(final Collection<? extends IdentifiableEmailWithMailboxIds> emails,
-                                                 @NullableDecl final IdentifiableMailboxWithRole trash) {
-        return Futures.transformAsync(
-                getObjectsState(),
-                objectsState -> moveToTrash(emails, trash, objectsState),
-                MoreExecutors.directExecutor()
-        );
-    }
-
-    private ListenableFuture<Boolean> moveToTrash(final Collection<? extends IdentifiableEmailWithMailboxIds> emails,
-                                                  @NullableDecl final IdentifiableMailboxWithRole trash,
-                                                  final ObjectsState objectsState) {
-        final JmapClient.MultiCall multiCall = jmapClient.newMultiCall();
-        final ListenableFuture<MethodResponses> mailboxCreateFuture;
-        if (trash == null) {
-            mailboxCreateFuture = createMailbox(Role.TRASH, objectsState, multiCall);
-        } else {
-            mailboxCreateFuture = null;
-        }
-        ImmutableMap.Builder<String, Map<String, Object>> emailPatchObjectMapBuilder = ImmutableMap.builder();
-        for (IdentifiableEmailWithMailboxIds email : emails) {
-            if (trash != null && email.getMailboxIds().size() == 1 && email.getMailboxIds().containsKey(trash.getId())) {
-                continue;
-            }
-            Patches.Builder patchesBuilder = Patches.builder();
-            if (trash == null) {
-                patchesBuilder.set("mailboxIds", ImmutableMap.of(CreateUtil.createIdReference(Role.TRASH), true));
-            } else {
-                patchesBuilder.set("mailboxIds", ImmutableMap.of(trash.getId(), true));
-            }
-            emailPatchObjectMapBuilder.put(email.getId(), patchesBuilder.build());
-        }
-        final ImmutableMap<String, Map<String, Object>> patches = emailPatchObjectMapBuilder.build();
-        if (patches.size() == 0) {
-            return Futures.immediateFuture(false);
-        }
-        final ListenableFuture<Boolean> patchesFuture = applyEmailPatches(patches,
-                objectsState,
-                trash != null,
-                multiCall
-        );
-        multiCall.execute();
-        return Futures.transformAsync(patchesFuture, patchesResults -> {
-            if (mailboxCreateFuture != null) {
-                SetMailboxMethodResponse setMailboxResponse = mailboxCreateFuture.get().getMain(SetMailboxMethodResponse.class);
-                SetMailboxException.throwIfFailed(setMailboxResponse);
-            }
-            return Futures.immediateFuture(patchesResults);
-        }, MoreExecutors.directExecutor());
+                                                 final IdentifiableMailboxWithRole trash) {
+        return getService(EmailService.class).moveToTrash(emails, trash);
     }
 
     public ListenableFuture<Boolean> emptyTrash() {
-        return Futures.transformAsync(getMailboxes(), mailboxes -> {
-            Preconditions.checkNotNull(mailboxes, "SpecialMailboxes collection must not be null but can be empty");
-            final IdentifiableMailboxWithRole trash = MailboxUtil.find(mailboxes, Role.TRASH);
-            if (trash == null) {
-                return Futures.immediateFailedFuture(new IllegalStateException("No mailbox with trash role"));
-            }
-            return emptyTrash(trash);
-        }, MoreExecutors.directExecutor());
-
+        return getService(EmailService.class).emptyTrash();
     }
 
     public ListenableFuture<Boolean> emptyTrash(@NonNullDecl IdentifiableMailboxWithRole trash) {
-        final JmapClient.MultiCall multiCall = jmapClient.newMultiCall();
-        final EmailFilterCondition filter = EmailFilterCondition.builder().inMailbox(trash.getId()).build();
-        final Call queryCall = multiCall.call(
-                QueryEmailMethodCall.builder()
-                        .accountId(accountId)
-                        .filter(filter)
-                        .build()
-        );
-        final ListenableFuture<MethodResponses> setFuture = multiCall.call(
-                SetEmailMethodCall.builder()
-                        .accountId(accountId)
-                        .destroyReference(queryCall.createResultReference(Request.Invocation.ResultReference.Path.IDS))
-                        .build()
-        ).getMethodResponses();
-        multiCall.execute();
-        return Futures.transformAsync(setFuture, methodResponses -> {
-            SetEmailMethodResponse setEmailMethodResponse = setFuture.get().getMain(SetEmailMethodResponse.class);
-            SetEmailException.throwIfFailed(setEmailMethodResponse);
-            final String[] destroyed = setEmailMethodResponse.getDestroyed();
-            LOGGER.info("Deleted {} emails", destroyed == null ? 0 : destroyed.length);
-            return Futures.immediateFuture(true);
-        }, MoreExecutors.directExecutor());
-    }
-
-    public ListenableFuture<Status> refresh() {
-        return Futures.transformAsync(getObjectsState(), this::refresh, MoreExecutors.directExecutor());
-    }
-
-    private ListenableFuture<Status> refresh(ObjectsState objectsState) {
-        final JmapClient.MultiCall multiCall = jmapClient.newMultiCall();
-        List<ListenableFuture<Status>> futuresList = piggyBack(objectsState, multiCall);
-        multiCall.execute();
-        return transform(futuresList);
-    }
-
-    private List<ListenableFuture<Status>> piggyBack(ObjectsState objectsState, JmapClient.MultiCall multiCall) {
-        ImmutableList.Builder<ListenableFuture<Status>> futuresListBuilder = new ImmutableList.Builder<>();
-        if (objectsState.mailboxState != null) {
-            futuresListBuilder.add(updateMailboxes(objectsState.mailboxState, multiCall));
-        } else {
-            futuresListBuilder.add(loadMailboxes(multiCall));
-        }
-
-        //update to emails should happen before update to threads
-        //when mua queries threads the corresponding emails should already be in the cache
-
-        if (objectsState.emailState != null) {
-            futuresListBuilder.add(updateEmails(objectsState.emailState, multiCall));
-        }
-        if (objectsState.threadState != null) {
-            futuresListBuilder.add(updateThreads(objectsState.threadState, multiCall));
-        }
-        return futuresListBuilder.build();
-    }
-
-    private ListenableFuture<Status> updateThreads(final String state, final JmapClient.MultiCall multiCall) {
-        Preconditions.checkNotNull(state, "state can not be null when updating threads");
-        LOGGER.info("Refreshing threads since state {}", state);
-        final SettableFuture<Status> settableFuture = SettableFuture.create();
-        final UpdateUtil.MethodResponsesFuture methodResponsesFuture = UpdateUtil.threads(multiCall, accountId, state);
-        methodResponsesFuture.addListener(() -> {
-            try {
-                final ChangesThreadMethodResponse changesResponse = methodResponsesFuture.changes(ChangesThreadMethodResponse.class);
-                final GetThreadMethodResponse createdResponse = methodResponsesFuture.created(GetThreadMethodResponse.class);
-                final GetThreadMethodResponse updatedResponse = methodResponsesFuture.updated(GetThreadMethodResponse.class);
-                final Update<Thread> update = Update.of(changesResponse, createdResponse, updatedResponse);
-                if (update.hasChanges()) {
-                    cache.updateThreads(update);
-                }
-                settableFuture.set(Status.of(update));
-            } catch (InterruptedException | ExecutionException | CacheWriteException | CacheConflictException e) {
-                settableFuture.setException(extractException(e));
-            }
-        }, ioExecutorService);
-        return settableFuture;
-    }
-
-    private static ListenableFuture<Status> transform(List<ListenableFuture<Status>> list) {
-        return Futures.transform(Futures.allAsList(list), statuses -> {
-            if (statuses.contains(Status.HAS_MORE)) {
-                return Status.HAS_MORE;
-            }
-            if (statuses.contains(Status.UPDATED)) {
-                return Status.UPDATED;
-            }
-            return Status.UNCHANGED;
-        }, MoreExecutors.directExecutor());
-    }
-
-    public ListenableFuture<Status> query(Filter<Email> filter) {
-        return query(EmailQuery.of(filter));
-    }
-
-    public ListenableFuture<Status> query(@NonNullDecl final EmailQuery query) {
-        final ListenableFuture<QueryStateWrapper> queryStateFuture = ioExecutorService.submit(() -> cache.getQueryState(query.toQueryString()));
-
-        return Futures.transformAsync(queryStateFuture, queryStateWrapper -> {
-            Preconditions.checkNotNull(queryStateWrapper, "QueryStateWrapper can not be null");
-            if (!queryStateWrapper.canCalculateChanges || queryStateWrapper.upTo == null) {
-                return initialQuery(query, queryStateWrapper);
-            } else {
-                Preconditions.checkNotNull(queryStateWrapper.objectsState, "ObjectsState can not be null if queryState was not");
-                Preconditions.checkNotNull(queryStateWrapper.objectsState.emailState, "emailState can not be null if queryState was not");
-                Preconditions.checkNotNull(queryStateWrapper.objectsState.threadState, "threadState can not be null if queryState was not");
-                return refreshQuery(query, queryStateWrapper);
-            }
-        }, MoreExecutors.directExecutor());
-    }
-
-    public ListenableFuture<Status> query(@NonNullDecl final EmailQuery query, final String afterEmailId) {
-        final ListenableFuture<QueryStateWrapper> queryStateFuture = ioExecutorService.submit(() -> cache.getQueryState(query.toQueryString()));
-        return Futures.transformAsync(
-                queryStateFuture,
-                queryStateWrapper -> query(query, afterEmailId, queryStateWrapper),
-                MoreExecutors.directExecutor()
-        );
-    }
-
-    private ListenableFuture<Status> query(@NonNullDecl final EmailQuery query, @NonNullDecl final String afterEmailId, final QueryStateWrapper queryStateWrapper) {
-        Preconditions.checkNotNull(query, "Query can not be null");
-        Preconditions.checkNotNull(afterEmailId, "afterEmailId can not be null");
-        Preconditions.checkNotNull(queryStateWrapper, "QueryStateWrapper can not be null when paging");
-
-        LOGGER.info("Paging query {} after {}", query.toString(), afterEmailId);
-
-        if (queryStateWrapper.canCalculateChanges && queryStateWrapper.queryState == null) {
-            throw new InconsistentQueryStateException(
-                    "QueryStateWrapper needs queryState for paging when canCalculateChanges was true"
-            );
-        }
-        if (queryStateWrapper.upTo == null || !afterEmailId.equals(queryStateWrapper.upTo.id)) {
-            //in conjunction with lttrs-android this can happen if we have a QueryItemOverwrite for the last item in
-            //a query. This will probably fix itself once the update command has run as well as a subsequent updateQuery() call.
-            throw new InconsistentQueryStateException("upToId from QueryState needs to match the supplied afterEmailId");
-        }
-        final SettableFuture<Status> settableFuture = SettableFuture.create();
-        JmapClient.MultiCall multiCall = jmapClient.newMultiCall();
-        final ListenableFuture<Status> queryRefreshFuture;
-        if (queryStateWrapper.canCalculateChanges) {
-            queryRefreshFuture = refreshQuery(query, queryStateWrapper, multiCall);
-        } else {
-            LOGGER.debug("Skipping queryChanges because canCalculateChanges was false");
-            queryRefreshFuture = null;
-        }
-
-        final Call queryCall = multiCall.call(
-                QueryEmailMethodCall.builder()
-                        .accountId(accountId)
-                        .query(query)
-                        .anchor(afterEmailId)
-                        .limit(this.queryPageSize)
-                        .build()
-        );
-        final ListenableFuture<MethodResponses> queryResponsesFuture = queryCall.getMethodResponses();
-        final ListenableFuture<MethodResponses> getThreadIdsResponsesFuture = multiCall.call(
-                GetEmailMethodCall.builder()
-                        .accountId(accountId)
-                        .idsReference(queryCall.createResultReference(Request.Invocation.ResultReference.Path.IDS))
-                        .properties(Email.Properties.THREAD_ID)
-                        .build()
-        ).getMethodResponses();
-
-        queryResponsesFuture.addListener(() -> {
-            try {
-                //This needs to be the first response that we get in order to properly process a potential
-                //anchorNotFound in the catch block
-                final QueryEmailMethodResponse queryResponse = queryResponsesFuture.get().getMain(QueryEmailMethodResponse.class);
-                final GetEmailMethodResponse getThreadIdsResponse = getThreadIdsResponsesFuture.get().getMain(GetEmailMethodResponse.class);
-
-                final QueryResult queryResult = QueryResult.of(queryResponse, getThreadIdsResponse);
-
-                //processing order is:
-                //  1) refresh the existent query (which in our implementation also piggybacks email and thread updates)
-                //  2) store new items
-
-                if (queryRefreshFuture != null) {
-                    queryRefreshFuture.get();
-                }
-
-                try {
-                    cache.addQueryResult(query.toQueryString(), afterEmailId, queryResult);
-                } catch (CorruptCacheException e) {
-                    LOGGER.info("Invalidating query result cache after cache corruption", e);
-                    cache.invalidateQueryResult(query.toQueryString());
-                    throw e;
-                }
-
-                fetchMissing(query.toQueryString()).addListener(() -> settableFuture.set(queryResult.items.length > 0 ? Status.UPDATED : Status.UNCHANGED), MoreExecutors.directExecutor());
-            } catch (ExecutionException e) {
-                final Throwable cause = e.getCause();
-                if (cause instanceof MethodErrorResponseException) {
-                    final MethodErrorResponse methodError = ((MethodErrorResponseException) cause).getMethodErrorResponse();
-                    if (methodError instanceof AnchorNotFoundMethodErrorResponse) {
-                        if (queryRefreshFuture == null || Status.unchanged(queryRefreshFuture)) {
-                            LOGGER.info("Invalidating query result cache after receiving AnchorNotFound response");
-                            cache.invalidateQueryResult(query.toQueryString());
-                        } else {
-                            LOGGER.info(
-                                    "Holding back on invaliding query result cache despite AnchorNotFound response because query refresh had changes"
-                            );
-                        }
-                    }
-                }
-                settableFuture.setException(extractException(e));
-            } catch (Exception e) {
-                settableFuture.setException(extractException(e));
-            }
-        }, ioExecutorService);
-        multiCall.execute();
-        return settableFuture;
-    }
-
-    private ListenableFuture<Status> refreshQuery(@NonNullDecl final EmailQuery query, @NonNullDecl final QueryStateWrapper queryStateWrapper) {
-        final JmapClient.MultiCall multiCall = jmapClient.newMultiCall();
-        ListenableFuture<Status> future = refreshQuery(query, queryStateWrapper, multiCall);
-        multiCall.execute();
-        return future;
-    }
-
-    private ListenableFuture<Status> refreshQuery(@NonNullDecl final EmailQuery query,
-                                                  @NonNullDecl final QueryStateWrapper queryStateWrapper,
-                                                  final JmapClient.MultiCall multiCall) {
-        Preconditions.checkNotNull(queryStateWrapper.queryState, "QueryState can not be null when attempting to refresh query");
-        LOGGER.info("Refreshing query {}", query.toString());
-        final SettableFuture<Status> settableFuture = SettableFuture.create();
-
-        final List<ListenableFuture<Status>> piggyBackedFuturesList = piggyBack(queryStateWrapper.objectsState, multiCall);
-
-        final Call queryChangesCall = multiCall.call(
-                //TODO do we want to include upTo?
-                QueryChangesEmailMethodCall.builder()
-                        .accountId(accountId)
-                        .sinceQueryState(queryStateWrapper.queryState)
-                        .query(query)
-                        .build()
-        );
-        final ListenableFuture<MethodResponses> queryChangesResponsesFuture = queryChangesCall.getMethodResponses();
-        final ListenableFuture<MethodResponses> getThreadIdResponsesFuture = multiCall.call(
-                GetEmailMethodCall.builder()
-                        .accountId(accountId)
-                        .idsReference(queryChangesCall.createResultReference(Request.Invocation.ResultReference.Path.ADDED_IDS))
-                        .properties(Email.Properties.THREAD_ID)
-                        .build()
-        ).getMethodResponses();
-
-        queryChangesResponsesFuture.addListener(() -> {
-            try {
-                QueryChangesEmailMethodResponse queryChangesResponse = queryChangesResponsesFuture.get().getMain(QueryChangesEmailMethodResponse.class);
-                GetEmailMethodResponse getThreadIdsResponse = getThreadIdResponsesFuture.get().getMain(GetEmailMethodResponse.class);
-                List<AddedItem<QueryResultItem>> added = QueryResult.of(queryChangesResponse, getThreadIdsResponse);
-
-                final QueryUpdate<Email, QueryResultItem> queryUpdate = QueryUpdate.of(queryChangesResponse, added);
-
-                //processing order is:
-                //  1) update Objects (Email, Threads, and Mailboxes)
-                //  2) store query results; If query cache sees an outdated email state it will fail
-
-                Status piggybackStatus = transform(piggyBackedFuturesList).get(); //wait for updates before attempting to fetch
-                Status queryUpdateStatus = Status.of(queryUpdate);
-
-                if (queryUpdate.hasChanges()) {
-                    cache.updateQueryResults(query.toQueryString(), queryUpdate, getThreadIdsResponse.getTypedState());
-                }
-
-
-                final List<ListenableFuture<Status>> list = new ArrayList<>();
-                list.add(Futures.immediateFuture(piggybackStatus));
-                list.add(Futures.immediateFuture(queryUpdateStatus));
-                //it might be that a previous fetchMissing() has failed. so better safe than sorry
-                list.add(fetchMissing(query.toQueryString()));
-                settableFuture.setFuture(transform(list));
-
-            } catch (InterruptedException | ExecutionException | CacheWriteException | CacheConflictException e) {
-                settableFuture.setException(extractException(e));
-            }
-        }, ioExecutorService);
-
-        return settableFuture;
-    }
-
-    private ListenableFuture<Status> initialQuery(@NonNullDecl final EmailQuery query, @NonNullDecl final QueryStateWrapper queryStateWrapper) {
-        return Futures.transformAsync(
-                getJmapClient().getSession(), session -> initialQuery(query, queryStateWrapper, Preconditions.checkNotNull(session, "Session object must not be null")),
-                MoreExecutors.directExecutor()
-        );
-
-    }
-
-    private ListenableFuture<Status> initialQuery(@NonNullDecl final EmailQuery query, @NonNullDecl final QueryStateWrapper queryStateWrapper, @NonNullDecl Session session) {
-
-        Preconditions.checkState(
-                !queryStateWrapper.canCalculateChanges || queryStateWrapper.upTo == null,
-                "canCalculateChanges must be false or upTo must be NULL when calling initialQuery"
-        );
-
-        LOGGER.info("Performing initial query for {}", query.toString());
-        final SettableFuture<Status> settableFuture = SettableFuture.create();
-        JmapClient.MultiCall multiCall = jmapClient.newMultiCall();
-
-        //these need to be processed *before* the Query call or else the fetchMissing will not honor newly fetched ids
-        final List<ListenableFuture<Status>> piggyBackedFuturesList = piggyBack(queryStateWrapper.objectsState, multiCall);
-
-
-        final Long queryPageSize;
-        if (queryStateWrapper.upTo != null) {
-            final long currentNumberOfItemsInCache = queryStateWrapper.upTo.position + 1;
-            if (this.queryPageSize == null || currentNumberOfItemsInCache > this.queryPageSize) {
-                LOGGER.info("Current number of items ({}) in query cache exceeds configured page size of {}", currentNumberOfItemsInCache, this.queryPageSize);
-                final long maxObjectsInGet = session.getCapability(CoreCapability.class).maxObjectsInGet();
-                if (maxObjectsInGet < currentNumberOfItemsInCache) {
-                    LOGGER.warn("Capping page size at {} to not exceed maxObjectsInGet", maxObjectsInGet);
-                    queryPageSize = maxObjectsInGet;
-                } else {
-                    queryPageSize = currentNumberOfItemsInCache;
-                }
-            } else {
-                queryPageSize = this.queryPageSize;
-            }
-        } else {
-            queryPageSize = this.queryPageSize;
-        }
-
-        final Call queryCall = multiCall.call(
-                QueryEmailMethodCall.builder()
-                        .accountId(accountId)
-                        .query(query)
-                        .limit(queryPageSize)
-                        .build()
-        );
-        final ListenableFuture<MethodResponses> queryResponsesFuture = queryCall.getMethodResponses();
-        final Call threadIdsCall = multiCall.call(
-                GetEmailMethodCall.builder()
-                        .accountId(accountId)
-                        .idsReference(queryCall.createResultReference(Request.Invocation.ResultReference.Path.IDS))
-                        .properties(Email.Properties.THREAD_ID)
-                        .build()
-        );
-        final ListenableFuture<MethodResponses> getThreadIdsResponsesFuture = threadIdsCall.getMethodResponses();
-
-
-        final ListenableFuture<MethodResponses> getThreadsResponsesFuture;
-        final ListenableFuture<MethodResponses> getEmailResponsesFuture;
-        if (queryStateWrapper.objectsState.threadState == null && queryStateWrapper.objectsState.emailState == null) {
-            final Call threadCall = multiCall.call(
-                    GetThreadMethodCall.builder()
-                            .accountId(accountId)
-                            .idsReference(threadIdsCall.createResultReference(Request.Invocation.ResultReference.Path.LIST_THREAD_IDS))
-                            .build()
-            );
-            getThreadsResponsesFuture = threadCall.getMethodResponses();
-            getEmailResponsesFuture = multiCall.call(
-                    GetEmailMethodCall.builder()
-                            .accountId(accountId)
-                            .idsReference(threadCall.createResultReference(Request.Invocation.ResultReference.Path.LIST_EMAIL_IDS))
-                            .fetchTextBodyValues(true)
-                            .build()
-            ).getMethodResponses();
-        } else {
-            getThreadsResponsesFuture = null;
-            getEmailResponsesFuture = null;
-        }
-
-        multiCall.execute();
-        queryResponsesFuture.addListener(() -> {
-            try {
-                QueryEmailMethodResponse queryResponse = queryResponsesFuture.get().getMain(QueryEmailMethodResponse.class);
-                GetEmailMethodResponse getThreadIdsResponse = getThreadIdsResponsesFuture.get().getMain(GetEmailMethodResponse.class);
-
-                QueryResult queryResult = QueryResult.of(queryResponse, getThreadIdsResponse);
-
-                //processing order is:
-                //  1) update Objects (Email, Threads, and Mailboxes)
-                //  2) if getThread or getEmails calls where made process those results
-                //  3) store query results; If query cache sees an outdated email state it will fail
-                transform(piggyBackedFuturesList).get();
-
-                if (getThreadsResponsesFuture != null && getEmailResponsesFuture != null) {
-                    GetThreadMethodResponse getThreadsResponse = getThreadsResponsesFuture.get().getMain(GetThreadMethodResponse.class);
-                    GetEmailMethodResponse getEmailResponse = getEmailResponsesFuture.get().getMain(GetEmailMethodResponse.class);
-                    cache.setThreadsAndEmails(getThreadsResponse.getTypedState(), getThreadsResponse.getList(), getEmailResponse.getTypedState(), getEmailResponse.getList());
-                }
-
-                if (queryResult.position != 0) {
-                    throw new IllegalStateException("Server reported position " + queryResult.position + " in response to initial query. We expected 0");
-                }
-
-                cache.setQueryResult(query.toQueryString(), queryResult);
-
-                if (getThreadsResponsesFuture != null && getEmailResponsesFuture != null) {
-                    settableFuture.set(Status.UPDATED);
-                } else {
-                    List<ListenableFuture<Status>> list = new ArrayList<>();
-                    list.add(Futures.immediateFuture(Status.UPDATED));
-                    list.add(fetchMissing(query.toQueryString()));
-                    settableFuture.setFuture(transform(list));
-                }
-            } catch (InterruptedException | ExecutionException | CacheWriteException e) {
-                settableFuture.setException(extractException(e));
-            }
-        }, ioExecutorService);
-        return settableFuture;
-    }
-
-    private ListenableFuture<Status> fetchMissing(@NonNullDecl final String queryString) {
-        Preconditions.checkNotNull(queryString, "QueryString can not be null");
-        try {
-            return fetchMissing(cache.getMissing(queryString));
-        } catch (CacheReadException e) {
-            return Futures.immediateFailedFuture(e);
-        }
-    }
-
-    private ListenableFuture<Status> fetchMissing(final Missing missing) {
-        Preconditions.checkNotNull(missing, "Missing can not be null");
-        Preconditions.checkNotNull(missing.threadIds, "Missing.ThreadIds can not be null; pass empty list instead");
-        if (missing.threadIds.size() == 0) {
-            return Futures.immediateFuture(Status.UNCHANGED);
-        }
-        LOGGER.info("fetching " + missing.threadIds.size() + " missing threads");
-        final SettableFuture<Status> settableFuture = SettableFuture.create();
-        final JmapClient.MultiCall multiCall = jmapClient.newMultiCall();
-        final ListenableFuture<Status> updateThreadsFuture = updateThreads(missing.threadState, multiCall);
-        final ListenableFuture<Status> updateEmailsFuture = updateEmails(missing.emailState, multiCall);
-        final Call threadsCall = multiCall.call(
-                GetThreadMethodCall.builder()
-                        .accountId(accountId)
-                        .ids(missing.threadIds.toArray(new String[0]))
-                        .build()
-        );
-        final ListenableFuture<MethodResponses> getThreadsResponsesFuture = threadsCall.getMethodResponses();
-        final ListenableFuture<MethodResponses> getEmailsResponsesFuture = multiCall.call(
-                GetEmailMethodCall.builder()
-                        .accountId(accountId)
-                        .idsReference(threadsCall.createResultReference(Request.Invocation.ResultReference.Path.LIST_EMAIL_IDS))
-                        .fetchTextBodyValues(true)
-                        .build()
-        ).getMethodResponses();
-        multiCall.execute();
-        getThreadsResponsesFuture.addListener(() -> {
-            try {
-                Status updateThreadsStatus = updateThreadsFuture.get();
-                if (updateThreadsStatus == Status.HAS_MORE) {
-                    //throw
-                }
-
-                Status updateEmailStatus = updateEmailsFuture.get();
-                if (updateEmailStatus == Status.HAS_MORE) {
-                    //throw
-                }
-
-                GetThreadMethodResponse getThreadMethodResponse = getThreadsResponsesFuture.get().getMain(GetThreadMethodResponse.class);
-                GetEmailMethodResponse getEmailMethodResponse = getEmailsResponsesFuture.get().getMain(GetEmailMethodResponse.class);
-                cache.addThreadsAndEmail(getThreadMethodResponse.getTypedState(), getThreadMethodResponse.getList(), getEmailMethodResponse.getTypedState(), getEmailMethodResponse.getList());
-
-                settableFuture.set(Status.UPDATED);
-
-            } catch (Exception e) {
-                settableFuture.setException(extractException(e));
-            }
-
-        }, ioExecutorService);
-        return settableFuture;
+        return getService(EmailService.class).emptyTrash(trash);
     }
 
     public static class Builder {
@@ -1603,12 +330,11 @@ public class Mua implements Closeable {
         public Mua build() {
             Preconditions.checkNotNull(accountId, "accountId is required");
 
-            JmapClient jmapClient = new JmapClient(this.username, this.password, this.sessionResource);
+            final JmapClient jmapClient = new JmapClient(this.username, this.password, this.sessionResource);
             jmapClient.setSessionCache(this.sessionCache);
-            Mua mua = new Mua(jmapClient, cache, accountId);
-            mua.queryPageSize = this.queryPageSize;
+            final Mua mua = new Mua(jmapClient, cache, accountId);
+            mua.setQueryPageSize(this.queryPageSize);
             return mua;
         }
     }
-
 }
