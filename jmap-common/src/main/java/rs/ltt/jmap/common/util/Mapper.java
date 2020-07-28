@@ -29,6 +29,7 @@ import rs.ltt.jmap.common.Utils;
 import rs.ltt.jmap.common.entity.AbstractIdentifiableEntity;
 import rs.ltt.jmap.common.entity.AccountCapability;
 import rs.ltt.jmap.common.entity.Capability;
+import rs.ltt.jmap.common.entity.JSCalendar;
 import rs.ltt.jmap.common.entity.filter.Filter;
 import rs.ltt.jmap.common.entity.filter.FilterCondition;
 import rs.ltt.jmap.common.entity.filter.MailboxFilterCondition;
@@ -53,6 +54,7 @@ public final class Mapper {
     public static final ImmutableBiMap<String, Class<? extends MethodErrorResponse>> METHOD_ERROR_RESPONSES = Mapper.get(MethodErrorResponse.class);
     public static final ImmutableBiMap<String, Class<? extends Capability>> CAPABILITIES = Mapper.get(Capability.class);
     public static final ImmutableBiMap<String, Class<? extends AccountCapability>> ACCOUNT_CAPABILITIES = Mapper.get(AccountCapability.class);
+    public static final ImmutableBiMap<String, Class<? extends JSCalendar>> JSCALENDAR_TYPES = Mapper.get(JSCalendar.class);
     public static final ImmutableMap<Class<? extends AbstractIdentifiableEntity>, Class<FilterCondition<? extends AbstractIdentifiableEntity>>> ENTITY_TO_FILTER_CONDITION = getEntityToFilterConditionMap();
     public static final ImmutableMap<Type, Class<? extends AbstractIdentifiableEntity>> TYPE_TO_ENTITY_CLASS;
 

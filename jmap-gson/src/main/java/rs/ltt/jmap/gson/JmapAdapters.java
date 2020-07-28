@@ -34,6 +34,8 @@ public final class JmapAdapters {
         OffsetDateTimeTypeAdapter.register(builder);
         ResultReferenceTypeAdapter.register(builder);
         PatchObjectNullTypeAdapter.register(builder);
+        DurationTypeAdapter.register(builder);
+        LocalDateTimeAdapter.register(builder);
 
         CapabilitiesDeserializer.register(builder);
         FilterDeserializer.register(builder);
@@ -50,6 +52,7 @@ public final class JmapAdapters {
         ListSerializer.register(builder);
         ResponseInvocationSerializer.register(builder);
         StringMapSerializer.register(builder);
+        JSCalendarSerializer.register(builder);
     }
 
 }
