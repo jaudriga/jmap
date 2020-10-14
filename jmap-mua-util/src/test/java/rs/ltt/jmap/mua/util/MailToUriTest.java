@@ -16,12 +16,15 @@
 
 package rs.ltt.jmap.mua.util;
 
+import com.google.common.collect.Iterables;
 import org.junit.Assert;
 import org.junit.Test;
 import rs.ltt.jmap.common.entity.EmailAddress;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.Collection;
+import java.util.Objects;
 
 public class MailToUriTest {
 
@@ -30,6 +33,7 @@ public class MailToUriTest {
     private static final String EXAMPLE_ADDRESS_BETA = "beta@example.com";
     private static final String EXAMPLE_ADDRESS_GAMMA = "gamma@example.com";
     private static final String EXAMPLE_ADDRESS_DELTA = "delta@example.com";
+    private static final String EXAMPLE_ADDRESS_AT = "\"@\"example.com";
 
     @Test
     public void standaloneEmail() {
@@ -39,6 +43,14 @@ public class MailToUriTest {
                         .build(),
                 MailToUri.get(String.format("mailto:%s", EXAMPLE_ADDRESS_ALPHA))
         );
+    }
+
+    @Test
+    public void standaloneEmailAddressWithAt() {
+        final MailToUri uri = MailToUri.get(String.format("mailto:%s", EXAMPLE_ADDRESS_AT));
+        final Collection<EmailAddress> to = uri.getTo();
+        Assert.assertEquals("Unexpected number of email addresses in URI", 1, to.size());
+        Assert.assertEquals(EXAMPLE_ADDRESS_AT, Objects.requireNonNull(Iterables.getFirst(to, null)).getEmail());
     }
 
     @Test
