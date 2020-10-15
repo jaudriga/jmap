@@ -33,7 +33,7 @@ public class MailToUriTest {
     private static final String EXAMPLE_ADDRESS_BETA = "beta@example.com";
     private static final String EXAMPLE_ADDRESS_GAMMA = "gamma@example.com";
     private static final String EXAMPLE_ADDRESS_DELTA = "delta@example.com";
-    private static final String EXAMPLE_ADDRESS_AT = "\"@\"example.com";
+    private static final String EXAMPLE_ADDRESS_AT = "\"@\"@example.com";
 
     @Test
     public void standaloneEmail() {
