@@ -40,7 +40,7 @@ public class JmapClient implements Closeable {
     private final SessionClient sessionClient;
     private final HttpAuthentication authentication;
 
-    private ListeningExecutorService executorService = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(2));
+    private final ListeningExecutorService executorService = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(2));
 
     private final SessionStateListener sessionStateListener = new SessionStateListener() {
         @Override

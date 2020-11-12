@@ -43,17 +43,17 @@ public class SessionClient {
     private static final Logger LOGGER = LoggerFactory.getLogger(SessionClient.class);
 
     private final HttpUrl sessionResource;
-    private HttpAuthentication httpAuthentication;
+    private final HttpAuthentication httpAuthentication;
     private SessionCache sessionCache;
     private Session currentSession = null;
     private boolean sessionResourceChanged = false;
 
-    public SessionClient(HttpAuthentication authentication) {
+    public SessionClient(final HttpAuthentication authentication) {
         this.sessionResource = null;
         this.httpAuthentication = authentication;
     }
 
-    public SessionClient(HttpAuthentication authentication, HttpUrl sessionResource) {
+    public SessionClient(final HttpAuthentication authentication, final HttpUrl sessionResource) {
         this.sessionResource = sessionResource;
         this.httpAuthentication = authentication;
     }
