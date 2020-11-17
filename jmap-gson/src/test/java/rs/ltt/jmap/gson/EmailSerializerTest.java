@@ -10,8 +10,6 @@ import rs.ltt.jmap.common.entity.EmailBodyPart;
 import rs.ltt.jmap.common.entity.EmailBodyValue;
 
 import java.io.IOException;
-import java.time.Instant;
-import java.time.ZoneId;
 import java.time.ZoneOffset;
 
 public class EmailSerializerTest extends AbstractGsonTest {

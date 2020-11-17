@@ -9,7 +9,6 @@ import rs.ltt.jmap.common.entity.filter.Filter;
 import rs.ltt.jmap.common.entity.filter.FilterOperator;
 
 import java.io.IOException;
-import java.time.Instant;
 
 public class FilterSerializationTest extends AbstractGsonTest {
 
