@@ -36,18 +36,19 @@ public class RfcExamplesDeserializerTest extends AbstractGsonTest {
         Assert.assertEquals(responseInvocation.length, 1);
         Assert.assertThat(responseInvocation[0].getMethodResponse(), instanceOf(GetEmailMethodResponse.class));
         final GetEmailMethodResponse methodResponse = (GetEmailMethodResponse) responseInvocation[0].getMethodResponse();
-        Email[] emails = methodResponse.getList();
+        final Email[] emails = methodResponse.getList();
         Assert.assertEquals(emails.length, 1);
-        Email email = emails[0];
+        final Email email = emails[0];
         Assert.assertEquals(email.getId(), "f123u457");
         Assert.assertEquals(email.getBodyValues().size(), 2);
         Assert.assertEquals(email.getFrom().size(), 1);
         Assert.assertEquals(email.getSubject(), "Dinner on Thursday?");
+        Assert.assertEquals(email.getReceivedAt(), email.getSentAt().toInstant());
     }
 
     @Test
     public void identityGetResponse() throws IOException {
-        Response.Invocation invocation =  parseFromResource("rfc-example/identity-get-response.json", Response.Invocation.class);
+        Response.Invocation invocation = parseFromResource("rfc-example/identity-get-response.json", Response.Invocation.class);
         Assert.assertThat(invocation.getMethodResponse(), instanceOf(GetIdentityMethodResponse.class));
         GetIdentityMethodResponse methodResponse = (GetIdentityMethodResponse) invocation.getMethodResponse();
         Identity[] identities = methodResponse.getList();

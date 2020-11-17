@@ -17,9 +17,7 @@
 package rs.ltt.jmap.gson;
 
 import com.google.gson.GsonBuilder;
-import rs.ltt.jmap.gson.adapter.PatchObjectNullTypeAdapter;
-import rs.ltt.jmap.gson.adapter.RequestInvocationTypeAdapter;
-import rs.ltt.jmap.gson.adapter.ResultReferenceTypeAdapter;
+import rs.ltt.jmap.gson.adapter.*;
 import rs.ltt.jmap.gson.deserializer.*;
 import rs.ltt.jmap.gson.serializer.*;
 
@@ -32,6 +30,8 @@ public final class JmapAdapters {
 
     public static void register(GsonBuilder builder) {
 
+        InstantTypeAdapter.register(builder);
+        OffsetDateTimeTypeAdapter.register(builder);
         ResultReferenceTypeAdapter.register(builder);
         PatchObjectNullTypeAdapter.register(builder);
 

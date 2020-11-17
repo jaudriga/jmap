@@ -20,11 +20,15 @@ import rs.ltt.jmap.common.entity.Role;
 import rs.ltt.jmap.common.entity.UndoStatus;
 import rs.ltt.jmap.common.entity.filter.QueryString;
 
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.Date;
 
 public class IndexableStringUtils {
+
+    public static final InstantComparator INSTANT_COMPARATOR = new InstantComparator();
+    public static final StringArrayComparator STRING_ARRAY_COMPARATOR = new StringArrayComparator();
+    public static final BooleanComparator BOOLEAN_COMPARATOR = new BooleanComparator();
 
     public static String toIndexableString(char a, char b, Object... objects) {
         final StringBuilder builder = new StringBuilder();
@@ -77,7 +81,7 @@ public class IndexableStringUtils {
         }
     }
 
-    public static class StringArrayComparator implements Comparator<String[]> {
+    private static class StringArrayComparator implements Comparator<String[]> {
 
         @Override
         public int compare(String[] a, String[] b) {
@@ -97,7 +101,7 @@ public class IndexableStringUtils {
         }
     }
 
-    public static class BooleanComparator implements Comparator<Boolean> {
+    private static class BooleanComparator implements Comparator<Boolean> {
 
         @Override
         public int compare(Boolean a, Boolean b) {
@@ -113,10 +117,10 @@ public class IndexableStringUtils {
         }
     }
 
-    public static class DateComparator implements Comparator<Date> {
+    private static class InstantComparator implements Comparator<Instant> {
 
         @Override
-        public int compare(Date a, Date b) {
+        public int compare(final Instant a, Instant b) {
             if (a == null && b == null) {
                 return 0;
             } else if (a != null && b == null) {

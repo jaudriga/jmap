@@ -19,7 +19,7 @@ package rs.ltt.jmap.common.entity;
 import lombok.Builder;
 import lombok.Getter;
 
-import java.util.Date;
+import java.time.Instant;
 import java.util.List;
 
 @Getter
@@ -34,7 +34,7 @@ public class PushSubscription extends AbstractIdentifiableEntity {
 
     private String verificationCode;
 
-    private Date expires;
+    private Instant expires;
 
     private List<String> types;
 

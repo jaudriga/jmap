@@ -24,7 +24,7 @@ import rs.ltt.jmap.common.entity.EmailSubmission;
 import rs.ltt.jmap.common.entity.UndoStatus;
 import rs.ltt.jmap.common.util.IndexableStringUtils;
 
-import java.util.Date;
+import java.time.Instant;
 
 @Getter
 @Builder
@@ -38,21 +38,21 @@ public class EmailSubmissionFilterCondition implements FilterCondition<EmailSubm
 
     private UndoStatus undoStatus;
 
-    private Date before;
+    private Instant before;
 
-    private Date after;
+    private Instant after;
 
     @Override
     public int compareTo(@NonNullDecl Filter<EmailSubmission> filter) {
         if (filter instanceof EmailSubmissionFilterCondition) {
             EmailSubmissionFilterCondition other = (EmailSubmissionFilterCondition) filter;
             return ComparisonChain.start()
-                    .compare(identityIds, other.identityIds, new IndexableStringUtils.StringArrayComparator())
-                    .compare(emailIds, other.emailIds, new IndexableStringUtils.StringArrayComparator())
-                    .compare(threadIds, other.threadIds, new IndexableStringUtils.StringArrayComparator())
+                    .compare(identityIds, other.identityIds, IndexableStringUtils.STRING_ARRAY_COMPARATOR)
+                    .compare(emailIds, other.emailIds, IndexableStringUtils.STRING_ARRAY_COMPARATOR)
+                    .compare(threadIds, other.threadIds, IndexableStringUtils.STRING_ARRAY_COMPARATOR)
                     .compare(IndexableStringUtils.nullToEmpty(undoStatus), IndexableStringUtils.nullToEmpty(other.undoStatus))
-                    .compare(before, other.before, new IndexableStringUtils.DateComparator())
-                    .compare(after, other.after, new IndexableStringUtils.DateComparator())
+                    .compare(before, other.before)
+                    .compare(after, other.after, IndexableStringUtils.INSTANT_COMPARATOR)
                     .result();
         } else {
             return 1;

@@ -19,7 +19,7 @@ package rs.ltt.jmap.common.entity;
 import lombok.Builder;
 import lombok.NonNull;
 
-import java.util.Date;
+import java.time.Instant;
 import java.util.Map;
 
 @Builder
@@ -33,6 +33,6 @@ public class EmailImport {
 
     private Map<String, Boolean> keywords;
 
-    private Date receivedAt;
+    private Instant receivedAt;
 
 }

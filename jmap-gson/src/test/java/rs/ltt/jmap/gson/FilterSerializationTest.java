@@ -9,18 +9,28 @@ import rs.ltt.jmap.common.entity.filter.Filter;
 import rs.ltt.jmap.common.entity.filter.FilterOperator;
 
 import java.io.IOException;
+import java.time.Instant;
 
 public class FilterSerializationTest extends AbstractGsonTest {
 
     @Test
     public void complexEmailFilterSerialization() throws IOException {
-        Gson gson = getGson();
-        Filter<Email> emailFilter = FilterOperator.and(
+        final Gson gson = getGson();
+        final Filter<Email> emailFilter = FilterOperator.and(
                 EmailFilterCondition.builder().text("two").build(),
                 FilterOperator.not(EmailFilterCondition.builder().text("three").build()),
                 EmailFilterCondition.builder().text("one").build()
         );
-        Assert.assertEquals(readResourceAsString("filter/one-two-not-three.json"),gson.toJson(emailFilter));
+        Assert.assertEquals(readResourceAsString("filter/one-two-not-three.json"), gson.toJson(emailFilter));
     }
 
+    @Test
+    public void emailFilterBetweenSerialization() throws IOException {
+        final Gson gson = getGson();
+        final Filter<Email> emailFilter = EmailFilterCondition.builder()
+                .before(OCTOBER_THIRD_8PM)
+                .after(OCTOBER_FIRST_8AM)
+                .build();
+        Assert.assertEquals(readResourceAsString("filter/email-filter-between.json"), gson.toJson(emailFilter));
+    }
 }

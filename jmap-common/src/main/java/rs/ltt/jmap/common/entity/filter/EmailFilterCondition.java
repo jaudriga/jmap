@@ -25,6 +25,8 @@ import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 import rs.ltt.jmap.common.entity.Email;
 import rs.ltt.jmap.common.util.IndexableStringUtils;
 
+import java.time.Instant;
+
 @Getter
 @Builder
 public class EmailFilterCondition implements FilterCondition<Email> {
@@ -32,6 +34,10 @@ public class EmailFilterCondition implements FilterCondition<Email> {
     private String inMailbox;
 
     private String[] inMailboxOtherThan;
+
+    private Instant before;
+
+    private Instant after;
 
     private Long minSize;
 
@@ -70,6 +76,8 @@ public class EmailFilterCondition implements FilterCondition<Email> {
                 L4_DIVIDER,
                 inMailbox,
                 inMailboxOtherThan,
+                before,
+                after,
                 minSize,
                 maxSize,
                 allInThreadHaveKeyword,
@@ -94,7 +102,9 @@ public class EmailFilterCondition implements FilterCondition<Email> {
             EmailFilterCondition other = (EmailFilterCondition) filter;
             return ComparisonChain.start()
                     .compare(Strings.nullToEmpty(inMailbox), Strings.nullToEmpty(other.inMailbox))
-                    .compare(inMailboxOtherThan, other.inMailboxOtherThan, new IndexableStringUtils.StringArrayComparator())
+                    .compare(inMailboxOtherThan, other.inMailboxOtherThan, IndexableStringUtils.STRING_ARRAY_COMPARATOR)
+                    .compare(before, other.before, IndexableStringUtils.INSTANT_COMPARATOR)
+                    .compare(after, other.after, IndexableStringUtils.INSTANT_COMPARATOR)
                     .compare(minSize == null ? 0L : minSize, other.minSize == null ? 0L : other.minSize)
                     .compare(maxSize == null ? 0L : maxSize, other.maxSize == null ? 0L : other.maxSize)
                     .compare(Strings.nullToEmpty(allInThreadHaveKeyword), Strings.nullToEmpty(other.allInThreadHaveKeyword))
@@ -116,7 +126,7 @@ public class EmailFilterCondition implements FilterCondition<Email> {
     }
 
     private static boolean nullToFalse(Boolean b) {
-        return b == null ? false : b;
+        return b != null && b;
     }
 
     @Override

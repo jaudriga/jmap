@@ -59,7 +59,7 @@ public class ResponseInvocationDeserializer implements JsonDeserializer<Response
         if (clazz == null) {
             throw new JsonParseException("Unknown method response '"+name+"'");
         }
-        MethodResponse methodResponse = context.deserialize(parameter, clazz);
+        final MethodResponse methodResponse = context.deserialize(parameter, clazz);
         return new Response.Invocation(methodResponse, id);
     }
 }

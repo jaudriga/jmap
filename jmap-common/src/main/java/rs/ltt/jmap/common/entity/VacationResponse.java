@@ -19,7 +19,7 @@ package rs.ltt.jmap.common.entity;
 import lombok.Builder;
 import lombok.Getter;
 
-import java.util.Date;
+import java.time.Instant;
 
 @Getter
 @Builder(toBuilder = true)
@@ -27,9 +27,9 @@ public class VacationResponse extends AbstractIdentifiableEntity {
 
     private Boolean isEnabled;
 
-    private Date fromDate;
+    private Instant fromDate;
 
-    private Date toDate;
+    private Instant toDate;
 
     private String subject;
 

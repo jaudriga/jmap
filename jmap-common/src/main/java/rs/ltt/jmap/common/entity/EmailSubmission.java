@@ -20,7 +20,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Singular;
 
-import java.util.Date;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
@@ -32,7 +32,7 @@ public class EmailSubmission extends AbstractIdentifiableEntity {
     private String emailId;
     private String threadId;
     private Envelope envelope;
-    private Date sendAt;
+    private Instant sendAt;
     private UndoStatus undoStatus;
 
     @Singular("deliveryStatus")

@@ -47,8 +47,8 @@ public class MailboxFilterCondition implements FilterCondition<Mailbox> {
                     .compare(Strings.nullToEmpty(parentId), Strings.nullToEmpty(other.parentId))
                     .compare(Strings.nullToEmpty(name), Strings.nullToEmpty(other.name))
                     .compare(IndexableStringUtils.nullToEmpty(role), IndexableStringUtils.nullToEmpty(other.role))
-                    .compare(hasAnyRole, other.hasAnyRole, new IndexableStringUtils.BooleanComparator())
-                    .compare(isSubscribed, other.isSubscribed, new IndexableStringUtils.BooleanComparator())
+                    .compare(hasAnyRole, other.hasAnyRole, IndexableStringUtils.BOOLEAN_COMPARATOR)
+                    .compare(isSubscribed, other.isSubscribed, IndexableStringUtils.BOOLEAN_COMPARATOR)
                     .result();
         } else {
             return 1;

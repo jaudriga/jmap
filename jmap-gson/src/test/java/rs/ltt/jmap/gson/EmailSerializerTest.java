@@ -10,6 +10,9 @@ import rs.ltt.jmap.common.entity.EmailBodyPart;
 import rs.ltt.jmap.common.entity.EmailBodyValue;
 
 import java.io.IOException;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 
 public class EmailSerializerTest extends AbstractGsonTest {
 
@@ -36,10 +39,11 @@ public class EmailSerializerTest extends AbstractGsonTest {
                         .email("arya.stark@ltt.rs")
                         .build())
                 .subject("Winter is coming")
+                .sentAt(OCTOBER_FIRST_8AM.atOffset(ZoneOffset.ofHours(2)))
+                .receivedAt(OCTOBER_FIRST_8AM)
                 .bodyValue(partId, emailBodyValue)
                 .textBody(emailBodyPart)
                 .build();
-        Assert.assertEquals(readResourceAsString("email/simple.json"),gson.toJson(email));
+        Assert.assertEquals(readResourceAsString("email/simple.json"), gson.toJson(email));
     }
-
 }

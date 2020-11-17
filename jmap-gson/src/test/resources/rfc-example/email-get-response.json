@@ -9,6 +9,7 @@
       "from": [{ "name": "Joe Bloggs", "email": "joe@example.com" }],
       "subject": "Dinner on Thursday?",
       "receivedAt": "2013-10-13T14:12:00Z",
+      "sentAt": "2013-10-13T16:12:00+02:00",
       "header:List-POST:asURLs": [
         "mailto:partytime@lists.example.com"
       ],

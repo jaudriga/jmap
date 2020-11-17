@@ -22,7 +22,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Singular;
 
-import java.util.Date;
+import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -44,7 +45,7 @@ public class Email extends AbstractIdentifiableEntity implements IdentifiableEma
 
     private Long size;
 
-    private Date receivedAt;
+    private Instant receivedAt;
 
     //Header
     @Singular
@@ -80,7 +81,7 @@ public class Email extends AbstractIdentifiableEntity implements IdentifiableEma
 
     private String subject;
 
-    private Date sentAt;
+    private OffsetDateTime sentAt;
 
     //The following properties are not directly specified by JMAP but are provided by the library for your convenience
     @SerializedName(Property.USER_AGENT)
