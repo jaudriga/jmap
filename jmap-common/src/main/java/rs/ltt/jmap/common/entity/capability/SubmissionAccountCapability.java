@@ -30,9 +30,9 @@ import java.util.Map;
 @Getter
 @Builder
 @ToString
-public class SubmissionAccountCapability implements AccountCapability  {
+public class SubmissionAccountCapability implements AccountCapability {
     private Long maxDelayedSend;
-    private Map<String,String[]> submissionExtensions;
+    private Map<String, String[]> submissionExtensions;
 
     public long maxDelayedSend() {
         return Property.expected(maxDelayedSend);

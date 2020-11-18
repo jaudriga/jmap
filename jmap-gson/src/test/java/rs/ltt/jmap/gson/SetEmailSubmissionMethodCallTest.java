@@ -19,8 +19,8 @@ package rs.ltt.jmap.gson;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import rs.ltt.jmap.common.Request;
 import rs.ltt.jmap.common.entity.EmailSubmission;
 import rs.ltt.jmap.common.entity.Keyword;
@@ -32,7 +32,7 @@ import java.io.IOException;
 public class SetEmailSubmissionMethodCallTest extends AbstractGsonTest {
 
     @Test
-    public void setEmailSubmissionTest() throws IOException  {
+    public void setEmailSubmissionTest() throws IOException {
         GsonBuilder builder = new GsonBuilder();
         JmapAdapters.register(builder);
         Gson gson = builder.create();
@@ -59,6 +59,6 @@ public class SetEmailSubmissionMethodCallTest extends AbstractGsonTest {
                 )
                 .build();
         Request request = new Request.Builder().call(submissionCall).build();
-        Assert.assertEquals(readResourceAsString("request/set-email-submission.json"),gson.toJson(request));
+        Assertions.assertEquals(readResourceAsString("request/set-email-submission.json"), gson.toJson(request));
     }
 }

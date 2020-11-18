@@ -21,8 +21,8 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
@@ -48,7 +48,7 @@ public class MoveToInboxTest {
                 .accountId(ACCOUNT_ID)
                 .build()) {
             mua.refreshMailboxes().get();
-            Assert.assertFalse(mua.moveToInbox(ImmutableSet.of(new MyIdentifiableEmailWithMailboxes("e0", "mb0"))).get());
+            Assertions.assertFalse(mua.moveToInbox(ImmutableSet.of(new MyIdentifiableEmailWithMailboxes("e0", "mb0"))).get());
         }
         server.shutdown();
     }

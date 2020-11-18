@@ -1,8 +1,8 @@
 package rs.ltt.jmap.gson;
 
 import com.google.gson.GsonBuilder;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import rs.ltt.jmap.common.Request;
 import rs.ltt.jmap.common.method.call.email.QueryEmailMethodCall;
 import rs.ltt.jmap.gson.adapter.ResultReferenceTypeAdapter;
@@ -22,9 +22,9 @@ public class ResultReferenceTypeAdapterTest {
         ResultReferenceTypeAdapter.register(gsonBuilder);
         String json = gsonBuilder.create().toJson(resultReferenceOut);
         Request.Invocation.ResultReference resultReferenceIn = gsonBuilder.create().fromJson(json, Request.Invocation.ResultReference.class);
-        Assert.assertEquals(resultReferenceIn.getClazz(), resultReferenceOut.getClazz());
-        Assert.assertEquals(resultReferenceIn.getId(), resultReferenceOut.getId());
-        Assert.assertEquals(resultReferenceIn.getPath(), resultReferenceOut.getPath());
+        Assertions.assertEquals(resultReferenceIn.getClazz(), resultReferenceOut.getClazz());
+        Assertions.assertEquals(resultReferenceIn.getId(), resultReferenceOut.getId());
+        Assertions.assertEquals(resultReferenceIn.getPath(), resultReferenceOut.getPath());
     }
 
 }

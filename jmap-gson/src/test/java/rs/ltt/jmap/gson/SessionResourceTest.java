@@ -18,7 +18,8 @@ package rs.ltt.jmap.gson;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import rs.ltt.jmap.common.SessionResource;
 import rs.ltt.jmap.common.entity.Account;
 import rs.ltt.jmap.common.entity.AccountCapability;
@@ -28,7 +29,7 @@ import rs.ltt.jmap.common.entity.capability.*;
 import java.io.IOException;
 import java.util.Map;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class SessionResourceTest extends AbstractGsonTest {
 
@@ -65,7 +66,7 @@ public class SessionResourceTest extends AbstractGsonTest {
 
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void missingRequiredPropertyInMailCapability() throws IOException {
         final SessionResource session = parseFromResource("rfc-example/session.json", SessionResource.class);
 
@@ -77,8 +78,8 @@ public class SessionResourceTest extends AbstractGsonTest {
 
         MailAccountCapability mailAccountCapability = account.getCapability(MailAccountCapability.class);
 
-        mailAccountCapability.maxSizeAttachmentsPerEmail(); //this property is missing in the example but is required
-
+        //this property is missing in the example but is required
+        Assertions.assertThrows(IllegalStateException.class, mailAccountCapability::maxSizeAttachmentsPerEmail);
     }
 
 

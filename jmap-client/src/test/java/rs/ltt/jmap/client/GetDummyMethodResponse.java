@@ -21,4 +21,8 @@ import rs.ltt.jmap.common.method.response.standard.GetMethodResponse;
 
 @JmapMethod("Dummy/get")
 public class GetDummyMethodResponse extends GetMethodResponse<Dummy> {
+
+    public GetDummyMethodResponse(String accountId, String state, String[] notFound, Dummy[] list) {
+        super(accountId, state, notFound, list);
+    }
 }

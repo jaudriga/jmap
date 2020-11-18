@@ -2,7 +2,8 @@ package rs.ltt.jmap.gson;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import rs.ltt.jmap.common.entity.AccountCapability;
 import rs.ltt.jmap.common.entity.capability.MailAccountCapability;
 import rs.ltt.jmap.common.entity.capability.SubmissionAccountCapability;
@@ -12,10 +13,10 @@ import java.lang.reflect.Type;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
 
 public class AccountCapabilitiesSerializerTest extends AbstractGsonTest {
-    private static final Type TYPE = new TypeToken<Map<Class<? extends AccountCapability>, AccountCapability>>() {}.getType();
+    private static final Type TYPE = new TypeToken<Map<Class<? extends AccountCapability>, AccountCapability>>() {
+    }.getType();
 
     private final Gson gson = getGson();
 
@@ -28,7 +29,7 @@ public class AccountCapabilitiesSerializerTest extends AbstractGsonTest {
         String json = gson.toJson(accountCapabilities, TYPE);
 
         String expectedJson = readResourceAsString("account-capability/mail-serialized.json");
-        assertEquals(expectedJson, json);
+        Assertions.assertEquals(expectedJson, json);
     }
 
     @Test
@@ -40,7 +41,7 @@ public class AccountCapabilitiesSerializerTest extends AbstractGsonTest {
         String json = gson.toJson(accountCapabilities, TYPE);
 
         String expectedJson = readResourceAsString("account-capability/submission-serialized.json");
-        assertEquals(expectedJson, json);
+        Assertions.assertEquals(expectedJson, json);
     }
 
     @Test
@@ -51,7 +52,7 @@ public class AccountCapabilitiesSerializerTest extends AbstractGsonTest {
 
         String json = gson.toJson(accountCapabilities, TYPE);
 
-        assertEquals("{\"urn:ietf:params:jmap:vacationresponse\":{}}", json);
+        Assertions.assertEquals("{\"urn:ietf:params:jmap:vacationresponse\":{}}", json);
     }
 
     @Test
@@ -65,7 +66,7 @@ public class AccountCapabilitiesSerializerTest extends AbstractGsonTest {
         String json = gson.toJson(accountCapabilities, TYPE);
 
         String expectedJson = readResourceAsString("account-capability/all-serialized.json");
-        assertEquals(expectedJson, json);
+        Assertions.assertEquals(expectedJson, json);
     }
 
     private MailAccountCapability createMailAccountCapability() {
@@ -74,14 +75,14 @@ public class AccountCapabilitiesSerializerTest extends AbstractGsonTest {
                 .maxMailboxDepth(5L)
                 .maxSizeMailboxName(500L)
                 .maxSizeAttachmentsPerEmail(10_000_000L)
-                .emailQuerySortOptions(new String[] { "receivedAt", "To" })
+                .emailQuerySortOptions(new String[]{"receivedAt", "To"})
                 .mayCreateTopLevelMailbox(false)
                 .build();
     }
 
     private SubmissionAccountCapability createSubmissionAccountCapability() {
         Map<String, String[]> submissionExtensions = new LinkedHashMap<>();
-        submissionExtensions.put("DELIVERBY", new String[] { "240" });
+        submissionExtensions.put("DELIVERBY", new String[]{"240"});
         return SubmissionAccountCapability.builder()
                 .maxDelayedSend(300L)
                 .submissionExtensions(submissionExtensions)

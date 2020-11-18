@@ -2,8 +2,8 @@ package rs.ltt.jmap.gson;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import rs.ltt.jmap.common.entity.Email;
 import rs.ltt.jmap.common.entity.EmailAddress;
 import rs.ltt.jmap.common.entity.EmailBodyPart;
@@ -42,6 +42,6 @@ public class EmailSerializerTest extends AbstractGsonTest {
                 .bodyValue(partId, emailBodyValue)
                 .textBody(emailBodyPart)
                 .build();
-        Assert.assertEquals(readResourceAsString("email/simple.json"), gson.toJson(email));
+        Assertions.assertEquals(readResourceAsString("email/simple.json"), gson.toJson(email));
     }
 }

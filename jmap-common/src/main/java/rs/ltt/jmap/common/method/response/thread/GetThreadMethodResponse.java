@@ -16,10 +16,16 @@
 
 package rs.ltt.jmap.common.method.response.thread;
 
+import lombok.Builder;
 import rs.ltt.jmap.annotation.JmapMethod;
 import rs.ltt.jmap.common.entity.Thread;
 import rs.ltt.jmap.common.method.response.standard.GetMethodResponse;
 
 @JmapMethod("Thread/get")
 public class GetThreadMethodResponse extends GetMethodResponse<Thread> {
+
+    @Builder
+    public GetThreadMethodResponse(String accountId, String state, String[] notFound, Thread[] list) {
+        super(accountId, state, notFound, list);
+    }
 }

@@ -39,7 +39,7 @@ public class IndexableStringUtils {
             }
             if (o instanceof String[]) {
                 String[] strings = (String[]) o;
-                String[] copy = Arrays.copyOf(strings,strings.length);
+                String[] copy = Arrays.copyOf(strings, strings.length);
                 Arrays.sort(copy);
                 for (int j = 0; j < copy.length; ++j) {
                     if (j != 0) {

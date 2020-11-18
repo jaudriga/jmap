@@ -39,7 +39,7 @@ public class MailboxQuery extends Query<Mailbox> {
     }
 
     public static MailboxQuery unfiltered() {
-        return new MailboxQuery(null,null,null,null);
+        return new MailboxQuery(null, null, null, null);
     }
 
     public static MailboxQuery unfiltered(Boolean sortAsTree, Boolean filterAsTree) {

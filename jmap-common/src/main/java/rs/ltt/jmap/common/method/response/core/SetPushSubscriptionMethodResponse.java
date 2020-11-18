@@ -16,10 +16,16 @@
 
 package rs.ltt.jmap.common.method.response.core;
 
+import lombok.Builder;
 import rs.ltt.jmap.annotation.JmapMethod;
 import rs.ltt.jmap.common.entity.PushSubscription;
 import rs.ltt.jmap.common.method.response.standard.GetMethodResponse;
 
 @JmapMethod("PushSubscription/set")
 public class SetPushSubscriptionMethodResponse extends GetMethodResponse<PushSubscription> {
+
+    @Builder
+    public SetPushSubscriptionMethodResponse(String accountId, String state, String[] notFound, PushSubscription[] list) {
+        super(accountId, state, notFound, list);
+    }
 }

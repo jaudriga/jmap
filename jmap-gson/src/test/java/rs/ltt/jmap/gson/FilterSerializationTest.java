@@ -1,8 +1,8 @@
 package rs.ltt.jmap.gson;
 
 import com.google.gson.Gson;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import rs.ltt.jmap.common.entity.Email;
 import rs.ltt.jmap.common.entity.filter.EmailFilterCondition;
 import rs.ltt.jmap.common.entity.filter.Filter;
@@ -20,7 +20,7 @@ public class FilterSerializationTest extends AbstractGsonTest {
                 FilterOperator.not(EmailFilterCondition.builder().text("three").build()),
                 EmailFilterCondition.builder().text("one").build()
         );
-        Assert.assertEquals(readResourceAsString("filter/one-two-not-three.json"), gson.toJson(emailFilter));
+        Assertions.assertEquals(readResourceAsString("filter/one-two-not-three.json"), gson.toJson(emailFilter));
     }
 
     @Test
@@ -30,6 +30,6 @@ public class FilterSerializationTest extends AbstractGsonTest {
                 .before(OCTOBER_THIRD_8PM)
                 .after(OCTOBER_FIRST_8AM)
                 .build();
-        Assert.assertEquals(readResourceAsString("filter/email-filter-between.json"), gson.toJson(emailFilter));
+        Assertions.assertEquals(readResourceAsString("filter/email-filter-between.json"), gson.toJson(emailFilter));
     }
 }

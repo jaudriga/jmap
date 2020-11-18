@@ -16,17 +16,19 @@
 
 package rs.ltt.jmap.client.util;
 
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ListMultimap;
 import rs.ltt.jmap.client.MethodResponses;
 import rs.ltt.jmap.common.Request;
 import rs.ltt.jmap.common.Response;
 import rs.ltt.jmap.common.method.MethodResponse;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+//TODO test me
 public class ResponseAnalyzer {
 
     private final ImmutableMap<String, MethodResponses> methodResponsesMap;
@@ -36,29 +38,25 @@ public class ResponseAnalyzer {
     }
 
     public static ResponseAnalyzer analyse(Response response) {
-        final Map<String, List<MethodResponse>> preMap = new HashMap<>();
+        final ListMultimap<String, MethodResponse> preMap = ArrayListMultimap.create();
         for (Response.Invocation invocation : response.getMethodResponses()) {
-            final List<MethodResponse> list;
-            if (preMap.containsKey(invocation.getId())) {
-                list = preMap.get(invocation.getId());
-            } else {
-                list = new ArrayList<>();
-                preMap.put(invocation.getId(), list);
-            }
-            list.add(invocation.getMethodResponse());
+            preMap.put(invocation.getId(), invocation.getMethodResponse());
         }
         final Map<String, MethodResponses> actualMap = new HashMap<>();
-        for (Map.Entry<String, List<MethodResponse>> entry : preMap.entrySet()) {
-            final List<MethodResponse> methodResponseList = entry.getValue();
+        for (final String id : preMap.keySet()) {
+            final List<MethodResponse> methodResponseList = preMap.get(id);
             final MethodResponses methodResponses;
             if (methodResponseList.size() == 0) {
                 throw new AssertionError("Method response list can not be empty");
             } else if (methodResponseList.size() == 1) {
                 methodResponses = new MethodResponses(methodResponseList.get(0));
             } else {
-                methodResponses = new MethodResponses(methodResponseList.get(0), methodResponseList.subList(1, methodResponseList.size()).toArray(new MethodResponse[0]));
+                methodResponses = new MethodResponses(
+                        methodResponseList.get(0),
+                        methodResponseList.subList(1, methodResponseList.size()).toArray(new MethodResponse[0])
+                );
             }
-            actualMap.put(entry.getKey(), methodResponses);
+            actualMap.put(id, methodResponses);
         }
         return new ResponseAnalyzer(actualMap);
     }

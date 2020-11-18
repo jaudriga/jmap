@@ -17,8 +17,8 @@
 package rs.ltt.jmap.gson;
 
 import com.google.common.math.LongMath;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import rs.ltt.jmap.common.entity.Email;
 import rs.ltt.jmap.common.entity.Mailbox;
 
@@ -27,15 +27,15 @@ public class MaxIntegerDeserializationTest extends AbstractGsonTest {
     @Test
     public void emailDeserialization() throws Exception {
         final Email email = parseFromResource("email/max-int-email.json", Email.class);
-        Assert.assertEquals((long) email.getSize(), LongMath.pow(2, 53) - 1L);
-        Assert.assertEquals((long) email.getTextBody().get(0).getSize(), LongMath.pow(2, 53) - 2L);
+        Assertions.assertEquals((long) email.getSize(), LongMath.pow(2, 53) - 1L);
+        Assertions.assertEquals((long) email.getTextBody().get(0).getSize(), LongMath.pow(2, 53) - 2L);
     }
 
     @Test
     public void mailboxDeserialization() throws Exception {
         final Mailbox mailbox = parseFromResource("mailbox/max-int-mailbox.json", Mailbox.class);
-        Assert.assertEquals((long) mailbox.getTotalEmails(), LongMath.pow(2, 53) - 1L);
-        Assert.assertEquals((long) mailbox.getUnreadEmails(), LongMath.pow(2, 53) - 2L);
+        Assertions.assertEquals((long) mailbox.getTotalEmails(), LongMath.pow(2, 53) - 1L);
+        Assertions.assertEquals((long) mailbox.getUnreadEmails(), LongMath.pow(2, 53) - 2L);
 
     }
 

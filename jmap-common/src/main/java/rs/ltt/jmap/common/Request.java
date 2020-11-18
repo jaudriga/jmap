@@ -26,9 +26,8 @@ import java.util.*;
 public class Request {
 
     private static final Map<Class<? extends MethodCall>, List<String>> NAMESPACE_CACHE = new HashMap<>();
-
-    private String[] using;
-    private Invocation[] methodCalls;
+    private final String[] using;
+    private final Invocation[] methodCalls;
 
     private Request(String[] using, Invocation[] methodCalls) {
         this.using = using;
@@ -54,6 +53,14 @@ public class Request {
             NAMESPACE_CACHE.put(clazz, namespaces);
             return namespaces;
         }
+    }
+
+    public String[] getUsing() {
+        return using;
+    }
+
+    public Invocation[] getMethodCalls() {
+        return methodCalls;
     }
 
     public static class Invocation {
@@ -136,7 +143,7 @@ public class Request {
 
         public Builder add(Invocation invocation) {
             this.invocations.add(invocation);
-            final Class<?extends MethodCall> clazz = invocation.methodCall.getClass();
+            final Class<? extends MethodCall> clazz = invocation.methodCall.getClass();
             this.using.addAll(getNamespacesFor(clazz));
             if (invocation.methodCall instanceof SetEmailSubmissionMethodCall) {
                 final SetEmailSubmissionMethodCall call = (SetEmailSubmissionMethodCall) invocation.methodCall;

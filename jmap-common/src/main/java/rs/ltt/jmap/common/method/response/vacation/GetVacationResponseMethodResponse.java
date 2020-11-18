@@ -16,10 +16,16 @@
 
 package rs.ltt.jmap.common.method.response.vacation;
 
+import lombok.Builder;
 import rs.ltt.jmap.annotation.JmapMethod;
 import rs.ltt.jmap.common.entity.VacationResponse;
 import rs.ltt.jmap.common.method.response.standard.GetMethodResponse;
 
 @JmapMethod("VacationResponse/get")
 public class GetVacationResponseMethodResponse extends GetMethodResponse<VacationResponse> {
+
+    @Builder
+    public GetVacationResponseMethodResponse(String accountId, String state, String[] notFound, VacationResponse[] list) {
+        super(accountId, state, notFound, list);
+    }
 }

@@ -31,7 +31,7 @@ public class BasicAuthHttpAuthentication implements HttpAuthentication {
 
     @Override
     public void authenticate(Request.Builder builder) {
-        builder.header("Authorization", Credentials.basic(username,password));
+        builder.header("Authorization", Credentials.basic(username, password));
     }
 
     @Override

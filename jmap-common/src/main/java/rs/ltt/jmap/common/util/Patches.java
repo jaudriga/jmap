@@ -26,11 +26,11 @@ public class Patches {
 
     }
 
-    public static Map<String,Object> set(String path, Object value) {
+    public static Map<String, Object> set(String path, Object value) {
         return new Builder().set(path, value).build();
     }
 
-    public static Map<String,Object> remove(String path) {
+    public static Map<String, Object> remove(String path) {
         return new Builder().remove(path).build();
     }
 
@@ -52,7 +52,7 @@ public class Patches {
 
         }
 
-        private final ImmutableMap.Builder<String,Object> mapBuilder = new ImmutableMap.Builder<>();
+        private final ImmutableMap.Builder<String, Object> mapBuilder = new ImmutableMap.Builder<>();
 
         public Builder set(String path, Object value) {
             mapBuilder.put(path, value);
@@ -64,7 +64,7 @@ public class Patches {
             return this;
         }
 
-        public Map<String,Object> build() {
+        public Map<String, Object> build() {
             return mapBuilder.build();
         }
 

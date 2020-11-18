@@ -21,8 +21,8 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
@@ -49,11 +49,11 @@ public class MoveToTrashTest {
                 .build()) {
             mua.refreshMailboxes().get();
 
-            Assert.assertFalse(mua.moveToTrash(ImmutableSet.of(
+            Assertions.assertFalse(mua.moveToTrash(ImmutableSet.of(
                     new MyIdentifiableEmailWithMailboxes("e0", "mb4")
             )).get());
 
-            Assert.assertFalse(mua.moveToTrash(ImmutableSet.of(
+            Assertions.assertFalse(mua.moveToTrash(ImmutableSet.of(
                     new MyIdentifiableEmailWithMailboxes("e0", "mb4"),
                     new MyIdentifiableEmailWithMailboxes("e1", "mb4")
             )).get());

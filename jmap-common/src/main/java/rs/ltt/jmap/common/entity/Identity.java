@@ -24,7 +24,7 @@ import java.util.List;
 
 @Getter
 @Builder
-public class Identity  extends AbstractIdentifiableEntity implements IdentifiableIdentity {
+public class Identity extends AbstractIdentifiableEntity implements IdentifiableIdentity {
     private String name;
 
     private String email;

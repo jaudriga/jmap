@@ -32,6 +32,13 @@ public abstract class GetMethodResponse<T extends AbstractIdentifiableEntity> im
 
     protected T[] list;
 
+    public GetMethodResponse(String accountId, String state, String[] notFound, T[] list) {
+        this.accountId = accountId;
+        this.state = state;
+        this.notFound = notFound;
+        this.list = list;
+    }
+
     @Override
     public String toString() {
         return MoreObjects.toStringHelper(this)

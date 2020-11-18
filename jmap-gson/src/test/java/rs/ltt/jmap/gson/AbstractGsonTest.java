@@ -22,7 +22,7 @@ abstract class AbstractGsonTest {
 
     static <T> T parseFromResource(String filename, Type type) throws IOException {
         final Gson gson = getGson();
-        return gson.fromJson(Resources.asCharSource(Resources.getResource(filename), Charsets.UTF_8).read(),type);
+        return gson.fromJson(Resources.asCharSource(Resources.getResource(filename), Charsets.UTF_8).read(), type);
     }
 
     public String readResourceAsString(String filename) throws IOException {

@@ -21,5 +21,5 @@ import rs.ltt.jmap.common.entity.Email;
 import rs.ltt.jmap.common.method.response.standard.QueryChangesMethodResponse;
 
 @JmapMethod("Email/queryChanges")
-public class QueryChangesEmailMethodResponse  extends QueryChangesMethodResponse<Email> {
+public class QueryChangesEmailMethodResponse extends QueryChangesMethodResponse<Email> {
 }

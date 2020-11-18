@@ -1,7 +1,7 @@
 package rs.ltt.jmap.gson;
 
 import com.google.gson.reflect.TypeToken;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import rs.ltt.jmap.common.entity.AccountCapability;
 import rs.ltt.jmap.common.entity.capability.MailAccountCapability;
 import rs.ltt.jmap.common.entity.capability.SubmissionAccountCapability;
@@ -10,10 +10,12 @@ import rs.ltt.jmap.common.entity.capability.VacationResponseAccountCapability;
 import java.lang.reflect.Type;
 import java.util.Map;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
+
 
 public class AccountCapabilitiesDeserializerTest extends AbstractGsonTest {
-    private static final Type TYPE = new TypeToken<Map<Class<? extends AccountCapability>, AccountCapability>>() {}.getType();
+    private static final Type TYPE = new TypeToken<Map<Class<? extends AccountCapability>, AccountCapability>>() {
+    }.getType();
 
     @Test
     public void mailAccountCapability() throws Exception {
@@ -28,7 +30,7 @@ public class AccountCapabilitiesDeserializerTest extends AbstractGsonTest {
         assertEquals(Long.valueOf(10), mailAccountCapability.getMaxMailboxDepth());
         assertEquals(200, mailAccountCapability.maxSizeMailboxName());
         assertEquals(50_000_000, mailAccountCapability.maxSizeAttachmentsPerEmail());
-        assertArrayEquals(new String[] { "receivedAt" }, mailAccountCapability.getEmailQuerySortOptions());
+        assertArrayEquals(new String[]{"receivedAt"}, mailAccountCapability.getEmailQuerySortOptions());
         assertTrue(mailAccountCapability.mayCreateTopLevelMailbox());
     }
 
@@ -46,7 +48,7 @@ public class AccountCapabilitiesDeserializerTest extends AbstractGsonTest {
         assertEquals(1, submissionExtensions.size());
         assertTrue(submissionExtensions.containsKey("SIZE"));
         String[] sizeExtensionArguments = submissionExtensions.get("SIZE");
-        assertArrayEquals(new String[] { "50000000" }, sizeExtensionArguments);
+        assertArrayEquals(new String[]{"50000000"}, sizeExtensionArguments);
     }
 
     @Test

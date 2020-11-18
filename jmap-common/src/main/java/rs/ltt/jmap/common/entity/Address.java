@@ -30,6 +30,6 @@ public class Address {
     private String email;
 
     @Singular
-    private Map<String,Object> parameters;
+    private Map<String, Object> parameters;
 
 }

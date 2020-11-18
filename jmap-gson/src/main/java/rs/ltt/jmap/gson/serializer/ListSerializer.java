@@ -32,10 +32,9 @@ public class ListSerializer implements JsonSerializer<List<?>> {
         if (list == null || list.isEmpty()) {
             return null;
         }
-        JsonArray array = new JsonArray();
-
-        for (Object child : list) {
-            JsonElement element = context.serialize(child);
+        final JsonArray array = new JsonArray();
+        for (final Object child : list) {
+            final JsonElement element = context.serialize(child);
             array.add(element);
         }
 

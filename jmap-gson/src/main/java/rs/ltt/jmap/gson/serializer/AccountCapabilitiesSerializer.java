@@ -27,7 +27,7 @@ import java.util.Map;
 
 public class AccountCapabilitiesSerializer implements JsonSerializer<Map<Class<? extends AccountCapability>, AccountCapability>> {
 
-    private static final ImmutableMap<Class<? extends AccountCapability>,String> ACCOUNT_CAPABILITIES = Mapper.ACCOUNT_CAPABILITIES.inverse();
+    private static final ImmutableMap<Class<? extends AccountCapability>, String> ACCOUNT_CAPABILITIES = Mapper.ACCOUNT_CAPABILITIES.inverse();
 
     public static void register(final GsonBuilder builder) {
         Type type = new TypeToken<Map<Class<? extends AccountCapability>, AccountCapability>>() {

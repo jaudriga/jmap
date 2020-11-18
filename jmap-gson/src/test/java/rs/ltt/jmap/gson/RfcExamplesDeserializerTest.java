@@ -16,8 +16,9 @@
 
 package rs.ltt.jmap.gson;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.hamcrest.MatcherAssert;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import rs.ltt.jmap.common.Response;
 import rs.ltt.jmap.common.entity.Email;
 import rs.ltt.jmap.common.entity.Identity;
@@ -33,26 +34,26 @@ public class RfcExamplesDeserializerTest extends AbstractGsonTest {
     @Test
     public void emailGetResponse() throws IOException {
         Response.Invocation[] responseInvocation = parseFromResource("rfc-example/email-get-response.json", Response.Invocation[].class);
-        Assert.assertEquals(responseInvocation.length, 1);
-        Assert.assertThat(responseInvocation[0].getMethodResponse(), instanceOf(GetEmailMethodResponse.class));
+        Assertions.assertEquals(responseInvocation.length, 1);
+        MatcherAssert.assertThat(responseInvocation[0].getMethodResponse(), instanceOf(GetEmailMethodResponse.class));
         final GetEmailMethodResponse methodResponse = (GetEmailMethodResponse) responseInvocation[0].getMethodResponse();
         final Email[] emails = methodResponse.getList();
-        Assert.assertEquals(emails.length, 1);
+        Assertions.assertEquals(emails.length, 1);
         final Email email = emails[0];
-        Assert.assertEquals(email.getId(), "f123u457");
-        Assert.assertEquals(email.getBodyValues().size(), 2);
-        Assert.assertEquals(email.getFrom().size(), 1);
-        Assert.assertEquals(email.getSubject(), "Dinner on Thursday?");
-        Assert.assertEquals(email.getReceivedAt(), email.getSentAt().toInstant());
+        Assertions.assertEquals(email.getId(), "f123u457");
+        Assertions.assertEquals(email.getBodyValues().size(), 2);
+        Assertions.assertEquals(email.getFrom().size(), 1);
+        Assertions.assertEquals(email.getSubject(), "Dinner on Thursday?");
+        Assertions.assertEquals(email.getReceivedAt(), email.getSentAt().toInstant());
     }
 
     @Test
     public void identityGetResponse() throws IOException {
         Response.Invocation invocation = parseFromResource("rfc-example/identity-get-response.json", Response.Invocation.class);
-        Assert.assertThat(invocation.getMethodResponse(), instanceOf(GetIdentityMethodResponse.class));
+        MatcherAssert.assertThat(invocation.getMethodResponse(), instanceOf(GetIdentityMethodResponse.class));
         GetIdentityMethodResponse methodResponse = (GetIdentityMethodResponse) invocation.getMethodResponse();
         Identity[] identities = methodResponse.getList();
-        Assert.assertEquals(identities.length, 2);
-        Assert.assertEquals(identities[0].getName(), "Joe Bloggs");
+        Assertions.assertEquals(identities.length, 2);
+        Assertions.assertEquals(identities[0].getName(), "Joe Bloggs");
     }
 }

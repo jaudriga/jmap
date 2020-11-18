@@ -83,16 +83,16 @@ public class QueryStringTest {
                         EmailSubmissionFilterCondition.builder().undoStatus(UndoStatus.FINAL).build(),
                         EmailSubmissionFilterCondition.builder().undoStatus(UndoStatus.PENDING).build(),
                         FilterOperator.or(
-                                EmailSubmissionFilterCondition.builder().emailIds(new String[]{"1","2","3"}).build(),
-                                EmailSubmissionFilterCondition.builder().emailIds(new String[]{"4","5"}).build()
+                                EmailSubmissionFilterCondition.builder().emailIds(new String[]{"1", "2", "3"}).build(),
+                                EmailSubmissionFilterCondition.builder().emailIds(new String[]{"4", "5"}).build()
                         )
                 )
         );
         EmailSubmissionQuery b = EmailSubmissionQuery.of(
                 FilterOperator.or(
                         FilterOperator.or(
-                                EmailSubmissionFilterCondition.builder().emailIds(new String[]{"4","5"}).build(),
-                                EmailSubmissionFilterCondition.builder().emailIds(new String[]{"1","2","3"}).build()
+                                EmailSubmissionFilterCondition.builder().emailIds(new String[]{"4", "5"}).build(),
+                                EmailSubmissionFilterCondition.builder().emailIds(new String[]{"1", "2", "3"}).build()
                         ),
                         EmailSubmissionFilterCondition.builder().undoStatus(UndoStatus.PENDING).build(),
                         EmailSubmissionFilterCondition.builder().undoStatus(UndoStatus.FINAL).build()

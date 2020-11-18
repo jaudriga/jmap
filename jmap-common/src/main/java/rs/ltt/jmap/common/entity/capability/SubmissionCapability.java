@@ -20,6 +20,6 @@ import rs.ltt.jmap.Namespace;
 import rs.ltt.jmap.annotation.JmapCapability;
 import rs.ltt.jmap.common.entity.Capability;
 
-@JmapCapability( namespace = Namespace.SUBMISSION)
-public class SubmissionCapability implements Capability  {
+@JmapCapability(namespace = Namespace.SUBMISSION)
+public class SubmissionCapability implements Capability {
 }

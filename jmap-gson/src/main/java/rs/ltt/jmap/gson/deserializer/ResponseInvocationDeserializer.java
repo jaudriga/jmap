@@ -33,13 +33,18 @@ public class ResponseInvocationDeserializer implements JsonDeserializer<Response
     @Override
     public Response.Invocation deserialize(JsonElement jsonElement, Type type, JsonDeserializationContext context) throws JsonParseException {
         if (!jsonElement.isJsonArray()) {
-            throw new JsonParseException("Expected JSON array for invocation");
+            throw new JsonParseException("Expected JSON array for invocation. Got " + jsonElement.getClass().getSimpleName());
         }
         final JsonArray jsonArray = jsonElement.getAsJsonArray();
         if (jsonArray.size() != 3) {
-            throw new JsonParseException("Invocation array has "+jsonArray.size()+" values. Expected 3");
+            throw new JsonParseException("Invocation array has " + jsonArray.size() + " values. Expected 3");
         }
-        final String name = jsonArray.get(0).getAsString();
+        final String name;
+        if (jsonArray.get(0).isJsonPrimitive()) {
+            name = jsonArray.get(0).getAsString();
+        } else {
+            throw new JsonParseException("Name (index 0 of JsonArray) must be a primitive string");
+        }
         final JsonElement parameter = jsonArray.get(1);
         final String id = jsonArray.get(2).getAsString();
 
@@ -47,7 +52,7 @@ public class ResponseInvocationDeserializer implements JsonDeserializer<Response
             throw new JsonParseException("Parameter (index 1 of JsonArray) must be of type object");
         }
 
-        final Class<?extends MethodResponse> clazz;
+        final Class<? extends MethodResponse> clazz;
         if ("error".equals(name)) {
             final JsonObject jsonObject = parameter.getAsJsonObject();
             final String errorType = jsonObject.get("type").getAsString();
@@ -57,7 +62,7 @@ public class ResponseInvocationDeserializer implements JsonDeserializer<Response
             clazz = Mapper.METHOD_RESPONSES.get(name);
         }
         if (clazz == null) {
-            throw new JsonParseException("Unknown method response '"+name+"'");
+            throw new JsonParseException("Unknown method response '" + name + "'");
         }
         final MethodResponse methodResponse = context.deserialize(parameter, clazz);
         return new Response.Invocation(methodResponse, id);

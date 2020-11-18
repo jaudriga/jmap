@@ -51,7 +51,7 @@ public class RequestInvocationTypeAdapter extends TypeAdapter<Request.Invocation
     @Override
     public void write(JsonWriter jsonWriter, Request.Invocation invocation) throws IOException {
         final MethodCall methodCall = invocation.getMethodCall();
-        final Class<?extends MethodCall> clazz = methodCall.getClass();
+        final Class<? extends MethodCall> clazz = methodCall.getClass();
         final String name = METHOD_CALLS.inverse().get(clazz);
         if (name == null) {
             throw new IOException(String.format("%s is not a registered @JmapMethod", clazz.getName()));
@@ -64,7 +64,13 @@ public class RequestInvocationTypeAdapter extends TypeAdapter<Request.Invocation
     }
 
     @Override
-    public Request.Invocation read(JsonReader jsonReader) throws IOException {
-        throw new IOException("No deserialization support for Request.Invocation via Type Adapter");
+    public Request.Invocation read(final JsonReader jsonReader) throws IOException {
+        jsonReader.beginArray();
+        final String name = jsonReader.nextString();
+        final Class<? extends MethodCall> clazz = METHOD_CALLS.get(name);
+        final MethodCall methodCall = REGULAR_GSON.fromJson(jsonReader, clazz);
+        final String id = jsonReader.nextString();
+        jsonReader.endArray();
+        return new Request.Invocation(methodCall,id);
     }
 }

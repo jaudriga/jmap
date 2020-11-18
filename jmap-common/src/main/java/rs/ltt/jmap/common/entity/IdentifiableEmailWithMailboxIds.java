@@ -20,6 +20,6 @@ import java.util.Map;
 
 public interface IdentifiableEmailWithMailboxIds extends Identifiable {
 
-    Map<String,Boolean> getMailboxIds();
+    Map<String, Boolean> getMailboxIds();
 
 }

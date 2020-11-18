@@ -21,8 +21,8 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import rs.ltt.jmap.common.entity.IdentifiableMailboxWithRole;
 import rs.ltt.jmap.common.entity.Role;
 import rs.ltt.jmap.mua.cache.InMemoryCache;
@@ -57,7 +57,7 @@ public class ToggleImportantTest {
                     new MyIdentifiableEmailWithMailboxes("e0", "mb2")
             );
 
-            Assert.assertFalse(mua.copyToImportant(emails).get());
+            Assertions.assertFalse(mua.copyToImportant(emails).get());
         }
 
         server.shutdown();
@@ -87,13 +87,13 @@ public class ToggleImportantTest {
 
             IdentifiableMailboxWithRole mailbox = MailboxUtil.find(inMemoryCache.getSpecialMailboxes(), Role.IMPORTANT);
 
-            Assert.assertNotNull(mailbox);
+            Assertions.assertNotNull(mailbox);
 
             final Collection<MyIdentifiableEmailWithMailboxes> emails = ImmutableSet.of(
                     new MyIdentifiableEmailWithMailboxes("e0", "mb0")
             );
 
-            Assert.assertFalse(mua.removeFromMailbox(emails, mailbox.getId()).get());
+            Assertions.assertFalse(mua.removeFromMailbox(emails, mailbox.getId()).get());
         }
 
         server.shutdown();

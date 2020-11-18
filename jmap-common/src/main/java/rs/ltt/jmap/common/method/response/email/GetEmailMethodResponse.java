@@ -16,10 +16,16 @@
 
 package rs.ltt.jmap.common.method.response.email;
 
+import lombok.Builder;
 import rs.ltt.jmap.annotation.JmapMethod;
 import rs.ltt.jmap.common.entity.Email;
 import rs.ltt.jmap.common.method.response.standard.GetMethodResponse;
 
 @JmapMethod("Email/get")
 public class GetEmailMethodResponse extends GetMethodResponse<Email> {
+
+    @Builder
+    public GetEmailMethodResponse(String accountId, String state, String[] notFound, Email[] list) {
+        super(accountId, state, notFound, list);
+    }
 }

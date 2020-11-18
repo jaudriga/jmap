@@ -46,6 +46,7 @@ public final class JmapAdapters {
         AccountCapabilitiesSerializer.register(builder);
         PrimaryAccountsSerializer.register(builder);
         ListSerializer.register(builder);
+        ResponseInvocationSerializer.register(builder);
         StringMapSerializer.register(builder);
     }
 

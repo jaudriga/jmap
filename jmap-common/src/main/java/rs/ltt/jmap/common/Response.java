@@ -20,8 +20,13 @@ import rs.ltt.jmap.common.method.MethodResponse;
 
 public class Response implements GenericResponse {
 
-    private Invocation[] methodResponses;
-    private String sessionState;
+    private final Invocation[] methodResponses;
+    private final String sessionState;
+
+    public Response(final Invocation[] methodResponses, final String sessionState) {
+        this.methodResponses = methodResponses;
+        this.sessionState = sessionState;
+    }
 
     public Invocation[] getMethodResponses() {
         return methodResponses;

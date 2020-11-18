@@ -45,7 +45,7 @@ public class MapperLoggingUtils {
                 .build();
     }
 
-    public static <T>  boolean isMissingWellKnown(ImmutableBiMap<String, Class<? extends T>> map, Class<T> type) {
+    public static <T> boolean isMissingWellKnown(ImmutableBiMap<String, Class<? extends T>> map, Class<T> type) {
         final Class wellKnownMapping = WELL_KNOWN_MAPPINGS.get(type);
         return wellKnownMapping != null && !map.containsValue(wellKnownMapping);
     }
