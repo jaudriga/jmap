@@ -17,8 +17,8 @@
 package rs.ltt.jmap.mua.util;
 
 import com.google.common.collect.ImmutableList;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import rs.ltt.jmap.common.entity.EmailAddress;
 
 import java.util.Collection;
@@ -33,7 +33,7 @@ public class EmailAddressUtilTest {
                 EmailAddress.builder().email("test@example.com").name("Test").build()
         );
         final Collection<EmailAddress> actual = EmailAddressUtil.parse(input);
-        Assert.assertArrayEquals(
+        Assertions.assertArrayEquals(
                 expected.toArray(new EmailAddress[0]),
                 actual.toArray(new EmailAddress[0])
         );
@@ -42,30 +42,30 @@ public class EmailAddressUtilTest {
     @Test
     public void validEmailAddresses() {
         //copied from https://en.wikipedia.org/wiki/Email_address#Examples
-        Assert.assertTrue(EmailAddressUtil.isValid("simple@example.com"));
-        Assert.assertTrue(EmailAddressUtil.isValid("very.common@example.com"));
-        Assert.assertTrue(EmailAddressUtil.isValid("disposable.style.email.with+symbol@example.com"));
-        Assert.assertTrue(EmailAddressUtil.isValid("other.email-with-hyphen@example.com"));
-        Assert.assertTrue(EmailAddressUtil.isValid("fully-qualified-domain@example.com"));
-        Assert.assertTrue(EmailAddressUtil.isValid("user.name+tag+sorting@example.com"));
-        Assert.assertTrue(EmailAddressUtil.isValid("x@example.com"));
-        Assert.assertTrue(EmailAddressUtil.isValid("example-indeed@strange-example.com"));
-        Assert.assertTrue(EmailAddressUtil.isValid("admin@mailserver1"));
-        Assert.assertTrue(EmailAddressUtil.isValid("example@s.example"));
-        Assert.assertTrue(EmailAddressUtil.isValid("\" \"@example.org"));
-        Assert.assertTrue(EmailAddressUtil.isValid("\"john..doe\"@example.org"));
-        Assert.assertTrue(EmailAddressUtil.isValid("mailhost!username@example.org"));
-        Assert.assertTrue(EmailAddressUtil.isValid("user%example.com@example.org"));
+        Assertions.assertTrue(EmailAddressUtil.isValid("simple@example.com"));
+        Assertions.assertTrue(EmailAddressUtil.isValid("very.common@example.com"));
+        Assertions.assertTrue(EmailAddressUtil.isValid("disposable.style.email.with+symbol@example.com"));
+        Assertions.assertTrue(EmailAddressUtil.isValid("other.email-with-hyphen@example.com"));
+        Assertions.assertTrue(EmailAddressUtil.isValid("fully-qualified-domain@example.com"));
+        Assertions.assertTrue(EmailAddressUtil.isValid("user.name+tag+sorting@example.com"));
+        Assertions.assertTrue(EmailAddressUtil.isValid("x@example.com"));
+        Assertions.assertTrue(EmailAddressUtil.isValid("example-indeed@strange-example.com"));
+        Assertions.assertTrue(EmailAddressUtil.isValid("admin@mailserver1"));
+        Assertions.assertTrue(EmailAddressUtil.isValid("example@s.example"));
+        Assertions.assertTrue(EmailAddressUtil.isValid("\" \"@example.org"));
+        Assertions.assertTrue(EmailAddressUtil.isValid("\"john..doe\"@example.org"));
+        Assertions.assertTrue(EmailAddressUtil.isValid("mailhost!username@example.org"));
+        Assertions.assertTrue(EmailAddressUtil.isValid("user%example.com@example.org"));
     }
 
     @Test
     public void invalidEmailAddresses() {
         //copied from https://en.wikipedia.org/wiki/Email_address#Examples
-        Assert.assertFalse(EmailAddressUtil.isValid("Abc.example.com"));
-        Assert.assertFalse(EmailAddressUtil.isValid("A@b@c@example.com"));
-        Assert.assertFalse(EmailAddressUtil.isValid("a\"b(c)d,e:f;g<h>i[j\\k]l@example.com"));
-        Assert.assertFalse(EmailAddressUtil.isValid("just\"not\"right@example.com"));
-        Assert.assertFalse(EmailAddressUtil.isValid("this is\"not\\allowed@example.com"));
-        Assert.assertFalse(EmailAddressUtil.isValid("this\\ still\\\"not\\\\allowed@example.com"));
+        Assertions.assertFalse(EmailAddressUtil.isValid("Abc.example.com"));
+        Assertions.assertFalse(EmailAddressUtil.isValid("A@b@c@example.com"));
+        Assertions.assertFalse(EmailAddressUtil.isValid("a\"b(c)d,e:f;g<h>i[j\\k]l@example.com"));
+        Assertions.assertFalse(EmailAddressUtil.isValid("just\"not\"right@example.com"));
+        Assertions.assertFalse(EmailAddressUtil.isValid("this is\"not\\allowed@example.com"));
+        Assertions.assertFalse(EmailAddressUtil.isValid("this\\ still\\\"not\\\\allowed@example.com"));
     }
 }

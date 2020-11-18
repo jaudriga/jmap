@@ -17,8 +17,8 @@
 package rs.ltt.jmap.mua.util;
 
 import com.google.common.collect.ImmutableList;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import rs.ltt.jmap.common.entity.EmailAddress;
 
 import java.util.Collection;
@@ -26,10 +26,9 @@ import java.util.Collections;
 
 public class EmailAddressTokenizerTest {
 
-
     @Test
     public void emptySequence() {
-        Assert.assertEquals(Collections.emptyList(), EmailAddressTokenizer.tokenize(""));
+        Assertions.assertEquals(Collections.emptyList(), EmailAddressTokenizer.tokenize(""));
     }
 
     @Test
@@ -44,7 +43,7 @@ public class EmailAddressTokenizerTest {
         );
         final Collection<EmailAddressToken> actual = EmailAddressTokenizer.tokenize(input);
 
-        Assert.assertArrayEquals(
+        Assertions.assertArrayEquals(
                 expected.toArray(new EmailAddressToken[0]),
                 actual.toArray(new EmailAddressToken[0])
         );
@@ -54,7 +53,7 @@ public class EmailAddressTokenizerTest {
     public void whitespaces() {
         final String input = "     ";
         final Collection<EmailAddressToken> actual = EmailAddressTokenizer.tokenize(input);
-        Assert.assertArrayEquals(
+        Assertions.assertArrayEquals(
                 new EmailAddressToken[0],
                 actual.toArray(new EmailAddressToken[0])
         );
@@ -72,7 +71,7 @@ public class EmailAddressTokenizerTest {
         );
         final Collection<EmailAddressToken> actual = EmailAddressTokenizer.tokenize(input);
 
-        Assert.assertArrayEquals(
+        Assertions.assertArrayEquals(
                 expected.toArray(new EmailAddressToken[0]),
                 actual.toArray(new EmailAddressToken[0])
         );
@@ -90,7 +89,7 @@ public class EmailAddressTokenizerTest {
         );
         final Collection<EmailAddressToken> actual = EmailAddressTokenizer.tokenize(input);
 
-        Assert.assertArrayEquals(
+        Assertions.assertArrayEquals(
                 expected.toArray(new EmailAddressToken[0]),
                 actual.toArray(new EmailAddressToken[0])
         );
@@ -113,7 +112,7 @@ public class EmailAddressTokenizerTest {
         );
         final Collection<EmailAddressToken> actual = EmailAddressTokenizer.tokenize(input);
 
-        Assert.assertArrayEquals(
+        Assertions.assertArrayEquals(
                 expected.toArray(new EmailAddressToken[0]),
                 actual.toArray(new EmailAddressToken[0])
         );
@@ -136,7 +135,7 @@ public class EmailAddressTokenizerTest {
         );
         final Collection<EmailAddressToken> actual = EmailAddressTokenizer.tokenize(input);
 
-        Assert.assertArrayEquals(
+        Assertions.assertArrayEquals(
                 expected.toArray(new EmailAddressToken[0]),
                 actual.toArray(new EmailAddressToken[0])
         );
@@ -154,7 +153,7 @@ public class EmailAddressTokenizerTest {
         );
         final Collection<EmailAddressToken> actual = EmailAddressTokenizer.tokenize(input);
 
-        Assert.assertArrayEquals(
+        Assertions.assertArrayEquals(
                 expected.toArray(new EmailAddressToken[0]),
                 actual.toArray(new EmailAddressToken[0])
         );
@@ -164,7 +163,7 @@ public class EmailAddressTokenizerTest {
     public void singleEmailWithLabelExplicitDelimiter() {
         final String input = "A <a@example.com>";
         final Collection<EmailAddressToken> actual = EmailAddressTokenizer.tokenize(input, true);
-        Assert.assertArrayEquals(
+        Assertions.assertArrayEquals(
                 new EmailAddressToken[0],
                 actual.toArray(new EmailAddressToken[0])
         );
@@ -182,7 +181,7 @@ public class EmailAddressTokenizerTest {
         );
         final Collection<EmailAddressToken> actual = EmailAddressTokenizer.tokenize(input);
 
-        Assert.assertArrayEquals(
+        Assertions.assertArrayEquals(
                 expected.toArray(new EmailAddressToken[0]),
                 actual.toArray(new EmailAddressToken[0])
         );
@@ -205,7 +204,7 @@ public class EmailAddressTokenizerTest {
         );
         final Collection<EmailAddressToken> actual = EmailAddressTokenizer.tokenize(input);
 
-        Assert.assertArrayEquals(
+        Assertions.assertArrayEquals(
                 expected.toArray(new EmailAddressToken[0]),
                 actual.toArray(new EmailAddressToken[0])
         );
@@ -223,7 +222,7 @@ public class EmailAddressTokenizerTest {
         );
         final Collection<EmailAddressToken> actual = EmailAddressTokenizer.tokenize(input, true);
 
-        Assert.assertArrayEquals(
+        Assertions.assertArrayEquals(
                 expected.toArray(new EmailAddressToken[0]),
                 actual.toArray(new EmailAddressToken[0])
         );

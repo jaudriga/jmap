@@ -16,10 +16,8 @@
 
 package rs.ltt.jmap.client;
 
-import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import rs.ltt.jmap.common.method.call.core.EchoMethodCall;
 import rs.ltt.jmap.common.method.response.core.EchoMethodResponse;
 import rs.ltt.jmap.common.util.Mapper;
@@ -32,26 +30,24 @@ public class CustomExtensionTest {
     private static String USERNAME = "test@example.com";
     private static String PASSWORD = "secret";
 
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
-
     @Test
     public void findDummyAndCommonMethodCalls() {
-        Assert.assertTrue(Mapper.METHOD_CALLS.values().contains(GetDummyMethodCall.class));
-        Assert.assertTrue(Mapper.METHOD_CALLS.values().contains(EchoMethodCall.class));
+        Assertions.assertTrue(Mapper.METHOD_CALLS.values().contains(GetDummyMethodCall.class));
+        Assertions.assertTrue(Mapper.METHOD_CALLS.values().contains(EchoMethodCall.class));
     }
 
     @Test
     public void findDummyAndCommonMethodResponses() {
-        Assert.assertTrue(Mapper.METHOD_RESPONSES.values().contains(GetDummyMethodResponse.class));
-        Assert.assertTrue(Mapper.METHOD_RESPONSES.values().contains(EchoMethodResponse.class));
+        Assertions.assertTrue(Mapper.METHOD_RESPONSES.values().contains(GetDummyMethodResponse.class));
+        Assertions.assertTrue(Mapper.METHOD_RESPONSES.values().contains(EchoMethodResponse.class));
     }
 
     @Test
     public void failOnCallWithoutNamespace() throws ExecutionException, InterruptedException {
         final JmapClient client = new JmapClient(USERNAME, PASSWORD);
+        Assertions.assertThrows(IllegalArgumentException.class, () -> {
+            client.call(new GetDummyMethodCall(ACCOUNT_ID)).get();
+        });
 
-        thrown.expect(IllegalArgumentException.class);
-        client.call(new GetDummyMethodCall(ACCOUNT_ID)).get();
     }
 }

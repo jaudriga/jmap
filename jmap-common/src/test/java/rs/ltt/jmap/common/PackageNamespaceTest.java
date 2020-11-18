@@ -16,8 +16,8 @@
 
 package rs.ltt.jmap.common;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import rs.ltt.jmap.common.method.MethodCall;
 import rs.ltt.jmap.common.util.Mapper;
 import rs.ltt.jmap.common.util.Namespace;
@@ -27,7 +27,7 @@ public class PackageNamespaceTest {
     @Test
     public void ensureEveryMethodCallHasNamespace() {
         for (Class<? extends MethodCall> clazz : Mapper.METHOD_CALLS.values()) {
-            Assert.assertNotNull(String.format("%s is not defining a package namespace", clazz.getName()), Namespace.get(clazz));
+            Assertions.assertNotNull(Namespace.get(clazz), String.format("%s is not defining a package namespace", clazz.getName()));
         }
     }
 

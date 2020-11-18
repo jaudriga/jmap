@@ -16,15 +16,15 @@
 
 package rs.ltt.jmap.mua.util;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import rs.ltt.jmap.common.entity.Email;
 
 public class EmailUtilTest {
 
     @Test
     public void firstResponseSubject() {
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 "Re: Hello",
                 EmailUtil.getResponseSubject(
                         Email.builder()
@@ -36,7 +36,7 @@ public class EmailUtilTest {
 
     @Test
     public void secondResponseSubject() {
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 "Re: Hello",
                 EmailUtil.getResponseSubject(
                         Email.builder()
@@ -48,7 +48,7 @@ public class EmailUtilTest {
 
     @Test
     public void secondResponseSubjectExcessWhitespace() {
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 "Re: Hello",
                 EmailUtil.getResponseSubject(
                         Email.builder()
@@ -60,7 +60,7 @@ public class EmailUtilTest {
 
     @Test
     public void secondResponseSubjectGerman() {
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 "Re: Hello",
                 EmailUtil.getResponseSubject(
                         Email.builder()

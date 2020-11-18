@@ -23,10 +23,9 @@ import okhttp3.HttpUrl;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.hamcrest.CoreMatchers;
-import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.hamcrest.MatcherAssert;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import rs.ltt.jmap.client.api.EndpointNotFoundException;
 import rs.ltt.jmap.client.api.MethodErrorResponseException;
 import rs.ltt.jmap.client.api.MethodResponseNotFoundException;
@@ -35,7 +34,6 @@ import rs.ltt.jmap.client.session.Session;
 import rs.ltt.jmap.common.entity.Email;
 import rs.ltt.jmap.common.entity.Mailbox;
 import rs.ltt.jmap.common.entity.capability.WebSocketCapability;
-import rs.ltt.jmap.common.method.MethodErrorResponse;
 import rs.ltt.jmap.common.method.call.core.EchoMethodCall;
 import rs.ltt.jmap.common.method.call.mailbox.GetMailboxMethodCall;
 import rs.ltt.jmap.common.method.error.UnknownMethodMethodErrorResponse;
@@ -45,17 +43,12 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
 
-import static org.hamcrest.CoreMatchers.instanceOf;
-
 public class HttpJmapClientTest {
 
     private static String ACCOUNT_ID = "test@example.com";
     private static String USERNAME = "test@example.com";
     private static String PASSWORD = "secret";
     private static String WELL_KNOWN_PATH = ".well-known/jmap";
-
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
 
     @Test
     public void fetchMailboxes() throws Exception {
@@ -78,7 +71,7 @@ public class HttpJmapClientTest {
 
         final GetMailboxMethodResponse mailboxResponse = future.get().getMain(GetMailboxMethodResponse.class);
 
-        Assert.assertEquals(7, mailboxResponse.getList().length);
+        Assertions.assertEquals(7, mailboxResponse.getList().length);
 
         server.shutdown();
     }
@@ -106,14 +99,11 @@ public class HttpJmapClientTest {
         );
 
 
-        try {
-            future.get();
-        } catch (ExecutionException e) {
-            final Throwable cause = e.getCause();
-            Assert.assertThat(cause, instanceOf(MethodErrorResponseException.class));
-            final MethodErrorResponseException methodErrorResponseException = (MethodErrorResponseException) cause;
-            Assert.assertThat(methodErrorResponseException.getMethodErrorResponse(), CoreMatchers.<MethodErrorResponse>instanceOf(UnknownMethodMethodErrorResponse.class));
-        }
+        final ExecutionException exception = Assertions.assertThrows(ExecutionException.class, future::get);
+        final Throwable cause = exception.getCause();
+        MatcherAssert.assertThat(cause, CoreMatchers.instanceOf(MethodErrorResponseException.class));
+        final MethodErrorResponseException methodErrorResponseException = (MethodErrorResponseException) cause;
+        MatcherAssert.assertThat(methodErrorResponseException.getMethodErrorResponse(), CoreMatchers.instanceOf(UnknownMethodMethodErrorResponse.class));
 
         server.shutdown();
     }
@@ -131,12 +121,12 @@ public class HttpJmapClientTest {
                 server.url(WELL_KNOWN_PATH)
         );
 
-        thrown.expect(ExecutionException.class);
-        thrown.expectCause(CoreMatchers.<Throwable>instanceOf(MethodResponseNotFoundException.class));
-        jmapClient.call(
-                GetMailboxMethodCall.builder().accountId(ACCOUNT_ID).build()
-        ).get();
-
+        final ExecutionException exception = Assertions.assertThrows(ExecutionException.class, () -> {
+            jmapClient.call(
+                    GetMailboxMethodCall.builder().accountId(ACCOUNT_ID).build()
+            ).get();
+        });
+        MatcherAssert.assertThat(exception.getCause(), CoreMatchers.instanceOf(MethodResponseNotFoundException.class));
         server.shutdown();
     }
 
@@ -151,10 +141,12 @@ public class HttpJmapClientTest {
                 server.url(WELL_KNOWN_PATH)
         );
 
-        thrown.expect(ExecutionException.class);
-        thrown.expectCause(CoreMatchers.<Throwable>instanceOf(EndpointNotFoundException.class));
+        final ExecutionException exception = Assertions.assertThrows(
+                ExecutionException.class,
+                () -> jmapClient.call(new EchoMethodCall()).get()
+        );
 
-        jmapClient.call(new EchoMethodCall()).get();
+        MatcherAssert.assertThat(exception.getCause(), CoreMatchers.instanceOf(EndpointNotFoundException.class));
 
         server.shutdown();
     }
@@ -184,7 +176,7 @@ public class HttpJmapClientTest {
         // Skip session request
         server.takeRequest();
 
-        Assert.assertEquals(server.url("/jmap/"), server.takeRequest().getRequestUrl());
+        Assertions.assertEquals(server.url("/jmap/"), server.takeRequest().getRequestUrl());
 
 
         final ListenableFuture<MethodResponses> echoFuture = jmapClient.call(new EchoMethodCall());
@@ -195,7 +187,7 @@ public class HttpJmapClientTest {
         // Skip session request
         server.takeRequest();
 
-        Assert.assertEquals(server.url("/api/jmap/"), server.takeRequest().getRequestUrl());
+        Assertions.assertEquals(server.url("/api/jmap/"), server.takeRequest().getRequestUrl());
 
 
         server.shutdown();
@@ -218,7 +210,7 @@ public class HttpJmapClientTest {
 
         Session session = jmapClient.getSession().get();
 
-        Assert.assertEquals(server.url("/jmap/"), session.getBase());
+        Assertions.assertEquals(server.url("/jmap/"), session.getBase());
 
         server.shutdown();
 
@@ -241,9 +233,9 @@ public class HttpJmapClientTest {
         HttpUrl upload = session.getUploadUrl(USERNAME);
         HttpUrl eventSource = session.getEventSourceUrl(Arrays.asList(Email.class, Mailbox.class), CloseAfter.STATE, 300L);
 
-        Assert.assertEquals(server.url("/jmap/download/test%40example.com/B10B1D/lttrs?accept=text%2Fplain"), download);
-        Assert.assertEquals(server.url("/jmap/upload/test%40example.com/"), upload);
-        Assert.assertEquals(server.url("jmap/eventsource/?types=Email,Mailbox&closeafter=state&ping=300"), eventSource);
+        Assertions.assertEquals(server.url("/jmap/download/test%40example.com/B10B1D/lttrs?accept=text%2Fplain"), download);
+        Assertions.assertEquals(server.url("/jmap/upload/test%40example.com/"), upload);
+        Assertions.assertEquals(server.url("jmap/eventsource/?types=Email,Mailbox&closeafter=state&ping=300"), eventSource);
 
         server.shutdown();
 
@@ -261,10 +253,7 @@ public class HttpJmapClientTest {
         );
 
         final Session session = jmapClient.getSession().get();
-
-        thrown.expect(IllegalStateException.class);
-        session.getUploadUrl(USERNAME);
-
+        Assertions.assertThrows(IllegalStateException.class, ()-> session.getUploadUrl(USERNAME));
         server.shutdown();
     }
 
@@ -280,6 +269,6 @@ public class HttpJmapClientTest {
         );
 
         final Session session = jmapClient.getSession().get();
-        Assert.assertNotNull(session.getCapability(WebSocketCapability.class).getUrl());
+        Assertions.assertNotNull(session.getCapability(WebSocketCapability.class).getUrl());
     }
 }

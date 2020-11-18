@@ -16,7 +16,8 @@
 
 package rs.ltt.jmap.common;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import rs.ltt.jmap.common.method.call.email.GetEmailMethodCall;
 import rs.ltt.jmap.common.method.call.email.QueryEmailMethodCall;
 import rs.ltt.jmap.common.method.call.mailbox.ChangesMailboxMethodCall;
@@ -25,36 +26,40 @@ import rs.ltt.jmap.common.method.call.snippet.GetSearchSnippetsMethodCall;
 
 public class MethodCallTest {
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void isAccountIdRequiredInGetMailboxMethodCall() {
-        GetMailboxMethodCall.builder().build();
+        Assertions.assertThrows(NullPointerException.class, () -> GetMailboxMethodCall.builder().build());
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void isAccountIdRequiredInChangesMailboxMethodCall() {
-        ChangesMailboxMethodCall.builder().sinceState("dummy").build();
+        Assertions.assertThrows(NullPointerException.class, () -> ChangesMailboxMethodCall.builder().sinceState("dummy").build());
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void isSinceStateRequiredInChangesMailboxMethodCall() {
-        ChangesMailboxMethodCall.builder().accountId("dummy").build();
+        Assertions.assertThrows(NullPointerException.class, () -> ChangesMailboxMethodCall.builder().accountId("dummy").build());
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void isAccountIdRequiredInGetSearchSnippetsMethodCall() {
-        GetSearchSnippetsMethodCall.builder()
-                .emailIds(new String[]{"1", "2"})
-                .build();
+        Assertions.assertThrows(NullPointerException.class, () ->
+                GetSearchSnippetsMethodCall.builder()
+                        .emailIds(new String[]{"1", "2"})
+                        .build()
+        );
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void isOneOfEmailIdRequiredInGetSearchSnippetsMethodCall() {
-        GetSearchSnippetsMethodCall.builder()
-                .accountId("dummy")
-                .build();
+        Assertions.assertThrows(IllegalArgumentException.class, () ->
+                GetSearchSnippetsMethodCall.builder()
+                        .accountId("dummy")
+                        .build()
+        );
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void preventReferenceAndIdInGetEmailMethodCall() {
         final Request.Invocation invocation = new Request.Invocation(
                 QueryEmailMethodCall.builder()
@@ -62,13 +67,15 @@ public class MethodCallTest {
                         .build(),
                 "1"
         );
-        GetEmailMethodCall.builder()
-                .accountId("dummy")
-                .ids(new String[]{"1", "2"})
-                .idsReference(
-                        invocation.createReference(
-                                Request.Invocation.ResultReference.Path.LIST_EMAIL_IDS
-                        ))
-                .build();
+        Assertions.assertThrows(IllegalArgumentException.class, () ->
+                GetEmailMethodCall.builder()
+                        .accountId("dummy")
+                        .ids(new String[]{"1", "2"})
+                        .idsReference(
+                                invocation.createReference(
+                                        Request.Invocation.ResultReference.Path.LIST_EMAIL_IDS
+                                ))
+                        .build()
+        );
     }
 }

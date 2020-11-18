@@ -79,7 +79,7 @@ public class SessionResourceTest extends AbstractGsonTest {
         MailAccountCapability mailAccountCapability = account.getCapability(MailAccountCapability.class);
 
         //this property is missing in the example but is required
-        Assertions.assertThrows(IllegalStateException.class, mailAccountCapability::maxSizeAttachmentsPerEmail);
+        assertThrows(IllegalStateException.class, mailAccountCapability::maxSizeAttachmentsPerEmail);
     }
 
 

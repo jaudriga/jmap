@@ -16,24 +16,29 @@
 
 package rs.ltt.jmap.common;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import rs.ltt.jmap.common.util.Mapper;
 
 public class MapperTest {
 
-
     @Test
     public void everyCallHasResponse() {
         for (final String jsonName : Mapper.METHOD_CALLS.inverse().values()) {
-            Assert.assertNotNull(String.format("Jmap method call %s has no appropriate method response", jsonName), Mapper.METHOD_RESPONSES.get(jsonName));
+            Assertions.assertNotNull(
+                    Mapper.METHOD_RESPONSES.get(jsonName),
+                    String.format("Jmap method call %s has no appropriate method response", jsonName)
+            );
         }
     }
 
     @Test
     public void everyResponseHasCall() {
         for (final String jsonName : Mapper.METHOD_RESPONSES.inverse().values()) {
-            Assert.assertNotNull(String.format("Jmap method response %s has no appropriate method call", jsonName), Mapper.METHOD_CALLS.get(jsonName));
+            Assertions.assertNotNull(
+                    Mapper.METHOD_CALLS.get(jsonName),
+                    String.format("Jmap method response %s has no appropriate method call", jsonName)
+            );
         }
     }
 

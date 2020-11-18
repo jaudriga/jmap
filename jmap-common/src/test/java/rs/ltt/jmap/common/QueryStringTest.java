@@ -1,7 +1,7 @@
 package rs.ltt.jmap.common;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import rs.ltt.jmap.common.entity.Email;
 import rs.ltt.jmap.common.entity.UndoStatus;
 import rs.ltt.jmap.common.entity.filter.*;
@@ -27,15 +27,15 @@ public class QueryStringTest {
                 EmailFilterCondition.builder().text("one").build(),
                 FilterOperator.not(EmailFilterCondition.builder().text("three").build())
         );
-        Assert.assertEquals(emailFilter1.toQueryString(), emailFilter2.toQueryString());
-        Assert.assertEquals(emailFilter2.toQueryString(), emailFilter3.toQueryString());
+        Assertions.assertEquals(emailFilter1.toQueryString(), emailFilter2.toQueryString());
+        Assertions.assertEquals(emailFilter2.toQueryString(), emailFilter3.toQueryString());
     }
 
     @Test
     public void inMailboxOtherThan() {
         Filter<Email> a = EmailFilterCondition.builder().inMailboxOtherThan(new String[]{"spam", "trash"}).build();
         Filter<Email> b = EmailFilterCondition.builder().inMailboxOtherThan(new String[]{"trash", "spam"}).build();
-        Assert.assertEquals(a.toQueryString(), b.toQueryString());
+        Assertions.assertEquals(a.toQueryString(), b.toQueryString());
     }
 
     @Test
@@ -48,7 +48,7 @@ public class QueryStringTest {
                 EmailFilterCondition.builder().inMailboxOtherThan(new String[]{"inbox"}).build(),
                 EmailFilterCondition.builder().inMailboxOtherThan(new String[]{"trash", "spam"}).build()
         );
-        Assert.assertEquals(a.toQueryString(), b.toQueryString());
+        Assertions.assertEquals(a.toQueryString(), b.toQueryString());
     }
 
     @Test
@@ -73,7 +73,7 @@ public class QueryStringTest {
                         MailboxFilterCondition.builder().hasAnyRole(true).build()
                 )
         );
-        Assert.assertEquals(a.toQueryString(), b.toQueryString());
+        Assertions.assertEquals(a.toQueryString(), b.toQueryString());
     }
 
     @Test
@@ -98,13 +98,13 @@ public class QueryStringTest {
                         EmailSubmissionFilterCondition.builder().undoStatus(UndoStatus.FINAL).build()
                 )
         );
-        Assert.assertEquals(a.toQueryString(), b.toQueryString());
+        Assertions.assertEquals(a.toQueryString(), b.toQueryString());
     }
 
     @Test
     public void simpleNotMatchEmailSubmissionQuery() {
         EmailSubmissionQuery a = EmailSubmissionQuery.of(EmailSubmissionFilterCondition.builder().undoStatus(UndoStatus.PENDING).build());
         EmailSubmissionQuery b = EmailSubmissionQuery.of(EmailSubmissionFilterCondition.builder().undoStatus(UndoStatus.CANCELED).build());
-        Assert.assertNotEquals(a.toQueryString(), b.toQueryString());
+        Assertions.assertNotEquals(a.toQueryString(), b.toQueryString());
     }
 }
