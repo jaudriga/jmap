@@ -16,11 +16,19 @@
 
 package rs.ltt.jmap.common.method.call.core;
 
+import lombok.Builder;
+import lombok.Getter;
 import rs.ltt.jmap.annotation.JmapMethod;
 import rs.ltt.jmap.common.method.MethodCall;
 
 @JmapMethod("Core/echo")
+@Getter
 public final class EchoMethodCall implements MethodCall {
 
-    String libraryName = "ltt.rs";
+    private String libraryName;
+
+    @Builder
+    public EchoMethodCall(final String libraryName) {
+        this.libraryName = libraryName;
+    }
 }

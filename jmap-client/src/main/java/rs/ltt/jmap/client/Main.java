@@ -62,7 +62,7 @@ public class Main {
         try (final JmapClient client = new JmapClient(username, password, sessionResource)) {
             client.setSessionCache(new FileSessionCache());
 
-            final Future<MethodResponses> methodResponsesFuture = client.call(new EchoMethodCall());
+            final Future<MethodResponses> methodResponsesFuture = client.call(EchoMethodCall.builder().build());
 
             //System.out.println("Echo call result: " + methodResponsesFuture.get().getMain(EchoMethodResponse.class).toString());
 

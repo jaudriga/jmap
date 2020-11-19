@@ -143,7 +143,7 @@ public class HttpJmapClientTest {
 
         final ExecutionException exception = Assertions.assertThrows(
                 ExecutionException.class,
-                () -> jmapClient.call(new EchoMethodCall()).get()
+                () -> jmapClient.call(EchoMethodCall.builder().libraryName(Version.getUserAgent()).build()).get()
         );
 
         MatcherAssert.assertThat(exception.getCause(), CoreMatchers.instanceOf(EndpointNotFoundException.class));
@@ -179,7 +179,7 @@ public class HttpJmapClientTest {
         Assertions.assertEquals(server.url("/jmap/"), server.takeRequest().getRequestUrl());
 
 
-        final ListenableFuture<MethodResponses> echoFuture = jmapClient.call(new EchoMethodCall());
+        final ListenableFuture<MethodResponses> echoFuture = jmapClient.call(EchoMethodCall.builder().build());
 
         // Wait for result
         echoFuture.get();

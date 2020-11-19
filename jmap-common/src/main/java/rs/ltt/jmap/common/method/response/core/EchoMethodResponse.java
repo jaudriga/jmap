@@ -16,15 +16,19 @@
 
 package rs.ltt.jmap.common.method.response.core;
 
+import lombok.Builder;
+import lombok.Getter;
 import rs.ltt.jmap.annotation.JmapMethod;
 import rs.ltt.jmap.common.method.MethodResponse;
 
 @JmapMethod("Core/echo")
+@Getter
 public final class EchoMethodResponse implements MethodResponse {
 
-    private String libraryName = "ltt.rs";
+    private String libraryName;
 
-    public String getLibraryName() {
-        return libraryName;
+    @Builder
+    public EchoMethodResponse(final String libraryName) {
+        this.libraryName = libraryName;
     }
 }

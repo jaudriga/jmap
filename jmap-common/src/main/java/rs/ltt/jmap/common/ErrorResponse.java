@@ -25,6 +25,22 @@ public class ErrorResponse implements GenericResponse {
     private String detail;
     private int status;
 
+
+    public ErrorResponse() {
+
+    }
+
+    public ErrorResponse(ErrorType errorType, int status) {
+        this.type = errorType;
+        this.status = status;
+    }
+
+    public ErrorResponse(ErrorType errorType, int status, String detail) {
+        this.type = errorType;
+        this.status = status;
+        this.detail = detail;
+    }
+
     public ErrorType getType() {
         return type;
     }

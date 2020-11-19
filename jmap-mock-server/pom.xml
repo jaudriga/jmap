@@ -27,7 +27,7 @@
         <version>0.5.0</version>
     </parent>
 
-    <artifactId>jmap-mua</artifactId>
+    <artifactId>jmap-mock-server</artifactId>
 
     <build>
         <plugins>
@@ -52,13 +52,7 @@
 
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>jmap-client</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>jmap-mua-util</artifactId>
+            <artifactId>jmap-gson</artifactId>
             <version>${project.version}</version>
         </dependency>
 
@@ -78,16 +72,16 @@
         <dependency>
             <groupId>com.squareup.okhttp3</groupId>
             <artifactId>mockwebserver</artifactId>
-            <version>3.12.6</version>
-            <scope>test</scope>
+            <version>4.9.0</version>
         </dependency>
 
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>jmap-mock-server</artifactId>
+            <artifactId>jmap-client</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
+
 
     </dependencies>
 </project>

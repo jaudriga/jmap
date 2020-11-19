@@ -27,23 +27,23 @@ import rs.ltt.jmap.client.api.MethodErrorResponseException;
 import rs.ltt.jmap.common.Response;
 import rs.ltt.jmap.common.entity.Mailbox;
 import rs.ltt.jmap.common.entity.Role;
-import rs.ltt.jmap.common.method.MethodCall;
 import rs.ltt.jmap.common.method.MethodResponse;
 import rs.ltt.jmap.common.method.call.mailbox.GetMailboxMethodCall;
-import rs.ltt.jmap.common.method.error.UnknownMethodMethodErrorResponse;
 import rs.ltt.jmap.common.method.response.mailbox.GetMailboxMethodResponse;
+import rs.ltt.jmap.mock.server.JmapDispatcher;
+import rs.ltt.jmap.mock.server.StubMailServer;
 import rs.ltt.jmap.mua.cache.InMemoryCache;
 
 import java.io.IOException;
 import java.util.Collection;
 import java.util.concurrent.ExecutionException;
 
-public class MockServerTest {
+public class JmapMuaTest {
 
     @Test
     public void oneInboxMailbox() throws ExecutionException, InterruptedException, IOException {
         final MockWebServer server = new MockWebServer();
-        server.setDispatcher(new MyJmapDispatcher());
+        server.setDispatcher(new EmailServer());
 
         final MyInMemoryCache myInMemoryCache = new MyInMemoryCache();
 
@@ -64,7 +64,7 @@ public class MockServerTest {
     @Test
     public void methodNotFound() throws IOException {
         final MockWebServer server = new MockWebServer();
-        server.setDispatcher(new MyJmapDispatcher());
+        server.setDispatcher(new EmailServer());
 
         final Mua mua = Mua.builder()
                 .sessionResource(server.url(JmapDispatcher.WELL_KNOWN_PATH))
@@ -74,7 +74,7 @@ public class MockServerTest {
                 .build();
         final ExecutionException executionException = Assertions.assertThrows(
                 ExecutionException.class,
-                ()-> mua.refreshIdentities().get()
+                () -> mua.refreshIdentities().get()
         );
         MatcherAssert.assertThat(
                 executionException.getCause(),
@@ -83,24 +83,17 @@ public class MockServerTest {
         server.shutdown();
     }
 
-    private static class MyJmapDispatcher extends SimpleJmapDispatcher {
+    private static class EmailServer extends StubMailServer {
         @Override
-        protected MethodResponse[] dispatch(
-                final MethodCall methodCall,
+        protected MethodResponse[] execute(
+                final GetMailboxMethodCall methodCall,
                 final ListMultimap<String, Response.Invocation> previousResponses
         ) {
-            if (methodCall instanceof GetMailboxMethodCall) {
-                return new MethodResponse[]{
-                        GetMailboxMethodResponse.builder()
-                                .list(new Mailbox[]{Mailbox.builder().name("Inbox").role(Role.INBOX).build()})
-                                .accountId(ACCOUNT_ID)
-                                .build()
-                };
-            } else {
-                return new MethodResponse[]{
-                        new UnknownMethodMethodErrorResponse()
-                };
-            }
+            return new MethodResponse[]{
+                    GetMailboxMethodResponse.builder()
+                            .list(new Mailbox[]{Mailbox.builder().name("Inbox").role(Role.INBOX).build()})
+                            .accountId(ACCOUNT_ID).build()
+            };
         }
     }
 
