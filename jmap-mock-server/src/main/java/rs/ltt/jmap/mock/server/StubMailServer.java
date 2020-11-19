@@ -26,6 +26,12 @@ import rs.ltt.jmap.common.method.call.identity.ChangesIdentityMethodCall;
 import rs.ltt.jmap.common.method.call.identity.GetIdentityMethodCall;
 import rs.ltt.jmap.common.method.call.identity.SetIdentityMethodCall;
 import rs.ltt.jmap.common.method.call.mailbox.*;
+import rs.ltt.jmap.common.method.call.snippet.GetSearchSnippetsMethodCall;
+import rs.ltt.jmap.common.method.call.submission.*;
+import rs.ltt.jmap.common.method.call.thread.ChangesThreadMethodCall;
+import rs.ltt.jmap.common.method.call.thread.GetThreadMethodCall;
+import rs.ltt.jmap.common.method.call.vacation.GetVacationResponseMethodCall;
+import rs.ltt.jmap.common.method.call.vacation.SetVacationResponseMethodCall;
 import rs.ltt.jmap.common.method.error.UnknownMethodMethodErrorResponse;
 import rs.ltt.jmap.common.method.response.core.EchoMethodResponse;
 
@@ -99,6 +105,48 @@ public class StubMailServer extends JmapDispatcher {
         /**
          * jmap-mail / Snippet
          */
+        if (methodCall instanceof GetSearchSnippetsMethodCall) {
+            return execute((GetSearchSnippetsMethodCall) methodCall, previousResponses);
+        }
+
+        /**
+         * jmap-mail / Submission
+         */
+        if (methodCall instanceof ChangesEmailSubmissionMethodCall) {
+            return execute((ChangesEmailSubmissionMethodCall) methodCall, previousResponses);
+        }
+        if (methodCall instanceof GetEmailSubmissionMethodCall) {
+            return execute((GetEmailSubmissionMethodCall) methodCall, previousResponses);
+        }
+        if (methodCall instanceof QueryChangesEmailSubmissionMethodCall) {
+            return execute((QueryChangesEmailSubmissionMethodCall) methodCall, previousResponses);
+        }
+        if (methodCall instanceof QueryEmailSubmissionMethodCall) {
+            return execute((QueryEmailSubmissionMethodCall) methodCall, previousResponses);
+        }
+        if (methodCall instanceof SetEmailSubmissionMethodCall) {
+            return execute((SetEmailSubmissionMethodCall) methodCall, previousResponses);
+        }
+
+        /**
+         * jmap-mail / Thread
+         */
+        if (methodCall instanceof ChangesThreadMethodCall) {
+            return execute((ChangesThreadMethodCall) methodCall, previousResponses);
+        }
+        if (methodCall instanceof GetThreadMethodCall) {
+            return execute((GetThreadMethodCall) methodCall, previousResponses);
+        }
+
+        /**
+         * jmap-mail / Vacation
+         */
+        if (methodCall instanceof GetVacationResponseMethodCall) {
+            return execute((GetVacationResponseMethodCall) methodCall, previousResponses);
+        }
+        if (methodCall instanceof SetVacationResponseMethodCall) {
+            return execute((SetVacationResponseMethodCall) methodCall, previousResponses);
+        }
 
         return new MethodResponse[]{new UnknownMethodMethodErrorResponse()};
     }
@@ -164,6 +212,46 @@ public class StubMailServer extends JmapDispatcher {
     }
 
     protected MethodResponse[] execute(SetMailboxMethodCall methodCall, ListMultimap<String, Response.Invocation> previousResponses) {
+        return new MethodResponse[]{new UnknownMethodMethodErrorResponse()};
+    }
+
+    protected MethodResponse[] execute(GetSearchSnippetsMethodCall methodCall, ListMultimap<String, Response.Invocation> previousResponses) {
+        return new MethodResponse[]{new UnknownMethodMethodErrorResponse()};
+    }
+
+    protected MethodResponse[] execute(ChangesEmailSubmissionMethodCall methodCall, ListMultimap<String, Response.Invocation> previousResponses) {
+        return new MethodResponse[]{new UnknownMethodMethodErrorResponse()};
+    }
+
+    protected MethodResponse[] execute(GetEmailSubmissionMethodCall methodCall, ListMultimap<String, Response.Invocation> previousResponses) {
+        return new MethodResponse[]{new UnknownMethodMethodErrorResponse()};
+    }
+
+    protected MethodResponse[] execute(QueryChangesEmailSubmissionMethodCall methodCall, ListMultimap<String, Response.Invocation> previousResponses) {
+        return new MethodResponse[]{new UnknownMethodMethodErrorResponse()};
+    }
+
+    protected MethodResponse[] execute(QueryEmailSubmissionMethodCall methodCall, ListMultimap<String, Response.Invocation> previousResponses) {
+        return new MethodResponse[]{new UnknownMethodMethodErrorResponse()};
+    }
+
+    protected MethodResponse[] execute(SetEmailSubmissionMethodCall methodCall, ListMultimap<String, Response.Invocation> previousResponses) {
+        return new MethodResponse[]{new UnknownMethodMethodErrorResponse()};
+    }
+
+    protected MethodResponse[] execute(ChangesThreadMethodCall methodCall, ListMultimap<String, Response.Invocation> previousResponses) {
+        return new MethodResponse[]{new UnknownMethodMethodErrorResponse()};
+    }
+
+    protected MethodResponse[] execute(GetThreadMethodCall methodCall, ListMultimap<String, Response.Invocation> previousResponses) {
+        return new MethodResponse[]{new UnknownMethodMethodErrorResponse()};
+    }
+
+    protected MethodResponse[] execute(GetVacationResponseMethodCall methodCall, ListMultimap<String, Response.Invocation> previousResponses) {
+        return new MethodResponse[]{new UnknownMethodMethodErrorResponse()};
+    }
+
+    protected MethodResponse[] execute(SetVacationResponseMethodCall methodCall, ListMultimap<String, Response.Invocation> previousResponses) {
         return new MethodResponse[]{new UnknownMethodMethodErrorResponse()};
     }
 }
