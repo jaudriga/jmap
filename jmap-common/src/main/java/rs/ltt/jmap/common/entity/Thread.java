@@ -16,11 +16,13 @@
 
 package rs.ltt.jmap.common.entity;
 
+import lombok.Builder;
 import lombok.Getter;
 
 import java.util.List;
 
 @Getter
+@Builder
 public class Thread extends AbstractIdentifiableEntity {
 
     private List<String> emailIds;

@@ -17,12 +17,14 @@
 package rs.ltt.jmap.common.method.call.email;
 
 import lombok.Builder;
+import lombok.Getter;
 import rs.ltt.jmap.annotation.JmapMethod;
 import rs.ltt.jmap.common.Request;
 import rs.ltt.jmap.common.entity.Email;
 import rs.ltt.jmap.common.method.call.standard.GetMethodCall;
 
 @JmapMethod("Email/get")
+@Getter
 public class GetEmailMethodCall extends GetMethodCall<Email> {
 
     private String[] bodyProperties;
@@ -43,4 +45,5 @@ public class GetEmailMethodCall extends GetMethodCall<Email> {
         this.fetchAllBodyValues = fetchAllBodyValues;
         this.maxBodyValueBytes = maxBodyValueBytes;
     }
+
 }

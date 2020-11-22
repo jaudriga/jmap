@@ -36,6 +36,7 @@ public final class JmapAdapters {
         PatchObjectNullTypeAdapter.register(builder);
 
         CapabilitiesDeserializer.register(builder);
+        FilterDeserializer.register(builder);
         AccountCapabilitiesDeserializer.register(builder);
         PrimaryAccountsDeserializer.register(builder);
         GenericResponseDeserializer.register(builder);
@@ -43,6 +44,7 @@ public final class JmapAdapters {
 
         RequestInvocationTypeAdapter.register(builder);
         CapabilitiesSerializer.register(builder);
+        FilterSerializer.register(builder);
         AccountCapabilitiesSerializer.register(builder);
         PrimaryAccountsSerializer.register(builder);
         ListSerializer.register(builder);

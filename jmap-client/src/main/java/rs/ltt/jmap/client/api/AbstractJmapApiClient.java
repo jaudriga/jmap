@@ -44,10 +44,6 @@ public abstract class AbstractJmapApiClient implements JmapApiClient {
         JmapAdapters.register(gsonBuilder);
     }
 
-    abstract void onSessionStateRetrieved(String sessionState);
-
-    abstract InputStream send(String out) throws IOException, JmapApiException;
-
     @Override
     public void execute(final JmapRequest jmapRequest) {
         try {
@@ -76,7 +72,11 @@ public abstract class AbstractJmapApiClient implements JmapApiClient {
                         }
                         final MethodResponse main = methodResponses.getMain();
                         if (main instanceof MethodErrorResponse) {
-                            future.setException(new MethodErrorResponseException((MethodErrorResponse) main, methodResponses.getAdditional()));
+                            future.setException(new MethodErrorResponseException(
+                                    (MethodErrorResponse) main,
+                                    methodResponses.getAdditional(),
+                                    invocation.getMethodCall())
+                            );
                         } else {
                             future.set(methodResponses);
                         }
@@ -87,4 +87,8 @@ public abstract class AbstractJmapApiClient implements JmapApiClient {
             jmapRequest.setException(e);
         }
     }
+
+    abstract void onSessionStateRetrieved(String sessionState);
+
+    abstract InputStream send(String out) throws IOException, JmapApiException;
 }

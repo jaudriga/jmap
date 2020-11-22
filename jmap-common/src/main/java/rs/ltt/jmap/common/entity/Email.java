@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.Map;
 
 @Getter
-@Builder(toBuilder = true)
 public class Email extends AbstractIdentifiableEntity implements IdentifiableEmailWithKeywords, IdentifiableEmailWithMailboxIds, IdentifiableEmailWithAddresses, IdentifiableEmailWithSubject {
 
     //Metadata
@@ -37,10 +36,8 @@ public class Email extends AbstractIdentifiableEntity implements IdentifiableEma
 
     private String threadId;
 
-    @Singular
     private Map<String, Boolean> mailboxIds;
 
-    @Singular
     private Map<String, Boolean> keywords;
 
     private Long size;
@@ -48,35 +45,25 @@ public class Email extends AbstractIdentifiableEntity implements IdentifiableEma
     private Instant receivedAt;
 
     //Header
-    @Singular
     private List<EmailHeader> headers;
 
     //The following convenience properties are also specified for the Email object:
-    @Singular("messageId")
     private List<String> messageId;
 
-    @Singular("inReplyTo")
     private List<String> inReplyTo;
 
-    @Singular
     private List<String> references;
 
-    @Singular("sender")
     private List<EmailAddress> sender;
 
-    @Singular("from")
     private List<EmailAddress> from;
 
-    @Singular("to")
     private List<EmailAddress> to;
 
-    @Singular("cc")
     private List<EmailAddress> cc;
 
-    @Singular("bcc")
     private List<EmailAddress> bcc;
 
-    @Singular("replyTo")
     private List<EmailAddress> replyTo;
 
     private String subject;
@@ -88,7 +75,6 @@ public class Email extends AbstractIdentifiableEntity implements IdentifiableEma
     private String userAgent;
 
     @SerializedName(Property.AUTOCRYPT)
-    @Singular("autocrypt")
     private List<String> autocrypt;
 
     @SerializedName(Property.AUTOCRYPT_DRAFT_STATE)
@@ -101,56 +87,84 @@ public class Email extends AbstractIdentifiableEntity implements IdentifiableEma
 
     private EmailBodyPart bodyStructure;
 
-    @Singular
     private Map<String, EmailBodyValue> bodyValues;
 
-    @Singular("textBody")
     private List<EmailBodyPart> textBody;
 
-    @Singular("htmlBody")
     private List<EmailBodyPart> htmlBody;
 
-    @Singular
     private List<EmailBodyPart> attachments;
 
     private Boolean hasAttachment;
 
     private String preview;
 
+    @Builder(toBuilder = true)
+    public Email(String id,
+                 String blobId,
+                 String threadId,
+                 @Singular Map<String, Boolean> mailboxIds,
+                 @Singular Map<String, Boolean> keywords,
+                 Long size,
+                 Instant receivedAt,
+                 @Singular List<EmailHeader> headers,
+                 @Singular("messageId") List<String> messageId,
+                 @Singular("inReplyTo") List<String> inReplyTo,
+                 @Singular List<String> references,
+                 @Singular("sender") List<EmailAddress> sender,
+                 @Singular("from") List<EmailAddress> from,
+                 @Singular("to") List<EmailAddress> to,
+                 @Singular("cc") List<EmailAddress> cc,
+                 @Singular("bcc") List<EmailAddress> bcc,
+                 @Singular("replyTo") List<EmailAddress> replyTo,
+                 String subject,
+                 OffsetDateTime sentAt,
+                 String userAgent,
+                 @Singular("autocrypt") List<String> autocrypt,
+                 String autocryptDraftState,
+                 String autocryptSetupMessage,
+                 EmailBodyPart bodyStructure,
+                 @Singular Map<String, EmailBodyValue> bodyValues,
+                 @Singular("textBody") List<EmailBodyPart> textBody,
+                 @Singular("htmlBody") List<EmailBodyPart> htmlBody,
+                 List<EmailBodyPart> attachments,
+                 Boolean hasAttachment,
+                 String preview
+    ) {
+        this.id = id;
+        this.blobId = blobId;
+        this.threadId = threadId;
+        this.mailboxIds = mailboxIds;
+        this.keywords = keywords;
+        this.size = size;
+        this.receivedAt = receivedAt;
+        this.headers = headers;
+        this.messageId = messageId;
+        this.inReplyTo = inReplyTo;
+        this.references = references;
+        this.sender = sender;
+        this.from = from;
+        this.to = to;
+        this.cc = cc;
+        this.bcc = bcc;
+        this.replyTo = replyTo;
+        this.subject = subject;
+        this.sentAt = sentAt;
+        this.userAgent = userAgent;
+        this.autocrypt = autocrypt;
+        this.autocryptDraftState = autocryptDraftState;
+        this.autocryptSetupMessage = autocryptSetupMessage;
+        this.bodyStructure = bodyStructure;
+        this.bodyValues = bodyValues;
+        this.textBody = textBody;
+        this.htmlBody = htmlBody;
+        this.attachments = attachments;
+        this.hasAttachment = hasAttachment;
+        this.preview = preview;
+    }
+
     public static Email of(String id) {
-        final Email email = new Email(
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null
-        );
-        email.id = id;
-        return email;
+        return Email.builder().id(id).build();
     }
 
     @Override

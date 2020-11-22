@@ -32,6 +32,16 @@ public abstract class QueryMethodResponse<T extends AbstractIdentifiableEntity> 
     private Long total;
     private Long limit;
 
+    public QueryMethodResponse(String accountId, String queryState, boolean canCalculateChanges, Long position, String[] ids, Long total, Long limit) {
+        this.accountId = accountId;
+        this.queryState = queryState;
+        this.canCalculateChanges = canCalculateChanges;
+        this.position = position;
+        this.ids = ids;
+        this.total = total;
+        this.limit = limit;
+    }
+
     public TypedState<T> getTypedQueryState() {
         return TypedState.of(queryState);
     }

@@ -19,6 +19,7 @@ package rs.ltt.jmap.common.entity.filter;
 import com.google.common.base.Strings;
 import com.google.common.collect.ComparisonChain;
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 import rs.ltt.jmap.common.entity.Mailbox;
@@ -59,4 +60,5 @@ public class MailboxFilterCondition implements FilterCondition<Mailbox> {
     public String toQueryString() {
         return IndexableStringUtils.toIndexableString(L3_DIVIDER, L4_DIVIDER, parentId, name, role, hasAnyRole, isSubscribed);
     }
+
 }

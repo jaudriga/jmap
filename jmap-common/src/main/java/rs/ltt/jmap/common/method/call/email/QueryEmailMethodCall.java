@@ -17,6 +17,7 @@
 package rs.ltt.jmap.common.method.call.email;
 
 import lombok.Builder;
+import lombok.Getter;
 import rs.ltt.jmap.annotation.JmapMethod;
 import rs.ltt.jmap.common.entity.Comparator;
 import rs.ltt.jmap.common.entity.Email;
@@ -25,6 +26,7 @@ import rs.ltt.jmap.common.entity.query.EmailQuery;
 import rs.ltt.jmap.common.method.call.standard.QueryMethodCall;
 
 @JmapMethod("Email/query")
+@Getter
 public class QueryEmailMethodCall extends QueryMethodCall<Email> {
 
     private Boolean collapseThreads;

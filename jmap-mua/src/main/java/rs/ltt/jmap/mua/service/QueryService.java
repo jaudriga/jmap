@@ -303,7 +303,7 @@ public class QueryService extends MuaService {
                 list.add(fetchMissing(query.toQueryString()));
                 settableFuture.setFuture(transform(list));
 
-            } catch (InterruptedException | ExecutionException | CacheWriteException | CacheConflictException e) {
+            } catch (final Exception e) {
                 settableFuture.setException(extractException(e));
             }
         }, ioExecutorService);
@@ -407,7 +407,7 @@ public class QueryService extends MuaService {
                     list.add(fetchMissing(query.toQueryString()));
                     settableFuture.setFuture(transform(list));
                 }
-            } catch (InterruptedException | ExecutionException | CacheWriteException e) {
+            } catch (final Exception e) {
                 settableFuture.setException(extractException(e));
             }
         }, ioExecutorService);

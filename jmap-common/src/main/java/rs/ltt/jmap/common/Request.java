@@ -16,6 +16,7 @@
 
 package rs.ltt.jmap.common;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableList;
 import rs.ltt.jmap.common.method.MethodCall;
 import rs.ltt.jmap.common.method.call.submission.SetEmailSubmissionMethodCall;
@@ -111,6 +112,15 @@ public class Request {
 
             public Class<? extends MethodCall> getClazz() {
                 return clazz;
+            }
+
+            @Override
+            public String toString() {
+                return MoreObjects.toStringHelper(this)
+                        .add("id", id)
+                        .add("clazz", clazz)
+                        .add("path", path)
+                        .toString();
             }
 
             public static final class Path {

@@ -16,10 +16,15 @@
 
 package rs.ltt.jmap.common.method.response.submission;
 
+import lombok.Builder;
 import rs.ltt.jmap.annotation.JmapMethod;
 import rs.ltt.jmap.common.entity.EmailSubmission;
 import rs.ltt.jmap.common.method.response.standard.QueryMethodResponse;
 
 @JmapMethod("EmailSubmission/query")
 public class QueryEmailSubmissionMethodResponse extends QueryMethodResponse<EmailSubmission> {
+    @Builder
+    public QueryEmailSubmissionMethodResponse(String accountId, String queryState, boolean canCalculateChanges, Long position, String[] ids, Long total, Long limit) {
+        super(accountId, queryState, canCalculateChanges, position, ids, total, limit);
+    }
 }

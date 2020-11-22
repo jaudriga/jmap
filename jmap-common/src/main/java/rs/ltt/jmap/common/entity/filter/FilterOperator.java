@@ -16,6 +16,8 @@
 
 package rs.ltt.jmap.common.entity.filter;
 
+import com.google.common.base.MoreObjects;
+import com.google.common.base.Objects;
 import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 import rs.ltt.jmap.common.entity.AbstractIdentifiableEntity;
 import rs.ltt.jmap.common.util.IndexableStringUtils;
@@ -62,5 +64,13 @@ public class FilterOperator<T extends AbstractIdentifiableEntity> implements Fil
         } else {
             return -1;
         }
+    }
+
+    @Override
+    public String toString() {
+        return MoreObjects.toStringHelper(this)
+                .add("operator", operator)
+                .add("conditions", conditions)
+                .toString();
     }
 }

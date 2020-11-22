@@ -55,4 +55,18 @@ public class SessionResource {
         return primaryAccounts.get(clazz);
     }
 
+    public static class SessionResourceBuilder {
+        public SessionResourceBuilder capabilities(Map<Class<? extends Capability>, Capability> capabilities) {
+            for (Map.Entry<Class<? extends Capability>, Capability> entry : capabilities.entrySet()) {
+                final Class<? extends Capability> key = entry.getKey();
+                final Capability value = entry.getValue();
+                if (key != value.getClass()) {
+                    throw new IllegalArgumentException(String.format("key %s does not match value type %s", key, value.getClass()));
+                }
+            }
+            this.capabilities = capabilities;
+            return this;
+        }
+    }
+
 }

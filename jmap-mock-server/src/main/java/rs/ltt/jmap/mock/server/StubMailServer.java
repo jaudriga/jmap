@@ -34,6 +34,7 @@ import rs.ltt.jmap.common.method.call.vacation.GetVacationResponseMethodCall;
 import rs.ltt.jmap.common.method.call.vacation.SetVacationResponseMethodCall;
 import rs.ltt.jmap.common.method.error.UnknownMethodMethodErrorResponse;
 import rs.ltt.jmap.common.method.response.core.EchoMethodResponse;
+import rs.ltt.jmap.common.method.response.email.GetEmailMethodResponse;
 
 public class StubMailServer extends JmapDispatcher {
     @Override
@@ -53,6 +54,9 @@ public class StubMailServer extends JmapDispatcher {
         }
         if (methodCall instanceof CopyEmailMethodCall) {
             return execute((CopyEmailMethodCall) methodCall, previousResponses);
+        }
+        if (methodCall instanceof GetEmailMethodCall) {
+            return execute((GetEmailMethodCall) methodCall, previousResponses);
         }
         if (methodCall instanceof ImportEmailMethodCall) {
             return execute((ImportEmailMethodCall) methodCall, previousResponses);
@@ -160,6 +164,10 @@ public class StubMailServer extends JmapDispatcher {
     }
 
     protected MethodResponse[] execute(CopyEmailMethodCall methodCall, ListMultimap<String, Response.Invocation> previousResponses) {
+        return new MethodResponse[]{new UnknownMethodMethodErrorResponse()};
+    }
+
+    protected MethodResponse[] execute(GetEmailMethodCall methodCall, ListMultimap<String, Response.Invocation> previousResponses) {
         return new MethodResponse[]{new UnknownMethodMethodErrorResponse()};
     }
 

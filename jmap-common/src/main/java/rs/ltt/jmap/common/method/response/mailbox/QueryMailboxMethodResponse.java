@@ -16,10 +16,16 @@
 
 package rs.ltt.jmap.common.method.response.mailbox;
 
+import lombok.Builder;
 import rs.ltt.jmap.annotation.JmapMethod;
 import rs.ltt.jmap.common.entity.Mailbox;
 import rs.ltt.jmap.common.method.response.standard.QueryMethodResponse;
 
 @JmapMethod("Mailbox/query")
 public class QueryMailboxMethodResponse extends QueryMethodResponse<Mailbox> {
+
+    @Builder
+    public QueryMailboxMethodResponse(String accountId, String queryState, boolean canCalculateChanges, Long position, String[] ids, Long total, Long limit) {
+        super(accountId, queryState, canCalculateChanges, position, ids, total, limit);
+    }
 }

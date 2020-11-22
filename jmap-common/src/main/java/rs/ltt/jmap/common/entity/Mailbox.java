@@ -21,7 +21,6 @@ import lombok.Builder;
 import lombok.Getter;
 
 @Getter
-@Builder
 public class Mailbox extends AbstractIdentifiableEntity implements IdentifiableMailboxWithRole {
 
     private String name;
@@ -43,6 +42,31 @@ public class Mailbox extends AbstractIdentifiableEntity implements IdentifiableM
     private MailboxRights myRights;
 
     private Boolean isSubscribed;
+
+    @Builder
+    public Mailbox(String id,
+                   String name,
+                   String parentId,
+                   Role role,
+                   Long sortOrder,
+                   Long totalEmails,
+                   Long unreadEmails,
+                   Long totalThreads,
+                   Long unreadThreads,
+                   MailboxRights myRights,
+                   Boolean isSubscribed) {
+        this.id = id;
+        this.name = name;
+        this.parentId = parentId;
+        this.role = role;
+        this.sortOrder = sortOrder;
+        this.totalEmails = totalEmails;
+        this.unreadEmails = unreadEmails;
+        this.totalThreads = totalThreads;
+        this.unreadThreads = unreadThreads;
+        this.myRights = myRights;
+        this.isSubscribed = isSubscribed;
+    }
 
     @Override
     public String toString() {

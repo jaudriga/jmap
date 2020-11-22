@@ -16,18 +16,20 @@
 
 package rs.ltt.jmap.common.method.call.standard;
 
+import lombok.Getter;
 import lombok.NonNull;
 import rs.ltt.jmap.common.entity.AbstractIdentifiableEntity;
 import rs.ltt.jmap.common.entity.Comparator;
 import rs.ltt.jmap.common.entity.filter.Filter;
 import rs.ltt.jmap.common.method.MethodCall;
 
+@Getter
 public abstract class QueryMethodCall<T extends AbstractIdentifiableEntity> implements MethodCall {
 
     @NonNull
     private String accountId;
 
-    private Filter filter;
+    private Filter<T> filter;
 
     private Comparator[] sort;
 

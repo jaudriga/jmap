@@ -1,0 +1,1 @@
+{"accountId":"accountId","filter":{"operator":"OR","conditions":[{"role":"archive"},{"role":"inbox"}]}}

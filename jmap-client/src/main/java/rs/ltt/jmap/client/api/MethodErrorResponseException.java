@@ -16,18 +16,22 @@
 
 package rs.ltt.jmap.client.api;
 
+import rs.ltt.jmap.common.method.MethodCall;
 import rs.ltt.jmap.common.method.MethodErrorResponse;
 import rs.ltt.jmap.common.method.MethodResponse;
+import rs.ltt.jmap.common.util.Mapper;
 
 public class MethodErrorResponseException extends JmapApiException {
 
     private final MethodErrorResponse methodErrorResponse;
     private final MethodResponse[] additional;
+    private final MethodCall methodCall;
 
-    MethodErrorResponseException(MethodErrorResponse methodErrorResponse, MethodResponse[] additional) {
-        super(methodErrorResponse.getType() + ((additional != null && additional.length > 0) ? " + "+additional.length : ""));
+    MethodErrorResponseException(MethodErrorResponse methodErrorResponse, MethodResponse[] additional, MethodCall methodCall) {
+        super(methodErrorResponse.getType() + ((additional != null && additional.length > 0) ? " + " + additional.length : "") + " in response to " + Mapper.METHOD_CALLS.inverse().get(methodCall.getClass()));
         this.methodErrorResponse = methodErrorResponse;
         this.additional = additional;
+        this.methodCall = methodCall;
     }
 
     public MethodErrorResponse getMethodErrorResponse() {
@@ -36,5 +40,9 @@ public class MethodErrorResponseException extends JmapApiException {
 
     public MethodResponse[] getAdditional() {
         return additional;
+    }
+
+    public MethodCall getMethodCall() {
+        return methodCall;
     }
 }

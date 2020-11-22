@@ -18,10 +18,7 @@ package rs.ltt.jmap.mock.server;
 
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ImmutableListMultimap;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.ListMultimap;
+import com.google.common.collect.*;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
@@ -31,7 +28,9 @@ import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.RecordedRequest;
 import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 import rs.ltt.jmap.common.*;
+import rs.ltt.jmap.common.entity.Account;
 import rs.ltt.jmap.common.entity.ErrorType;
+import rs.ltt.jmap.common.entity.capability.MailAccountCapability;
 import rs.ltt.jmap.common.method.MethodCall;
 import rs.ltt.jmap.common.method.MethodResponse;
 import rs.ltt.jmap.gson.JmapAdapters;
@@ -69,7 +68,7 @@ public abstract class JmapDispatcher extends Dispatcher {
                     return new MockResponse().setResponseCode(401);
                 }
                 if ("GET".equals(request.getMethod())) {
-                    return session(request);
+                    return session();
                 } else if ("POST".equals(request.getMethod())) {
                     return request(request);
                 } else {
@@ -80,10 +79,17 @@ public abstract class JmapDispatcher extends Dispatcher {
         }
     }
 
-    private MockResponse session(final RecordedRequest request) {
+    private MockResponse session() {
         final SessionResource sessionResource = SessionResource.builder()
                 .apiUrl("/jmap/")
                 .state(getSessionState())
+                .account(ACCOUNT_ID, Account.builder()
+                        .accountCapabilities(ImmutableMap.of(
+                                MailAccountCapability.class,
+                                MailAccountCapability.builder().build()
+                        ))
+                        .build())
+                .primaryAccounts(ImmutableMap.of(MailAccountCapability.class, ACCOUNT_ID))
                 .build();
 
         return new MockResponse().setBody(GSON.toJson(sessionResource));
