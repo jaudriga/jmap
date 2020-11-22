@@ -19,8 +19,11 @@ package rs.ltt.jmap.common.entity;
 import com.google.common.base.MoreObjects;
 import lombok.Builder;
 import lombok.Getter;
+import rs.ltt.jmap.annotation.JmapEntity;
+import rs.ltt.jmap.common.entity.filter.MailboxFilterCondition;
 
 @Getter
+@JmapEntity(filterCondition = MailboxFilterCondition.class)
 public class Mailbox extends AbstractIdentifiableEntity implements IdentifiableMailboxWithRole {
 
     private String name;

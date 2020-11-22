@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Daniel Gultsch
+ * Copyright 2020 Daniel Gultsch
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,18 +16,9 @@
 
 package rs.ltt.jmap.common.entity;
 
-import com.google.common.base.MoreObjects;
-
 public abstract class AbstractIdentifiableEntity implements Identifiable {
 
     protected String id;
-
-    @Override
-    public String toString() {
-        return MoreObjects.toStringHelper(this)
-                .add("id", id)
-                .toString();
-    }
 
     @Override
     public String getId() {

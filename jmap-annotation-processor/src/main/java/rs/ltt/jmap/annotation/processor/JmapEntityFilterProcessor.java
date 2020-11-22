@@ -18,14 +18,16 @@ package rs.ltt.jmap.annotation.processor;
 
 
 import com.google.auto.service.AutoService;
-import rs.ltt.jmap.annotation.JmapAccountCapability;
+import rs.ltt.jmap.annotation.JmapEntity;
 import rs.ltt.jmap.common.Utils;
-import rs.ltt.jmap.common.entity.AccountCapability;
+import rs.ltt.jmap.common.entity.AbstractIdentifiableEntity;
+import rs.ltt.jmap.common.entity.filter.FilterCondition;
 
 import javax.annotation.processing.*;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.MirroredTypeException;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Types;
 import javax.tools.FileObject;
@@ -35,15 +37,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-@SupportedAnnotationTypes("rs.ltt.jmap.annotation.JmapAccountCapability")
-@SupportedSourceVersion(SourceVersion.RELEASE_7)
+@SupportedAnnotationTypes("rs.ltt.jmap.annotation.JmapEntity")
+@SupportedSourceVersion(SourceVersion.RELEASE_8)
 @AutoService(Processor.class)
-public class JmapAccountCapabilityProcessor extends AbstractProcessor {
+public class JmapEntityFilterProcessor extends AbstractProcessor {
 
-    private static final Class<AccountCapability> INTERFACE = AccountCapability.class;
+    private static final Class<AbstractIdentifiableEntity> INTERFACE = AbstractIdentifiableEntity.class;
 
     private Filer filer;
-    private TypeMirror accountCapability;
+    private TypeMirror abstractIdMirror;
     private Types typeUtils;
 
     @Override
@@ -51,27 +53,23 @@ public class JmapAccountCapabilityProcessor extends AbstractProcessor {
         super.init(processingEnvironment);
         this.filer = processingEnvironment.getFiler();
         this.typeUtils = processingEnvironment.getTypeUtils();
-        this.accountCapability = processingEnvironment.getElementUtils().getTypeElement(INTERFACE.getName()).asType();
+        this.abstractIdMirror = processingEnvironment.getElementUtils().getTypeElement(INTERFACE.getName()).asType();
     }
 
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnvironment) {
-        Set<? extends Element> elements = roundEnvironment.getElementsAnnotatedWith(JmapAccountCapability.class);
+        Set<? extends Element> elements = roundEnvironment.getElementsAnnotatedWith(JmapEntity.class);
         final List<TypeElement> classes = new ArrayList<>();
         for (Element element : elements) {
             if (element instanceof TypeElement) {
                 final TypeElement typeElement = (TypeElement) element;
-                if (typeUtils.isAssignable(element.asType(), accountCapability)) {
+                if (typeUtils.isAssignable(element.asType(), abstractIdMirror)) {
                     classes.add(typeElement);
                 } else {
-                    System.out.println(typeElement.getQualifiedName() + " does not implement " + accountCapability + " but " + typeElement.getInterfaces());
+                    System.err.println(typeElement.getQualifiedName() + " does not implement " + abstractIdMirror);
                 }
             }
         }
-        for (TypeElement typeElement : classes) {
-            System.out.println(typeElement.getQualifiedName());
-        }
 
-        System.out.println("creating for " + classes.size() + " classes");
         if (classes.size() == 0) {
             return true;
         }
@@ -79,16 +77,25 @@ public class JmapAccountCapabilityProcessor extends AbstractProcessor {
         try {
             FileObject resourceFile = filer.createResource(StandardLocation.CLASS_OUTPUT, "", Utils.getFilenameFor(INTERFACE));
             PrintWriter printWriter = new PrintWriter(resourceFile.openOutputStream());
-            for (TypeElement typeElement : classes) {
-                JmapAccountCapability annotation = typeElement.getAnnotation(JmapAccountCapability.class);
-                printWriter.println(String.format("%s %s", typeElement.getQualifiedName(), annotation.namespace()));
+            for (final TypeElement typeElement : classes) {
+                printWriter.println(String.format("%s %s", typeElement.getQualifiedName(), getFilterCondition(typeElement)));
             }
             printWriter.flush();
             printWriter.close();
-        } catch (Exception e) {
+            System.out.println("done writing entity filter for " + classes.size() + " classes");
+        } catch (final Exception e) {
             e.printStackTrace();
         }
-
         return true;
+    }
+
+    private static TypeMirror getFilterCondition(final TypeElement typeElement) {
+        final JmapEntity annotation = typeElement.getAnnotation(JmapEntity.class);
+        try {
+            final Class<? extends FilterCondition<? extends AbstractIdentifiableEntity>> fc = annotation.filterCondition();
+            throw new IllegalStateException("Getting Filter condition from annotation did not throw");
+        } catch (MirroredTypeException e) {
+            return e.getTypeMirror();
+        }
     }
 }

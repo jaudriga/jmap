@@ -21,6 +21,8 @@ import com.google.gson.annotations.SerializedName;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Singular;
+import rs.ltt.jmap.annotation.JmapEntity;
+import rs.ltt.jmap.common.entity.filter.EmailFilterCondition;
 
 import java.time.Instant;
 import java.time.OffsetDateTime;
@@ -28,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 
 @Getter
+@JmapEntity(filterCondition = EmailFilterCondition.class)
 public class Email extends AbstractIdentifiableEntity implements IdentifiableEmailWithKeywords, IdentifiableEmailWithMailboxIds, IdentifiableEmailWithAddresses, IdentifiableEmailWithSubject {
 
     //Metadata

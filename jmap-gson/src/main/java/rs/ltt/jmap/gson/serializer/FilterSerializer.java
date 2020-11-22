@@ -20,39 +20,19 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
-import com.google.gson.reflect.TypeToken;
 import rs.ltt.jmap.common.entity.AbstractIdentifiableEntity;
-import rs.ltt.jmap.common.entity.Email;
-import rs.ltt.jmap.common.entity.EmailSubmission;
-import rs.ltt.jmap.common.entity.Mailbox;
 import rs.ltt.jmap.common.entity.filter.Filter;
+import rs.ltt.jmap.common.util.Mapper;
 
 import java.lang.reflect.Type;
 
-/**
- * TODO: This filter currently uses hard coded elements. We will eventually have to use an annotation processor or something
- *  similar to automatically generate this.
- *  It is probably possible to have some sort of @JmapEntity(filterCondition=EntityFilterCondition.class) annotation
- *  Having the class of the full filter condition will be relevant for the FilterDeserializer
- */
+
 public class FilterSerializer implements JsonSerializer<Filter<? extends AbstractIdentifiableEntity>> {
 
-    public static final Type EMAIL_FILTER_TYPE =  new TypeToken<Filter<Email>>() {
-
-    }.getType();
-
-    public static final Type EMAIL_SUBMISSION_FILTER_TYPE =  new TypeToken<Filter<EmailSubmission>>() {
-
-    }.getType();
-
-    public static final Type MAILBOX_FILTER_TYPE =  new TypeToken<Filter<Mailbox>>() {
-
-    }.getType();
-
     public static void register(final GsonBuilder builder) {
-        builder.registerTypeAdapter(EMAIL_FILTER_TYPE, new FilterSerializer());
-        builder.registerTypeAdapter(EMAIL_SUBMISSION_FILTER_TYPE, new FilterSerializer());
-        builder.registerTypeAdapter(MAILBOX_FILTER_TYPE, new FilterSerializer());
+        for(final Type type : Mapper.TYPE_TO_ENTITY_CLASS.keySet()) {
+            builder.registerTypeAdapter(type, new FilterSerializer());
+        }
     }
 
     @Override

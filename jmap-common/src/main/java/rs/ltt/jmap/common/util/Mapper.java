@@ -19,14 +19,20 @@ package rs.ltt.jmap.common.util;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableBiMap;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.io.Resources;
+import com.google.gson.reflect.TypeToken;
 import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rs.ltt.jmap.common.Utils;
+import rs.ltt.jmap.common.entity.AbstractIdentifiableEntity;
 import rs.ltt.jmap.common.entity.AccountCapability;
 import rs.ltt.jmap.common.entity.Capability;
+import rs.ltt.jmap.common.entity.filter.Filter;
+import rs.ltt.jmap.common.entity.filter.FilterCondition;
 import rs.ltt.jmap.common.method.MethodCall;
 import rs.ltt.jmap.common.method.MethodErrorResponse;
 import rs.ltt.jmap.common.method.MethodResponse;
@@ -35,6 +41,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.Type;
 import java.net.URL;
 import java.util.Collections;
 import java.util.List;
@@ -47,6 +54,16 @@ public final class Mapper {
     public static final ImmutableBiMap<String, Class<? extends MethodErrorResponse>> METHOD_ERROR_RESPONSES = Mapper.get(MethodErrorResponse.class);
     public static final ImmutableBiMap<String, Class<? extends Capability>> CAPABILITIES = Mapper.get(Capability.class);
     public static final ImmutableBiMap<String, Class<? extends AccountCapability>> ACCOUNT_CAPABILITIES = Mapper.get(AccountCapability.class);
+    public static final ImmutableMap<Class<? extends AbstractIdentifiableEntity>, Class<FilterCondition<? extends AbstractIdentifiableEntity>>> ENTITY_TO_FILTER_CONDITION = getEntityToFilterConditionMap();
+    public static final ImmutableMap<Type, Class<? extends AbstractIdentifiableEntity>> TYPE_TO_ENTITY_CLASS;
+
+    static {
+        final ImmutableMap.Builder<Type, Class<? extends AbstractIdentifiableEntity>> typeMapBuilder = new ImmutableMap.Builder<>();
+        for(final Class<? extends AbstractIdentifiableEntity> clazz : ENTITY_TO_FILTER_CONDITION.keySet()) {
+            typeMapBuilder.put(TypeToken.getParameterized(Filter.class, clazz).getType(), clazz);
+        }
+        TYPE_TO_ENTITY_CLASS = typeMapBuilder.build();
+    }
 
     private Mapper() {
 
@@ -117,6 +134,32 @@ public final class Mapper {
             LOGGER.warn("Unable to get SystemResources from ClassLoader", e);
             return Collections.emptyList();
         }
+    }
+
+    private static ImmutableMap<Class<? extends AbstractIdentifiableEntity>, Class<FilterCondition<? extends AbstractIdentifiableEntity>>> getEntityToFilterConditionMap() {
+        final ImmutableBiMap.Builder<Class<? extends AbstractIdentifiableEntity>, Class<FilterCondition<? extends AbstractIdentifiableEntity>>> builder = new ImmutableBiMap.Builder<>();
+        for (final BufferedReader bufferedReader : getSystemResources(AbstractIdentifiableEntity.class)) {
+            if (bufferedReader == null) {
+                continue;
+            }
+            try {
+                for (String line = bufferedReader.readLine(); line != null; line = bufferedReader.readLine()) {
+                    final String[] parts = line.split(" ", 2);
+                    if (parts.length == 2) {
+                        try {
+                            final Class<? extends AbstractIdentifiableEntity> entityClass = Class.forName(parts[0]).asSubclass(AbstractIdentifiableEntity.class);
+                            final Class<FilterCondition<? extends AbstractIdentifiableEntity>> filterConditionClass = (Class<FilterCondition<? extends AbstractIdentifiableEntity>>) Class.forName(parts[1]).asSubclass(FilterCondition.class);
+                            builder.put(entityClass, filterConditionClass);
+                        } catch (ClassNotFoundException | ClassCastException e) {
+                            LOGGER.warn("Unable to create Entity to FilterCondition mapping for {} and {}", parts[0], parts[1]);
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                LOGGER.warn("Unable to read system resource", e);
+            }
+        }
+        return builder.build();
     }
 
 }

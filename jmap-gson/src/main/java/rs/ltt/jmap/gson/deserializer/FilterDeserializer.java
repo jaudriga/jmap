@@ -19,65 +19,29 @@ package rs.ltt.jmap.gson.deserializer;
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 import rs.ltt.jmap.common.entity.AbstractIdentifiableEntity;
-import rs.ltt.jmap.common.entity.Email;
-import rs.ltt.jmap.common.entity.EmailSubmission;
-import rs.ltt.jmap.common.entity.Mailbox;
-import rs.ltt.jmap.common.entity.filter.*;
+import rs.ltt.jmap.common.entity.filter.Filter;
+import rs.ltt.jmap.common.entity.filter.FilterOperator;
+import rs.ltt.jmap.common.util.Mapper;
 
 import java.lang.reflect.Type;
 
-import static rs.ltt.jmap.gson.serializer.FilterSerializer.*;
-
-/**
- * TODO: This class currently uses hard coded elements. This limits extensibility of this library. See Comments in FilterSerializer
- *  for some ideas on how to circumvent this in the future.
- */
 public class FilterDeserializer implements JsonDeserializer<Filter<? extends AbstractIdentifiableEntity>> {
 
-    private static final Type EMAIL_FILTER__OPERATOR_TYPE = new TypeToken<FilterOperator<Email>>() {
-
-    }.getType();
-
-    private static final Type EMAIL_SUBMISSION_FILTER__OPERATOR_TYPE = new TypeToken<FilterOperator<EmailSubmission>>() {
-
-    }.getType();
-
-    private static final Type MAILBOX_FILTER__OPERATOR_TYPE = new TypeToken<FilterOperator<Mailbox>>() {
-
-    }.getType();
-
     public static void register(final GsonBuilder builder) {
-        builder.registerTypeAdapter(EMAIL_FILTER_TYPE, new FilterDeserializer());
-        builder.registerTypeAdapter(EMAIL_SUBMISSION_FILTER_TYPE, new FilterDeserializer());
-        builder.registerTypeAdapter(MAILBOX_FILTER_TYPE, new FilterDeserializer());
+        for(final Type type : Mapper.TYPE_TO_ENTITY_CLASS.keySet()) {
+            builder.registerTypeAdapter(type, new FilterDeserializer());
+        }
     }
 
     @Override
     public Filter<? extends AbstractIdentifiableEntity> deserialize(JsonElement jsonElement, Type type, JsonDeserializationContext context) throws JsonParseException {
         final JsonObject jsonObject = jsonElement.getAsJsonObject();
         final boolean isOperator = jsonObject.has("operator") && jsonObject.has("conditions");
-        if (type.equals(EMAIL_FILTER_TYPE)) {
-            if (isOperator) {
-                return context.deserialize(jsonElement, EMAIL_FILTER__OPERATOR_TYPE);
-            } else {
-                return context.deserialize(jsonElement, EmailFilterCondition.class);
-            }
-
+        final Class<? extends AbstractIdentifiableEntity> entityClass = Mapper.TYPE_TO_ENTITY_CLASS.get(type);
+        if (isOperator) {
+            return context.deserialize(jsonElement, TypeToken.getParameterized(FilterOperator.class, entityClass).getType());
+        } else {
+            return context.deserialize(jsonElement, Mapper.ENTITY_TO_FILTER_CONDITION.get(entityClass));
         }
-        if (type.equals(EMAIL_SUBMISSION_FILTER_TYPE)) {
-            if (isOperator) {
-                return context.deserialize(jsonElement, EMAIL_SUBMISSION_FILTER__OPERATOR_TYPE);
-            } else {
-                return context.deserialize(jsonElement, EmailSubmissionFilterCondition.class);
-            }
-        }
-        if (type.equals(MAILBOX_FILTER_TYPE)) {
-            if (isOperator) {
-                return context.deserialize(jsonElement, MAILBOX_FILTER__OPERATOR_TYPE);
-            } else {
-                return context.deserialize(jsonElement, MailboxFilterCondition.class);
-            }
-        }
-        throw new JsonParseException("Dont know how to deserialize "+type);
     }
 }

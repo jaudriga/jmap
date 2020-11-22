@@ -19,6 +19,8 @@ package rs.ltt.jmap.common.entity;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Singular;
+import rs.ltt.jmap.annotation.JmapEntity;
+import rs.ltt.jmap.common.entity.filter.EmailSubmissionFilterCondition;
 
 import java.time.Instant;
 import java.util.List;
@@ -26,6 +28,7 @@ import java.util.Map;
 
 @Builder
 @Getter
+@JmapEntity(filterCondition = EmailSubmissionFilterCondition.class)
 public class EmailSubmission extends AbstractIdentifiableEntity {
 
     private String identityId;
