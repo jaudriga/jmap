@@ -16,11 +16,16 @@
 
 package rs.ltt.jmap.client;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import rs.ltt.jmap.common.method.call.core.EchoMethodCall;
 import rs.ltt.jmap.common.method.response.core.EchoMethodResponse;
 import rs.ltt.jmap.common.util.Mapper;
+import rs.ltt.jmap.gson.JmapAdapters;
 
 import java.util.concurrent.ExecutionException;
 
@@ -29,6 +34,8 @@ public class CustomExtensionTest {
     private static String ACCOUNT_ID = "test@example.com";
     private static String USERNAME = "test@example.com";
     private static String PASSWORD = "secret";
+
+    private static String EXPECTED_JSON_QUERY_CALL = "{\"accountId\":\"accountId\",\"filter\":{\"isPlaceholder\":true}}";
 
     @Test
     public void findDummyAndCommonMethodCalls() {
@@ -43,11 +50,39 @@ public class CustomExtensionTest {
     }
 
     @Test
-    public void failOnCallWithoutNamespace() throws ExecutionException, InterruptedException {
+    public void failOnCallWithoutNamespace() {
         final JmapClient client = new JmapClient(USERNAME, PASSWORD);
         Assertions.assertThrows(IllegalArgumentException.class, () -> {
             client.call(new GetDummyMethodCall(ACCOUNT_ID)).get();
         });
 
     }
+
+    @Test
+    public void serializeQuery() {
+        final GsonBuilder gsonBuilder = new GsonBuilder();
+        JmapAdapters.register(gsonBuilder);
+        final Gson gson = gsonBuilder.create();
+        final QueryDummyMethodCall queryDummyMethodCall = new QueryDummyMethodCall(
+                "accountId",
+                new DummyFilterCondition(true),
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
+        Assertions.assertEquals(EXPECTED_JSON_QUERY_CALL, gson.toJson(queryDummyMethodCall));
+    }
+
+    @Test
+    public void deserializeQuery() {
+        final GsonBuilder gsonBuilder = new GsonBuilder();
+        JmapAdapters.register(gsonBuilder);
+        final Gson gson = gsonBuilder.create();
+        final QueryDummyMethodCall queryMethodCall = gson.fromJson(EXPECTED_JSON_QUERY_CALL, QueryDummyMethodCall.class);
+        MatcherAssert.assertThat(queryMethodCall.getFilter(), CoreMatchers.instanceOf(DummyFilterCondition.class));
+    }
+
 }

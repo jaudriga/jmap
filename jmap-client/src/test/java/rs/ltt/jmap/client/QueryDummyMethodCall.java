@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Daniel Gultsch
+ * Copyright 2020 Daniel Gultsch
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,9 +16,13 @@
 
 package rs.ltt.jmap.client;
 
-import rs.ltt.jmap.annotation.JmapEntity;
-import rs.ltt.jmap.common.entity.AbstractIdentifiableEntity;
+import rs.ltt.jmap.common.entity.Comparator;
+import rs.ltt.jmap.common.entity.filter.Filter;
+import rs.ltt.jmap.common.method.call.standard.QueryMethodCall;
 
-@JmapEntity(filterCondition = DummyFilterCondition.class)
-public class Dummy extends AbstractIdentifiableEntity {
+public class QueryDummyMethodCall extends QueryMethodCall<Dummy> {
+
+    public QueryDummyMethodCall(String accountId, Filter<Dummy> filter, Comparator[] sort, Long position, String anchor, Long anchorOffset, Long limit, Boolean calculateTotal) {
+        super(accountId, filter, sort, position, anchor, anchorOffset, limit, calculateTotal);
+    }
 }

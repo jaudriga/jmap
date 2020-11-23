@@ -33,6 +33,7 @@ import rs.ltt.jmap.common.entity.AccountCapability;
 import rs.ltt.jmap.common.entity.Capability;
 import rs.ltt.jmap.common.entity.filter.Filter;
 import rs.ltt.jmap.common.entity.filter.FilterCondition;
+import rs.ltt.jmap.common.entity.filter.MailboxFilterCondition;
 import rs.ltt.jmap.common.method.MethodCall;
 import rs.ltt.jmap.common.method.MethodErrorResponse;
 import rs.ltt.jmap.common.method.MethodResponse;
@@ -136,7 +137,7 @@ public final class Mapper {
         }
     }
 
-    private static ImmutableMap<Class<? extends AbstractIdentifiableEntity>, Class<FilterCondition<? extends AbstractIdentifiableEntity>>> getEntityToFilterConditionMap() {
+    private static ImmutableBiMap<Class<? extends AbstractIdentifiableEntity>, Class<FilterCondition<? extends AbstractIdentifiableEntity>>> getEntityToFilterConditionMap() {
         final ImmutableBiMap.Builder<Class<? extends AbstractIdentifiableEntity>, Class<FilterCondition<? extends AbstractIdentifiableEntity>>> builder = new ImmutableBiMap.Builder<>();
         for (final BufferedReader bufferedReader : getSystemResources(AbstractIdentifiableEntity.class)) {
             if (bufferedReader == null) {
@@ -158,6 +159,13 @@ public final class Mapper {
             } catch (IOException e) {
                 LOGGER.warn("Unable to read system resource", e);
             }
+        }
+        final ImmutableBiMap<Class<? extends AbstractIdentifiableEntity>, Class<FilterCondition<? extends AbstractIdentifiableEntity>>> map = builder.build();
+        if (LOGGER.isWarnEnabled() && !map.containsValue(MailboxFilterCondition.class)) {
+            LOGGER.warn(
+                    "Some well known mappings are missing. Have you enabled resource merging for {}?",
+                    Utils.getFilenameFor(AbstractIdentifiableEntity.class)
+            );
         }
         return builder.build();
     }
