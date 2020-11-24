@@ -43,6 +43,7 @@ public class ResponseInvocationDeserializer implements JsonDeserializer<Response
         if (jsonArray.get(0).isJsonPrimitive()) {
             name = jsonArray.get(0).getAsString();
         } else {
+            System.out.println(jsonElement);
             throw new JsonParseException("Name (index 0 of JsonArray) must be a primitive string");
         }
         final JsonElement parameter = jsonArray.get(1);

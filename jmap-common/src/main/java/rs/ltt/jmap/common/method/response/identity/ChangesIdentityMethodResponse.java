@@ -16,10 +16,22 @@
 
 package rs.ltt.jmap.common.method.response.identity;
 
+import lombok.Builder;
 import rs.ltt.jmap.annotation.JmapMethod;
 import rs.ltt.jmap.common.entity.Identity;
 import rs.ltt.jmap.common.method.response.standard.ChangesMethodResponse;
 
 @JmapMethod("Identity/changes")
 public class ChangesIdentityMethodResponse extends ChangesMethodResponse<Identity> {
+
+    @Builder
+    public ChangesIdentityMethodResponse(String accountId,
+                                         String oldState,
+                                         String newState,
+                                         boolean hasMoreChanges,
+                                         String[] created,
+                                         String[] updated,
+                                         String[] destroyed) {
+        super(accountId, oldState, newState, hasMoreChanges, created, updated, destroyed);
+    }
 }

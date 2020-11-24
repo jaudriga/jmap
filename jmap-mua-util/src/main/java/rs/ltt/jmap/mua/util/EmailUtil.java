@@ -49,7 +49,7 @@ public class EmailUtil {
         return subjectWithPrefix(subject);
     }
 
-    private static String subjectWithPrefix(final String subject) {
+    public static String subjectWithPrefix(final String subject) {
         return String.format("%s: %s", RESPONSE_PREFIX, subject.trim());
     }
 

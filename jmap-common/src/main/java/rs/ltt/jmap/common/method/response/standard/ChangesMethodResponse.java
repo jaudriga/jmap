@@ -26,13 +26,23 @@ import rs.ltt.jmap.common.method.MethodResponse;
 @Getter
 public abstract class ChangesMethodResponse<T extends AbstractIdentifiableEntity> implements MethodResponse {
 
-    private String accountId;
-    private String oldState;
-    private String newState;
-    private boolean hasMoreChanges;
-    private String[] created;
-    private String[] updated;
-    private String[] destroyed;
+    protected String accountId;
+    protected String oldState;
+    protected String newState;
+    protected boolean hasMoreChanges;
+    protected String[] created;
+    protected String[] updated;
+    protected String[] destroyed;
+
+    public ChangesMethodResponse(String accountId, String oldState, String newState, boolean hasMoreChanges, String[] created, String[] updated, String[] destroyed) {
+        this.accountId = accountId;
+        this.oldState = oldState;
+        this.newState = newState;
+        this.hasMoreChanges = hasMoreChanges;
+        this.created = created;
+        this.updated = updated;
+        this.destroyed = destroyed;
+    }
 
     public TypedState<T> getTypedOldState() {
         return TypedState.of(this.oldState);

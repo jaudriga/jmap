@@ -19,10 +19,14 @@ package rs.ltt.jmap.mock.server;
 import com.google.common.collect.ListMultimap;
 import rs.ltt.jmap.common.Request;
 import rs.ltt.jmap.common.Response;
+import rs.ltt.jmap.common.entity.AddedItem;
 import rs.ltt.jmap.common.entity.Email;
 import rs.ltt.jmap.common.entity.Thread;
 import rs.ltt.jmap.common.method.MethodResponse;
+import rs.ltt.jmap.common.method.call.standard.ChangesMethodCall;
 import rs.ltt.jmap.common.method.response.email.GetEmailMethodResponse;
+import rs.ltt.jmap.common.method.response.standard.ChangesMethodResponse;
+import rs.ltt.jmap.common.method.response.standard.QueryChangesMethodResponse;
 import rs.ltt.jmap.common.method.response.standard.QueryMethodResponse;
 import rs.ltt.jmap.common.method.response.thread.GetThreadMethodResponse;
 import rs.ltt.jmap.common.util.Mapper;
@@ -54,9 +58,25 @@ public class ResultReferenceResolver {
                 if (methodResponse instanceof GetThreadMethodResponse) {
                     return Arrays.stream(((GetThreadMethodResponse) methodResponse).getList()).map(Thread::getEmailIds).flatMap(Collection::stream).toArray(String[]::new);
                 }
+                break;
+            case Request.Invocation.ResultReference.Path.CREATED:
+                if (methodResponse instanceof ChangesMethodResponse) {
+                    return nullToEmpty(((ChangesMethodResponse<?>) methodResponse).getCreated());
+                }
+                break;
+            case Request.Invocation.ResultReference.Path.UPDATED:
+                if (methodResponse instanceof ChangesMethodResponse) {
+                    return nullToEmpty(((ChangesMethodResponse<?>) methodResponse).getUpdated());
+                }
+                break;
+            case Request.Invocation.ResultReference.Path.ADDED_IDS:
+                if (methodResponse instanceof QueryChangesMethodResponse) {
+                    return ((QueryChangesMethodResponse<?>) methodResponse).getAdded().stream().map(AddedItem::getItem).toArray(String[]::new);
+                }
+                break;
             default:
         }
-        throw new IllegalStateException(String.format("Unable to resolve path %s for class %s", path, methodResponse.getClass().getName()));
+        throw new IllegalArgumentException(String.format("Unable to resolve path %s for class %s", path, methodResponse.getClass().getName()));
     }
 
     private static MethodResponse find(
@@ -76,6 +96,10 @@ public class ResultReferenceResolver {
             }
         }
         throw new IllegalArgumentException("Unable to find matching response for "+methodCallName);
+    }
+
+    private static String[] nullToEmpty(final String[] value) {
+        return value == null ? new String[0] : value;
     }
 
 }

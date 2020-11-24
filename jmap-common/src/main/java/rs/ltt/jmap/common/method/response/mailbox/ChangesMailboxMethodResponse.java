@@ -16,6 +16,7 @@
 
 package rs.ltt.jmap.common.method.response.mailbox;
 
+import lombok.Builder;
 import rs.ltt.jmap.annotation.JmapMethod;
 import rs.ltt.jmap.common.entity.Mailbox;
 import rs.ltt.jmap.common.method.response.standard.ChangesMethodResponse;
@@ -24,6 +25,19 @@ import rs.ltt.jmap.common.method.response.standard.ChangesMethodResponse;
 public class ChangesMailboxMethodResponse extends ChangesMethodResponse<Mailbox> {
 
     private String[] updatedProperties;
+
+    @Builder
+    public ChangesMailboxMethodResponse(String accountId,
+                                        String oldState,
+                                        String newState,
+                                        boolean hasMoreChanges,
+                                        String[] created,
+                                        String[] updated,
+                                        String[] destroyed,
+                                        String[] updatedProperties) {
+        super(accountId, oldState, newState, hasMoreChanges, created, updated, destroyed);
+        this.updatedProperties = updatedProperties;
+    }
 
     public String[] getUpdatedProperties() {
         return updatedProperties;

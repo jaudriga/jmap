@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Daniel Gultsch
+ * Copyright 2020 Daniel Gultsch
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -14,24 +14,11 @@
  *
  */
 
-package rs.ltt.jmap.common.method.call.standard;
+package rs.ltt.jmap.common.method.error;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NonNull;
-import rs.ltt.jmap.common.entity.AbstractIdentifiableEntity;
-import rs.ltt.jmap.common.method.MethodCall;
+import rs.ltt.jmap.annotation.JmapError;
+import rs.ltt.jmap.common.method.MethodErrorResponse;
 
-@AllArgsConstructor
-@Getter
-public abstract class ChangesMethodCall<T extends AbstractIdentifiableEntity> implements MethodCall {
-
-    @NonNull
-    private String accountId;
-
-    @NonNull
-    private String sinceState;
-
-    private Long maxChanges;
-
+@JmapError("cannotCalculateChanges")
+public class CannotCalculateChangesMethodErrorResponse extends MethodErrorResponse {
 }

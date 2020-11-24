@@ -35,6 +35,15 @@ public abstract class QueryChangesMethodResponse<T extends AbstractIdentifiableE
     private String[] removed;
     private List<AddedItem<String>> added;
 
+    public QueryChangesMethodResponse(String accountId, String oldQueryState, String newQueryState, long total, String[] removed, List<AddedItem<String>> added) {
+        this.accountId = accountId;
+        this.oldQueryState = oldQueryState;
+        this.newQueryState = newQueryState;
+        this.total = total;
+        this.removed = removed;
+        this.added = added;
+    }
+
 
     public TypedState<T> getOldTypedQueryState() {
         return TypedState.of(oldQueryState);

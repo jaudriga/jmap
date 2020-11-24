@@ -18,6 +18,9 @@ package rs.ltt.jmap.mock.server;
 
 import rs.ltt.jmap.common.entity.Email;
 import rs.ltt.jmap.common.entity.EmailAddress;
+import rs.ltt.jmap.common.entity.EmailBodyPart;
+import rs.ltt.jmap.common.entity.EmailBodyValue;
+import rs.ltt.jmap.mua.util.EmailUtil;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -37,41 +40,65 @@ public class EmailGenerator {
             "Lorem ipsum dolor sit",
             "Maecenas eleifend rhoncus",
             "Vivamus in convallis",
-            "Maecenas varius egestas",
-            "Sed sit amet fringilla"
+            "Aliquam luctus a elit",
+            "Sed sit amet fringilla",
+            "Quisque dictum turpis at"
     );
 
-    public static Email get(int index, int thread, int posInThread, int numInThread) {
+    private static final List<String> BODY_TEMPLATES = Arrays.asList(
+            "Vestibulum imperdiet tortor est, nec aliquam ligula volutpat at. Cras et malesuada sapien. Suspendisse sit amet luctus risus, in ultrices urna. Curabitur et maximus ante. Integer sit amet nulla turpis. Nulla pharetra felis et sem tempus laoreet. Suspendisse et facilisis quam, sed bibendum enim.",
+            "In in orci non sapien tempus ullamcorper id a mi. Nullam sit amet nisl viverra, dapibus ante in, bibendum ante. Aenean sodales ipsum nec enim ornare, vitae lacinia mauris venenatis. Integer gravida sollicitudin orci, eget porta nibh tempus ornare. Sed at convallis dui. Donec mattis rhoncus pharetra. Quisque sed libero posuere, malesuada magna non, hendrerit justo. Nulla eget sem eget enim porttitor tempus imperdiet nec ligula.",
+            "Nulla vitae tempus ligula. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus vel neque vitae turpis molestie mollis. Suspendisse auctor ullamcorper felis, non auctor velit pretium ut. Sed sit amet ultricies dui. Ut bibendum sit amet mi vitae lacinia. Ut non nisi lacus.",
+            "Duis et mattis purus, at sodales tellus. Suspendisse et auctor arcu. Maecenas vel urna blandit, fringilla velit a, consectetur metus. Pellentesque bibendum ullamcorper purus commodo consectetur. Nulla facilisi. Integer aliquet posuere ante quis faucibus. Duis augue ante, varius vel molestie et, consequat eget diam. Mauris tincidunt ac est non sollicitudin. Fusce aliquet feugiat facilisis. Maecenas venenatis, lectus vel dapibus pellentesque, lacus orci pharetra est, sed vulputate erat quam eget libero.",
+            "Vivamus rhoncus dictum lectus, sed bibendum nisi. Sed sodales nibh ac nunc porttitor, sit amet accumsan nisi sagittis. Donec imperdiet metus molestie diam scelerisque vestibulum. Sed aliquam eros sapien, sed hendrerit mi tincidunt sit amet. Cras nec massa nulla. Sed id mi imperdiet ante finibus lobortis. Duis suscipit nulla ac vehicula maximus."
+    );
+
+    public static Email get(final String mailboxId, int index, int thread, int posInThread, int numInThread) {
         final Instant receivedAt = START_DATE.minus(Duration.ofDays(thread)).plus(Duration.ofHours(posInThread));
         final EmailAddress from = getEmailAddress(index);
         final ArrayList<EmailAddress> recipients = new ArrayList<>();
         final int threadStartsAt = index - posInThread;
         final int threadEndsAt = threadStartsAt + numInThread;
-        for(int i = threadStartsAt; i < threadEndsAt; ++i) {
+        for (int i = threadStartsAt; i < threadEndsAt; ++i) {
             if (i != index) {
                 recipients.add(getEmailAddress(i));
             }
         }
+        recipients.add(EmailAddress.builder().email(MockMailServer.USERNAME).build());
         final String id = String.format("M%d", index);
         final String threadId = String.format("T%d", thread);
-        final String subject = String.format(SUBJECT_TEMPLATES.get(thread % SUBJECT_TEMPLATES.size()), thread);
-        //System.out.println(subject+", Date "+receivedAt+" From: "+from+", Recipients: "+recipients);
+        final String subject = SUBJECT_TEMPLATES.get(thread % SUBJECT_TEMPLATES.size());
+
+        final String body = BODY_TEMPLATES.get(thread % BODY_TEMPLATES.size());
+
+        final EmailBodyValue emailBodyValue = EmailBodyValue.builder()
+                .value(body)
+                .build();
+        final String partId = "0";
+        final EmailBodyPart emailBodyPart = EmailBodyPart.builder()
+                .partId(partId)
+                .type("text/plain")
+                .build();
         return Email.builder()
                 .id(id)
                 .threadId(threadId)
                 .receivedAt(receivedAt)
                 .sentAt(receivedAt.atOffset(DEFAULT_ZONE_OFFSET))
                 .to(recipients)
+                .mailboxId(mailboxId, true)
                 .from(from)
-                .subject(subject)
+                .subject(posInThread == 0 ? subject : EmailUtil.subjectWithPrefix(subject))
+                .preview(body.substring(0, Math.max(subject.length(), 256)))
+                .bodyValue(partId, emailBodyValue)
+                .textBody(emailBodyPart)
                 .build();
     }
 
     private static EmailAddress getEmailAddress(int index) {
         final NameGenerator.Name name = NameGenerator.get(index);
         return EmailAddress.builder()
-                .email(name.first.toLowerCase(Locale.ENGLISH)+"."+name.last.toLowerCase(Locale.ENGLISH)+"@example.com")
-                .name(name.first+" "+name.last)
+                .email(name.first.toLowerCase(Locale.ENGLISH) + "." + name.last.toLowerCase(Locale.ENGLISH) + "@example.com")
+                .name(name.first + " " + name.last)
                 .build();
 
     }

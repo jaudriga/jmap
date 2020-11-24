@@ -34,6 +34,7 @@ import rs.ltt.jmap.common.method.response.email.QueryChangesEmailMethodResponse;
 import rs.ltt.jmap.common.method.response.email.QueryEmailMethodResponse;
 
 import javax.annotation.Nonnull;
+import java.util.Collections;
 import java.util.List;
 
 public class QueryResult {
@@ -100,7 +101,7 @@ public class QueryResult {
     }
 
     public static List<AddedItem<QueryResultItem>> of(QueryChangesEmailMethodResponse queryChangesEmailMethodResponse, GetEmailMethodResponse emailMethodResponse) {
-        final List<AddedItem<String>> addedEmailIdItems = queryChangesEmailMethodResponse.getAdded();
+        final List<AddedItem<String>> addedEmailIdItems = nullToEmpty(queryChangesEmailMethodResponse.getAdded());
         ImmutableList.Builder<AddedItem<QueryResultItem>> builder = new ImmutableList.Builder<>();
         final ImmutableMap<String, String> emailIdToThreadIdMap = map(emailMethodResponse);
         for (AddedItem<String> addedItem : addedEmailIdItems) {
@@ -108,6 +109,10 @@ public class QueryResult {
             builder.add(AddedItem.of(QueryResultItem.of(emailId, emailIdToThreadIdMap.get(emailId)), addedItem.getIndex()));
         }
         return builder.build();
+    }
+
+    private static<T> List<AddedItem<T>> nullToEmpty(final List<AddedItem<T>> value) {
+        return value == null ? Collections.emptyList() : value;
     }
 
     @Override

@@ -16,10 +16,22 @@
 
 package rs.ltt.jmap.common.method.response.thread;
 
+import lombok.Builder;
 import rs.ltt.jmap.annotation.JmapMethod;
 import rs.ltt.jmap.common.entity.Thread;
 import rs.ltt.jmap.common.method.response.standard.ChangesMethodResponse;
 
 @JmapMethod("Thread/changes")
 public class ChangesThreadMethodResponse extends ChangesMethodResponse<Thread> {
+
+    @Builder
+    public ChangesThreadMethodResponse(String accountId,
+                                       String oldState,
+                                       String newState,
+                                       boolean hasMoreChanges,
+                                       String[] created,
+                                       String[] updated,
+                                       String[] destroyed) {
+        super(accountId, oldState, newState, hasMoreChanges, created, updated, destroyed);
+    }
 }

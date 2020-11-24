@@ -16,10 +16,16 @@
 
 package rs.ltt.jmap.common.method.response.email;
 
+import lombok.Builder;
 import rs.ltt.jmap.annotation.JmapMethod;
 import rs.ltt.jmap.common.entity.Email;
 import rs.ltt.jmap.common.method.response.standard.ChangesMethodResponse;
 
 @JmapMethod("Email/changes")
 public class ChangesEmailMethodResponse extends ChangesMethodResponse<Email> {
+
+    @Builder
+    public ChangesEmailMethodResponse(String accountId, String oldState, String newState, boolean hasMoreChanges, String[] created, String[] updated, String[] destroyed) {
+        super(accountId, oldState, newState, hasMoreChanges, created, updated, destroyed);
+    }
 }
