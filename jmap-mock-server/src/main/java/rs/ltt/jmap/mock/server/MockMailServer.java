@@ -36,7 +36,6 @@ import rs.ltt.jmap.common.method.call.thread.ChangesThreadMethodCall;
 import rs.ltt.jmap.common.method.call.thread.GetThreadMethodCall;
 import rs.ltt.jmap.common.method.error.CannotCalculateChangesMethodErrorResponse;
 import rs.ltt.jmap.common.method.error.InvalidResultReferenceMethodErrorResponse;
-import rs.ltt.jmap.common.method.error.UnknownMethodMethodErrorResponse;
 import rs.ltt.jmap.common.method.response.email.ChangesEmailMethodResponse;
 import rs.ltt.jmap.common.method.response.email.GetEmailMethodResponse;
 import rs.ltt.jmap.common.method.response.email.QueryChangesEmailMethodResponse;
@@ -48,6 +47,7 @@ import rs.ltt.jmap.common.method.response.thread.GetThreadMethodResponse;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class MockMailServer extends StubMailServer {
     protected final Map<String, Email> emails = new HashMap<>();
@@ -113,18 +113,36 @@ public class MockMailServer extends StubMailServer {
         } else {
             ids = Arrays.asList(methodCall.getIds());
         }
-        //TODO look at properties and return only threadIds if needed
-        System.out.println("ids: " + Arrays.asList(ids));
+        final String[] properties = methodCall.getProperties();
+        Stream<Email> emailStream = ids.stream().map(emails::get);
+        if (Arrays.equals(properties, Email.Properties.THREAD_ID)) {
+            emailStream = emailStream.map(email -> Email.builder().id(email.getId()).threadId(email.getThreadId()).build());
+        } else if (Arrays.equals(properties, Email.Properties.MUTABLE)) {
+            emailStream = emailStream.map(email -> Email.builder().id(email.getId()).keywords(email.getKeywords()).mailboxIds(email.getMailboxIds()).build());
+        }
         return new MethodResponse[]{
                 GetEmailMethodResponse.builder()
-                        .list(ids.stream().map(emails::get).toArray(Email[]::new))
+                        .list(emailStream.toArray(Email[]::new))
                         .state(getState())
                         .build()
         };
     }
 
-    protected String getState() {
-        return String.valueOf(this.state);
+    @Override
+    protected MethodResponse[] execute(QueryChangesEmailMethodCall methodCall, ListMultimap<String, Response.Invocation> previousResponses) {
+        final String since = methodCall.getSinceQueryState();
+        if (since != null && since.equals(getState())) {
+            return new MethodResponse[]{
+                    QueryChangesEmailMethodResponse.builder()
+                            .oldQueryState(getState())
+                            .newQueryState(getState())
+                            .added(Collections.emptyList())
+                            .removed(new String[0])
+                            .build()
+            };
+        } else {
+            return new MethodResponse[]{new CannotCalculateChangesMethodErrorResponse()};
+        }
     }
 
     @Override
@@ -145,15 +163,17 @@ public class MockMailServer extends StubMailServer {
     }
 
     @Override
-    protected MethodResponse[] execute(QueryChangesEmailMethodCall methodCall, ListMultimap<String, Response.Invocation> previousResponses) {
-        final String since = methodCall.getSinceQueryState();
+    protected MethodResponse[] execute(ChangesMailboxMethodCall methodCall, ListMultimap<String, Response.Invocation> previousResponses) {
+        final String since = methodCall.getSinceState();
         if (since != null && since.equals(getState())) {
             return new MethodResponse[]{
-                    QueryChangesEmailMethodResponse.builder()
-                            .oldQueryState(getState())
-                            .newQueryState(getState())
-                            .added(Collections.emptyList())
-                            .removed(new String[0])
+                    ChangesMailboxMethodResponse.builder()
+                            .oldState(getState())
+                            .newState(getState())
+                            .updated(new String[0])
+                            .created(new String[0])
+                            .destroyed(new String[0])
+                            .updatedProperties(new String[0])
                             .build()
             };
         } else {
@@ -182,17 +202,16 @@ public class MockMailServer extends StubMailServer {
     }
 
     @Override
-    protected MethodResponse[] execute(ChangesMailboxMethodCall methodCall, ListMultimap<String, Response.Invocation> previousResponses) {
+    protected MethodResponse[] execute(ChangesThreadMethodCall methodCall, ListMultimap<String, Response.Invocation> previousResponses) {
         final String since = methodCall.getSinceState();
         if (since != null && since.equals(getState())) {
             return new MethodResponse[]{
-                    ChangesMailboxMethodResponse.builder()
+                    ChangesThreadMethodResponse.builder()
                             .oldState(getState())
                             .newState(getState())
                             .updated(new String[0])
                             .created(new String[0])
                             .destroyed(new String[0])
-                            .updatedProperties(new String[0])
                             .build()
             };
         } else {
@@ -230,22 +249,8 @@ public class MockMailServer extends StubMailServer {
         };
     }
 
-    @Override
-    protected MethodResponse[] execute(ChangesThreadMethodCall methodCall, ListMultimap<String, Response.Invocation> previousResponses) {
-        final String since = methodCall.getSinceState();
-        if (since != null && since.equals(getState())) {
-            return new MethodResponse[]{
-                    ChangesThreadMethodResponse.builder()
-                            .oldState(getState())
-                            .newState(getState())
-                            .updated(new String[0])
-                            .created(new String[0])
-                            .destroyed(new String[0])
-                            .build()
-            };
-        } else {
-            return new MethodResponse[]{new CannotCalculateChangesMethodErrorResponse()};
-        }
+    protected String getState() {
+        return String.valueOf(this.state);
     }
 
     protected static class MailboxInfo {
