@@ -52,12 +52,20 @@ public interface Cache {
 
     void updateEmails(Update<Email> emailUpdate, String[] updatedProperties) throws CacheWriteException, CacheConflictException;
 
+    void invalidateEmails();
+
+    void invalidateThreads();
+
+    void invalidateMailboxes();
+
 
     //Identity
     void setIdentities(TypedState<Identity> state, Identity[] identities) throws CacheWriteException;
 
 
     void updateIdentities(Update<Identity> identityUpdate) throws CacheWriteException, CacheConflictException;
+
+    void invalidateIdentities();
 
     //Queries
 

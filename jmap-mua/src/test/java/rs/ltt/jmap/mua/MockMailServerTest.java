@@ -18,16 +18,13 @@ package rs.ltt.jmap.mua;
 
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.Test;
-import rs.ltt.jmap.common.entity.Mailbox;
 import rs.ltt.jmap.common.entity.filter.EmailFilterCondition;
 import rs.ltt.jmap.common.entity.filter.FilterOperator;
 import rs.ltt.jmap.common.entity.query.EmailQuery;
 import rs.ltt.jmap.mock.server.JmapDispatcher;
 import rs.ltt.jmap.mock.server.MockMailServer;
-import rs.ltt.jmap.mua.cache.InMemoryCache;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.concurrent.ExecutionException;
 
 public class MockMailServerTest {
@@ -38,10 +35,7 @@ public class MockMailServerTest {
         final MockWebServer server = new MockWebServer();
         server.setDispatcher(new MockMailServer(128));
 
-        final MyInMemoryCache myInMemoryCache = new MyInMemoryCache();
-
         try (final Mua mua = Mua.builder()
-                .cache(myInMemoryCache)
                 .sessionResource(server.url(JmapDispatcher.WELL_KNOWN_PATH))
                 .username(JmapDispatcher.USERNAME)
                 .password(JmapDispatcher.PASSWORD)
@@ -59,11 +53,5 @@ public class MockMailServerTest {
             mua.query(query).get();
         }
         server.shutdown();
-    }
-
-    private static class MyInMemoryCache extends InMemoryCache {
-        public Collection<Mailbox> getMailboxes() {
-            return this.mailboxes.values();
-        }
     }
 }

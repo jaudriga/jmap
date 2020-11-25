@@ -17,6 +17,8 @@
 package rs.ltt.jmap.mua.service;
 
 import com.google.common.base.Preconditions;
+import com.google.common.util.concurrent.AsyncCallable;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import org.slf4j.Logger;
@@ -45,22 +47,22 @@ public class ThreadService extends MuaService {
     protected ListenableFuture<Status> updateThreads(final String state, final JmapClient.MultiCall multiCall) {
         Preconditions.checkNotNull(state, "state can not be null when updating threads");
         LOGGER.info("Refreshing threads since state {}", state);
-        final SettableFuture<Status> settableFuture = SettableFuture.create();
         final UpdateUtil.MethodResponsesFuture methodResponsesFuture = UpdateUtil.threads(multiCall, accountId, state);
-        methodResponsesFuture.addListener(() -> {
-            try {
-                final ChangesThreadMethodResponse changesResponse = methodResponsesFuture.changes(ChangesThreadMethodResponse.class);
-                final GetThreadMethodResponse createdResponse = methodResponsesFuture.created(GetThreadMethodResponse.class);
-                final GetThreadMethodResponse updatedResponse = methodResponsesFuture.updated(GetThreadMethodResponse.class);
-                final Update<Thread> update = Update.of(changesResponse, createdResponse, updatedResponse);
-                if (update.hasChanges()) {
-                    cache.updateThreads(update);
-                }
-                settableFuture.set(Status.of(update));
-            } catch (InterruptedException | ExecutionException | CacheWriteException | CacheConflictException e) {
-                settableFuture.setException(extractException(e));
+        registerCacheInvalidationCallback(methodResponsesFuture, this::invalidateCache);
+        return methodResponsesFuture.addCallback(() -> {
+            final ChangesThreadMethodResponse changesResponse = methodResponsesFuture.changes(ChangesThreadMethodResponse.class);
+            final GetThreadMethodResponse createdResponse = methodResponsesFuture.created(GetThreadMethodResponse.class);
+            final GetThreadMethodResponse updatedResponse = methodResponsesFuture.updated(GetThreadMethodResponse.class);
+            final Update<Thread> update = Update.of(changesResponse, createdResponse, updatedResponse);
+            if (update.hasChanges()) {
+                cache.updateThreads(update);
             }
+            return Futures.immediateFuture(Status.of(update));
         }, ioExecutorService);
-        return settableFuture;
+    }
+
+    private void invalidateCache() {
+        LOGGER.info("Invalidate threads cache after cannotCalculateChanges response");
+        cache.invalidateThreads();
     }
 }

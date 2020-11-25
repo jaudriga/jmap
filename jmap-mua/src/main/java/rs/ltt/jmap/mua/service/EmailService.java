@@ -18,23 +18,24 @@ package rs.ltt.jmap.mua.service;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
-import com.google.common.util.concurrent.SettableFuture;
+import com.google.common.util.concurrent.*;
 import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 import org.checkerframework.checker.nullness.compatqual.NullableDecl;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rs.ltt.jmap.client.JmapClient;
 import rs.ltt.jmap.client.JmapRequest;
 import rs.ltt.jmap.client.MethodResponses;
+import rs.ltt.jmap.client.api.MethodErrorResponseException;
 import rs.ltt.jmap.common.Request;
 import rs.ltt.jmap.common.entity.*;
 import rs.ltt.jmap.common.entity.filter.EmailFilterCondition;
+import rs.ltt.jmap.common.method.MethodErrorResponse;
 import rs.ltt.jmap.common.method.call.email.QueryEmailMethodCall;
 import rs.ltt.jmap.common.method.call.email.SetEmailMethodCall;
 import rs.ltt.jmap.common.method.call.submission.SetEmailSubmissionMethodCall;
+import rs.ltt.jmap.common.method.error.CannotCalculateChangesMethodErrorResponse;
 import rs.ltt.jmap.common.method.response.email.ChangesEmailMethodResponse;
 import rs.ltt.jmap.common.method.response.email.GetEmailMethodResponse;
 import rs.ltt.jmap.common.method.response.email.SetEmailMethodResponse;
@@ -55,6 +56,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
+@SuppressWarnings("UnstableApiUsage")
 public class EmailService extends MuaService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EmailService.class);
@@ -287,23 +289,23 @@ public class EmailService extends MuaService {
     protected ListenableFuture<Status> updateEmails(final String state, final JmapClient.MultiCall multiCall) {
         Preconditions.checkNotNull(state, "state can not be null when updating emails");
         LOGGER.info("Refreshing emails since state {}", state);
-        final SettableFuture<Status> settableFuture = SettableFuture.create();
         final UpdateUtil.MethodResponsesFuture methodResponsesFuture = UpdateUtil.emails(multiCall, accountId, state);
-        methodResponsesFuture.addListener(() -> {
-            try {
-                final ChangesEmailMethodResponse changesResponse = methodResponsesFuture.changes(ChangesEmailMethodResponse.class);
-                final GetEmailMethodResponse createdResponse = methodResponsesFuture.created(GetEmailMethodResponse.class);
-                final GetEmailMethodResponse updatedResponse = methodResponsesFuture.updated(GetEmailMethodResponse.class);
-                final Update<Email> update = Update.of(changesResponse, createdResponse, updatedResponse);
-                if (update.hasChanges()) {
-                    cache.updateEmails(update, Email.Properties.MUTABLE);
-                }
-                settableFuture.set(Status.of(update));
-            } catch (InterruptedException | ExecutionException | CacheWriteException | CacheConflictException e) {
-                settableFuture.setException(extractException(e));
+        registerCacheInvalidationCallback(methodResponsesFuture, this::invalidateCache);
+        return methodResponsesFuture.addCallback(() -> {
+            final ChangesEmailMethodResponse changesResponse = methodResponsesFuture.changes(ChangesEmailMethodResponse.class);
+            final GetEmailMethodResponse createdResponse = methodResponsesFuture.created(GetEmailMethodResponse.class);
+            final GetEmailMethodResponse updatedResponse = methodResponsesFuture.updated(GetEmailMethodResponse.class);
+            final Update<Email> update = Update.of(changesResponse, createdResponse, updatedResponse);
+            if (update.hasChanges()) {
+                cache.updateEmails(update, Email.Properties.MUTABLE);
             }
+            return Futures.immediateFuture(Status.of(update));
         }, ioExecutorService);
-        return settableFuture;
+    }
+
+    private void invalidateCache() {
+        LOGGER.info("Invalidate emails cache after cannotCalculateChanges response");
+        cache.invalidateEmails();
     }
 
     public ListenableFuture<Boolean> discardDraft(final @NonNullDecl IdentifiableEmailWithKeywords email) {

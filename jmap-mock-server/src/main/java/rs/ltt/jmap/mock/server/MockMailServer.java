@@ -106,8 +106,7 @@ public class MockMailServer extends StubMailServer {
         if (idsReference != null) {
             try {
                 ids = Arrays.asList(ResultReferenceResolver.resolve(idsReference, previousResponses));
-            } catch (IllegalArgumentException e) {
-                e.printStackTrace();
+            } catch (final IllegalArgumentException e) {
                 return new MethodResponse[]{new InvalidResultReferenceMethodErrorResponse()};
             }
         } else {
@@ -149,7 +148,6 @@ public class MockMailServer extends StubMailServer {
     protected MethodResponse[] execute(QueryEmailMethodCall methodCall, ListMultimap<String, Response.Invocation> previousResponses) {
         final ArrayList<Email> temporaryList = new ArrayList<>(emails.values());
         temporaryList.sort(Comparator.comparing(Email::getReceivedAt).reversed());
-        System.out.println(methodCall.getFilter());
         final HashSet<String> threadIds = new HashSet<>();
         temporaryList.removeIf(email -> !threadIds.add(email.getThreadId()));
         return new MethodResponse[]{
@@ -232,7 +230,6 @@ public class MockMailServer extends StubMailServer {
         } else {
             ids = Arrays.asList(methodCall.getIds());
         }
-        System.out.println("thread ids " + ids);
         Thread[] threads = ids.stream()
                 .map(threadId -> Thread.builder()
                         .id(threadId)

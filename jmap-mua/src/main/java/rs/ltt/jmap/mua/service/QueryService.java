@@ -18,11 +18,9 @@ package rs.ltt.jmap.mua.service;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
-import com.google.common.util.concurrent.SettableFuture;
+import com.google.common.util.concurrent.*;
 import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rs.ltt.jmap.client.JmapClient;
@@ -42,6 +40,7 @@ import rs.ltt.jmap.common.method.call.email.QueryChangesEmailMethodCall;
 import rs.ltt.jmap.common.method.call.email.QueryEmailMethodCall;
 import rs.ltt.jmap.common.method.call.thread.GetThreadMethodCall;
 import rs.ltt.jmap.common.method.error.AnchorNotFoundMethodErrorResponse;
+import rs.ltt.jmap.common.method.error.CannotCalculateChangesMethodErrorResponse;
 import rs.ltt.jmap.common.method.response.email.GetEmailMethodResponse;
 import rs.ltt.jmap.common.method.response.email.QueryChangesEmailMethodResponse;
 import rs.ltt.jmap.common.method.response.email.QueryEmailMethodResponse;
@@ -227,6 +226,7 @@ public class QueryService extends MuaService {
                                       final ExecutionException exception) {
         final Throwable cause = exception.getCause();
         //check if cache needs invalidation pull into separate method
+        //TODO migrate this if condition to MethodErrorResponseException.matches(); but only after we wrote tests
         if (cause instanceof MethodErrorResponseException) {
             final MethodErrorResponse methodError = ((MethodErrorResponseException) cause).getMethodErrorResponse();
             if (methodError instanceof AnchorNotFoundMethodErrorResponse) {
@@ -255,7 +255,6 @@ public class QueryService extends MuaService {
                                                   final JmapClient.MultiCall multiCall) {
         Preconditions.checkNotNull(queryStateWrapper.queryState, "QueryState can not be null when attempting to refresh query");
         LOGGER.info("Refreshing query {}", query.toString());
-        final SettableFuture<Status> settableFuture = SettableFuture.create();
 
         final List<ListenableFuture<Status>> piggyBackedFuturesList = refresh(queryStateWrapper.objectsState, multiCall);
 
@@ -276,39 +275,50 @@ public class QueryService extends MuaService {
                         .build()
         ).getMethodResponses();
 
-        queryChangesResponsesFuture.addListener(() -> {
-            try {
-                QueryChangesEmailMethodResponse queryChangesResponse = queryChangesResponsesFuture.get().getMain(QueryChangesEmailMethodResponse.class);
-                GetEmailMethodResponse getThreadIdsResponse = getThreadIdResponsesFuture.get().getMain(GetEmailMethodResponse.class);
-                List<AddedItem<QueryResultItem>> added = QueryResult.of(queryChangesResponse, getThreadIdsResponse);
+        registerInvalidateQueryCacheCallback(query, queryChangesResponsesFuture);
 
-                final QueryUpdate<Email, QueryResultItem> queryUpdate = QueryUpdate.of(queryChangesResponse, added);
+        return Futures.transformAsync(queryChangesResponsesFuture, methodResponses -> {
+            QueryChangesEmailMethodResponse queryChangesResponse = methodResponses.getMain(QueryChangesEmailMethodResponse.class);
+            GetEmailMethodResponse getThreadIdsResponse = getThreadIdResponsesFuture.get().getMain(GetEmailMethodResponse.class);
+            List<AddedItem<QueryResultItem>> added = QueryResult.of(queryChangesResponse, getThreadIdsResponse);
 
-                //processing order is:
-                //  1) update Objects (Email, Threads, and Mailboxes)
-                //  2) store query results; If query cache sees an outdated email state it will fail
+            final QueryUpdate<Email, QueryResultItem> queryUpdate = QueryUpdate.of(queryChangesResponse, added);
 
-                Status piggybackStatus = transform(piggyBackedFuturesList).get(); //wait for updates before attempting to fetch
-                Status queryUpdateStatus = Status.of(queryUpdate);
+            //processing order is:
+            //  1) update Objects (Email, Threads, and Mailboxes)
+            //  2) store query results; If query cache sees an outdated email state it will fail
 
-                if (queryUpdate.hasChanges()) {
-                    cache.updateQueryResults(query.toQueryString(), queryUpdate, getThreadIdsResponse.getTypedState());
+            Status piggybackStatus = transform(piggyBackedFuturesList).get(); //wait for updates before attempting to fetch
+            Status queryUpdateStatus = Status.of(queryUpdate);
+
+            if (queryUpdate.hasChanges()) {
+                cache.updateQueryResults(query.toQueryString(), queryUpdate, getThreadIdsResponse.getTypedState());
+            }
+
+
+            final List<ListenableFuture<Status>> list = new ArrayList<>();
+            list.add(Futures.immediateFuture(piggybackStatus));
+            list.add(Futures.immediateFuture(queryUpdateStatus));
+            //it might be that a previous fetchMissing() has failed. so better safe than sorry
+            list.add(fetchMissing(query.toQueryString()));
+            return transform(list);
+        }, ioExecutorService);
+    }
+
+    private void registerInvalidateQueryCacheCallback(final EmailQuery query, ListenableFuture<MethodResponses> queryChangesResponsesFuture) {
+        Futures.addCallback(queryChangesResponsesFuture, new FutureCallback<MethodResponses>() {
+            @Override
+            public void onSuccess(@Nullable MethodResponses methodResponses) {
+
+            }
+
+            @Override
+            public void onFailure(@NonNullDecl Throwable throwable) {
+                if (MethodErrorResponseException.matches(throwable, CannotCalculateChangesMethodErrorResponse.class)) {
+                    cache.invalidateQueryResult(query.toQueryString());
                 }
-
-
-                final List<ListenableFuture<Status>> list = new ArrayList<>();
-                list.add(Futures.immediateFuture(piggybackStatus));
-                list.add(Futures.immediateFuture(queryUpdateStatus));
-                //it might be that a previous fetchMissing() has failed. so better safe than sorry
-                list.add(fetchMissing(query.toQueryString()));
-                settableFuture.setFuture(transform(list));
-
-            } catch (final Exception e) {
-                settableFuture.setException(extractException(e));
             }
         }, ioExecutorService);
-
-        return settableFuture;
     }
 
     private ListenableFuture<Status> initialQuery(@NonNullDecl final EmailQuery query, @NonNullDecl final QueryStateWrapper queryStateWrapper) {

@@ -286,6 +286,14 @@ public class InMemoryCache implements Cache {
     }
 
     @Override
+    public void invalidateIdentities() {
+        synchronized (this.identities) {
+            this.identities.clear();
+            this.identityState = null;
+        }
+    }
+
+    @Override
     public void setQueryResult(String query, QueryResult queryResult) {
         synchronized (this.queryResults) {
             final String emailState = queryResult.objectState.getState();
@@ -352,6 +360,30 @@ public class InMemoryCache implements Cache {
                 queryResult.items.add((int) addedItem.getIndex(), addedItem.getItem());
             }
             queryResult.queryState = update.getNewTypedState().getState();
+        }
+    }
+
+    @Override
+    public void invalidateEmails() {
+        synchronized (this.emails) {
+            this.emails.clear();
+            this.emailState = null;
+        }
+    }
+
+    @Override
+    public void invalidateThreads() {
+        synchronized (this.threads) {
+            this.threads.clear();
+            this.threadState = null;
+        }
+    }
+
+    @Override
+    public void invalidateMailboxes() {
+        synchronized (this.mailboxes) {
+            this.mailboxes.clear();
+            this.mailboxState = null;
         }
     }
 

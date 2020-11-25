@@ -39,7 +39,6 @@ import rs.ltt.jmap.common.method.response.mailbox.SetMailboxMethodResponse;
 import rs.ltt.jmap.mua.MuaSession;
 import rs.ltt.jmap.mua.SetMailboxException;
 import rs.ltt.jmap.mua.Status;
-import rs.ltt.jmap.mua.cache.CacheConflictException;
 import rs.ltt.jmap.mua.cache.CacheWriteException;
 import rs.ltt.jmap.mua.cache.ObjectsState;
 import rs.ltt.jmap.mua.cache.Update;
@@ -107,23 +106,23 @@ public class MailboxService extends MuaService {
     protected ListenableFuture<Status> updateMailboxes(final String state, final JmapClient.MultiCall multiCall) {
         Preconditions.checkNotNull(state, "State can not be null when updating mailboxes");
         LOGGER.info("Refreshing mailboxes since state {}", state);
-        final SettableFuture<Status> settableFuture = SettableFuture.create();
         final UpdateUtil.MethodResponsesFuture methodResponsesFuture = UpdateUtil.mailboxes(multiCall, accountId, state);
-        methodResponsesFuture.addListener(() -> {
-            try {
-                final ChangesMailboxMethodResponse changesResponse = methodResponsesFuture.changes(ChangesMailboxMethodResponse.class);
-                final GetMailboxMethodResponse createdResponse = methodResponsesFuture.created(GetMailboxMethodResponse.class);
-                final GetMailboxMethodResponse updatedResponse = methodResponsesFuture.updated(GetMailboxMethodResponse.class);
-                final Update<Mailbox> update = Update.of(changesResponse, createdResponse, updatedResponse);
-                if (update.hasChanges()) {
-                    cache.updateMailboxes(update, changesResponse.getUpdatedProperties());
-                }
-                settableFuture.set(Status.of(update));
-            } catch (InterruptedException | ExecutionException | CacheWriteException | CacheConflictException e) {
-                settableFuture.setException(extractException(e));
+        registerCacheInvalidationCallback(methodResponsesFuture, this::invalidateCache);
+        return methodResponsesFuture.addCallback(() -> {
+            final ChangesMailboxMethodResponse changesResponse = methodResponsesFuture.changes(ChangesMailboxMethodResponse.class);
+            final GetMailboxMethodResponse createdResponse = methodResponsesFuture.created(GetMailboxMethodResponse.class);
+            final GetMailboxMethodResponse updatedResponse = methodResponsesFuture.updated(GetMailboxMethodResponse.class);
+            final Update<Mailbox> update = Update.of(changesResponse, createdResponse, updatedResponse);
+            if (update.hasChanges()) {
+                cache.updateMailboxes(update, changesResponse.getUpdatedProperties());
             }
+            return Futures.immediateFuture(Status.of(update));
         }, ioExecutorService);
-        return settableFuture;
+    }
+
+    private void invalidateCache() {
+        LOGGER.info("Invalidate mailboxes cache after cannotCalculateChanges response");
+        this.cache.invalidateMailboxes();
     }
 
     protected ListenableFuture<Collection<? extends IdentifiableMailboxWithRole>> getMailboxes() {

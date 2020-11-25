@@ -16,6 +16,8 @@
 
 package rs.ltt.jmap.mua.util;
 
+import com.google.common.util.concurrent.AsyncCallable;
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import rs.ltt.jmap.client.JmapClient;
@@ -33,6 +35,7 @@ import rs.ltt.jmap.common.method.call.mailbox.GetMailboxMethodCall;
 import rs.ltt.jmap.common.method.call.thread.ChangesThreadMethodCall;
 import rs.ltt.jmap.common.method.call.thread.GetThreadMethodCall;
 
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 
@@ -161,8 +164,12 @@ public class UpdateUtil {
             return updated.get().getMain(clazz);
         }
 
-        public ListenableFuture<?> addListener(final Runnable runnable, final Executor executor) {
-            return Futures.whenAllComplete(changes, created, updated).run(runnable, executor);
+        public <T> ListenableFuture<T> addCallback(AsyncCallable<T> callable, Executor executor) {
+            return Futures.whenAllComplete(changes, created, updated).callAsync(callable, executor);
+        }
+
+        public void addChangesCallback(FutureCallback<MethodResponses> callback, Executor executor) {
+            Futures.addCallback(changes, callback, executor);
         }
 
     }

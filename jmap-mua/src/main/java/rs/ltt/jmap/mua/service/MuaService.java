@@ -16,12 +16,19 @@
 
 package rs.ltt.jmap.mua.service;
 
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
+import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
+import org.jetbrains.annotations.Nullable;
 import rs.ltt.jmap.client.JmapClient;
+import rs.ltt.jmap.client.MethodResponses;
+import rs.ltt.jmap.client.api.MethodErrorResponseException;
+import rs.ltt.jmap.common.method.error.CannotCalculateChangesMethodErrorResponse;
 import rs.ltt.jmap.mua.MuaSession;
 import rs.ltt.jmap.mua.cache.Cache;
 import rs.ltt.jmap.mua.cache.ObjectsState;
+import rs.ltt.jmap.mua.util.UpdateUtil;
 
 import java.util.concurrent.ExecutionException;
 
@@ -51,6 +58,22 @@ public abstract class MuaService {
 
     protected ListenableFuture<ObjectsState> getObjectsState() {
         return ioExecutorService.submit(cache::getObjectsState);
+    }
+
+    protected void registerCacheInvalidationCallback(UpdateUtil.MethodResponsesFuture methodResponsesFuture, Runnable runnable) {
+        methodResponsesFuture.addChangesCallback(new FutureCallback<MethodResponses>() {
+            @Override
+            public void onSuccess(@Nullable MethodResponses methodResponses) {
+
+            }
+
+            @Override
+            public void onFailure(@NonNullDecl Throwable throwable) {
+                if (MethodErrorResponseException.matches(throwable, CannotCalculateChangesMethodErrorResponse.class)) {
+                    runnable.run();
+                }
+            }
+        }, ioExecutorService);
     }
 
     protected static Throwable extractException(final Exception exception) {

@@ -19,6 +19,7 @@ package rs.ltt.jmap.client.api;
 import rs.ltt.jmap.common.method.MethodCall;
 import rs.ltt.jmap.common.method.MethodErrorResponse;
 import rs.ltt.jmap.common.method.MethodResponse;
+import rs.ltt.jmap.common.method.error.CannotCalculateChangesMethodErrorResponse;
 import rs.ltt.jmap.common.util.Mapper;
 
 public class MethodErrorResponseException extends JmapApiException {
@@ -44,5 +45,13 @@ public class MethodErrorResponseException extends JmapApiException {
 
     public MethodCall getMethodCall() {
         return methodCall;
+    }
+
+    public static boolean matches(Throwable throwable, Class<? extends MethodErrorResponse> methodError) {
+        if (throwable instanceof MethodErrorResponseException) {
+            final MethodErrorResponseException methodErrorResponseException = (MethodErrorResponseException) throwable;
+            return methodError.isInstance(methodErrorResponseException.getMethodErrorResponse());
+        }
+        return false;
     }
 }

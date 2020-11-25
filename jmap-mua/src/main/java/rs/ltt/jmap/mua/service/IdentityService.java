@@ -17,10 +17,9 @@
 package rs.ltt.jmap.mua.service;
 
 import com.google.common.base.Preconditions;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
-import com.google.common.util.concurrent.SettableFuture;
+import com.google.common.util.concurrent.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import rs.ltt.jmap.client.JmapClient;
 import rs.ltt.jmap.client.MethodResponses;
 import rs.ltt.jmap.common.entity.Identity;
@@ -33,6 +32,8 @@ import rs.ltt.jmap.mua.cache.Update;
 import rs.ltt.jmap.mua.util.UpdateUtil;
 
 public class IdentityService extends MuaService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(IdentityService.class);
 
     public IdentityService(final MuaSession muaSession) {
         super(muaSession);
@@ -83,23 +84,24 @@ public class IdentityService extends MuaService {
 
     private ListenableFuture<Status> updateIdentities(final String state, final JmapClient.MultiCall multiCall) {
         Preconditions.checkNotNull(state, "State can not be null when updating identities");
-        final SettableFuture<Status> settableFuture = SettableFuture.create();
         final UpdateUtil.MethodResponsesFuture methodResponsesFuture = UpdateUtil.identities(multiCall, accountId, state);
-        methodResponsesFuture.addListener(() -> {
-            try {
-                ChangesIdentityMethodResponse changesResponse = methodResponsesFuture.changes(ChangesIdentityMethodResponse.class);
-                GetIdentityMethodResponse createdResponse = methodResponsesFuture.created(GetIdentityMethodResponse.class);
-                GetIdentityMethodResponse updatedResponse = methodResponsesFuture.updated(GetIdentityMethodResponse.class);
-                final Update<Identity> update = Update.of(changesResponse, createdResponse, updatedResponse);
-                if (update.hasChanges()) {
-                    cache.updateIdentities(update);
-                }
-                settableFuture.set(Status.of(update));
-            } catch (Exception e) {
-                settableFuture.setException(extractException(e));
+        registerCacheInvalidationCallback(methodResponsesFuture, this::invalidateCache);
+        return methodResponsesFuture.addCallback(() -> {
+            ChangesIdentityMethodResponse changesResponse = methodResponsesFuture.changes(ChangesIdentityMethodResponse.class);
+            GetIdentityMethodResponse createdResponse = methodResponsesFuture.created(GetIdentityMethodResponse.class);
+            GetIdentityMethodResponse updatedResponse = methodResponsesFuture.updated(GetIdentityMethodResponse.class);
+            final Update<Identity> update = Update.of(changesResponse, createdResponse, updatedResponse);
+            if (update.hasChanges()) {
+                cache.updateIdentities(update);
             }
+            return Futures.immediateFuture(Status.of(update));
         }, ioExecutorService);
-        return settableFuture;
+
+    }
+
+    private void invalidateCache() {
+        LOGGER.info("Invalidate identities cache after cannotCalculateChanges response");
+        cache.invalidateIdentities();
     }
 
 }
