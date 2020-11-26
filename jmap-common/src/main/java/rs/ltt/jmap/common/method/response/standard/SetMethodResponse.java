@@ -37,6 +37,26 @@ public abstract class SetMethodResponse<T extends AbstractIdentifiableEntity> im
     private Map<String, SetError> notUpdated;
     private Map<String, SetError> notDestroyed;
 
+    public SetMethodResponse(String accountId,
+                             String oldState,
+                             String newState,
+                             Map<String, T> created,
+                             Map<String, T> updated,
+                             String[] destroyed,
+                             Map<String, SetError> notCreated,
+                             Map<String, SetError> notUpdated,
+                             Map<String, SetError> notDestroyed) {
+        this.accountId = accountId;
+        this.oldState = oldState;
+        this.newState = newState;
+        this.created = created;
+        this.updated = updated;
+        this.destroyed = destroyed;
+        this.notCreated = notCreated;
+        this.notUpdated = notUpdated;
+        this.notDestroyed = notDestroyed;
+    }
+
 
     public int getUpdatedCreatedCount() {
         return (created == null ? 0 : created.size()) + (updated == null ? 0 : updated.size());

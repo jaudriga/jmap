@@ -18,6 +18,7 @@ package rs.ltt.jmap.common.method.call.standard;
 
 import com.google.common.base.Preconditions;
 import com.google.gson.annotations.SerializedName;
+import lombok.Getter;
 import lombok.NonNull;
 import rs.ltt.jmap.common.Request;
 import rs.ltt.jmap.common.entity.AbstractIdentifiableEntity;
@@ -25,6 +26,7 @@ import rs.ltt.jmap.common.method.MethodCall;
 
 import java.util.Map;
 
+@Getter
 public abstract class SetMethodCall<T extends AbstractIdentifiableEntity> implements MethodCall {
 
     @NonNull

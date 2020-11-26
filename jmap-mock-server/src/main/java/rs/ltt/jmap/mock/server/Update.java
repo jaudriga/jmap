@@ -22,6 +22,7 @@ import rs.ltt.jmap.common.entity.Email;
 import rs.ltt.jmap.common.entity.Mailbox;
 import rs.ltt.jmap.common.entity.Thread;
 
+import java.util.Collection;
 import java.util.Map;
 
 public class Update {
@@ -41,6 +42,14 @@ public class Update {
         builder.put(Email.class, new Changes(new String[0], new String[]{email.getId()}));
         builder.put(Thread.class, new Changes(new String[0], new String[]{email.getThreadId()}));
         builder.put(Mailbox.class, new Changes(email.getMailboxIds().keySet().toArray(new String[0]), new String[0]));
+        return new Update(builder.build(), newVersion);
+    }
+
+    public static Update updated(final Collection<Email> emails, String newVersion) {
+        final ImmutableMap.Builder<Class<? extends AbstractIdentifiableEntity>, Changes> builder = new ImmutableMap.Builder<>();
+        builder.put(Email.class, new Changes(emails.stream().map(Email::getId).toArray(String[]::new), new String[0]));
+        builder.put(Thread.class, new Changes(new String[0], new String[0]));
+        builder.put(Mailbox.class, new Changes(emails.stream().map(email -> email.getMailboxIds().keySet()).flatMap(Collection::stream).toArray(String[]::new), new String[0]));
         return new Update(builder.build(), newVersion);
     }
 
