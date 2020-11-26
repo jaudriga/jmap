@@ -44,7 +44,10 @@ public class MockMailServerTest {
     @Test
     public void queryRefreshQuery() throws ExecutionException, InterruptedException, IOException {
         final MockWebServer server = new MockWebServer();
-        server.setDispatcher(new MockMailServer(128));
+        final MockMailServer mailServer = new MockMailServer(128);
+        //this will make the second query() a queryChangesCall
+        mailServer.setReportCanCalculateQueryChanges(true);
+        server.setDispatcher(mailServer);
 
         try (final Mua mua = Mua.builder()
                 .sessionResource(server.url(JmapDispatcher.WELL_KNOWN_PATH))

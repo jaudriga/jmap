@@ -36,6 +36,7 @@ public class CacheInvalidationTest {
     @Test
     public void canNotCalculateChangesQueryRepeat() throws IOException, InterruptedException, ExecutionException {
         final MyMockMailServer myMockMailServer = new MyMockMailServer(2);
+        myMockMailServer.setReportCanCalculateQueryChanges(true);
         final MockWebServer server = new MockWebServer();
         server.setDispatcher(myMockMailServer);
 

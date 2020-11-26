@@ -51,6 +51,8 @@ public class MockMailServer extends StubMailServer {
 
     private int state = 0;
 
+    private boolean reportCanCalculateQueryChanges = false;
+
     public MockMailServer(int numThreads) {
         setup(numThreads);
     }
@@ -81,6 +83,10 @@ public class MockMailServer extends StubMailServer {
         final String newVersion = getState();
         this.updates.put(oldVersion, Update.created(email, newVersion));
         return email;
+    }
+
+    public void setReportCanCalculateQueryChanges(final boolean reportCanCalculateQueryChanges) {
+        this.reportCanCalculateQueryChanges = reportCanCalculateQueryChanges;
     }
 
     protected void incrementState() {
@@ -225,7 +231,7 @@ public class MockMailServer extends StubMailServer {
         temporaryList.removeIf(email -> !threadIds.add(email.getThreadId()));
         return new MethodResponse[]{
                 QueryEmailMethodResponse.builder()
-                        .canCalculateChanges(true) //instructing the client to use QueryChanges on the next attempt even though we can’t
+                        .canCalculateChanges(this.reportCanCalculateQueryChanges)
                         .queryState(getState())
                         .ids(Collections2.transform(temporaryList, Email::getId).toArray(new String[0]))
                         .position(0L)

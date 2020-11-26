@@ -30,6 +30,7 @@ import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 import rs.ltt.jmap.common.*;
 import rs.ltt.jmap.common.entity.Account;
 import rs.ltt.jmap.common.entity.ErrorType;
+import rs.ltt.jmap.common.entity.capability.CoreCapability;
 import rs.ltt.jmap.common.entity.capability.MailAccountCapability;
 import rs.ltt.jmap.common.method.MethodCall;
 import rs.ltt.jmap.common.method.MethodResponse;
@@ -89,6 +90,7 @@ public abstract class JmapDispatcher extends Dispatcher {
                                 MailAccountCapability.builder().build()
                         ))
                         .build())
+                .capabilities(ImmutableMap.of(CoreCapability.class, CoreCapability.builder().maxObjectsInGet(4096L).build()))
                 .primaryAccounts(ImmutableMap.of(MailAccountCapability.class, ACCOUNT_ID))
                 .build();
 
