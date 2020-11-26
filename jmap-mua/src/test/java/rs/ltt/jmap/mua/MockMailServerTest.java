@@ -17,14 +17,18 @@
 package rs.ltt.jmap.mua;
 
 import okhttp3.mockwebserver.MockWebServer;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import rs.ltt.jmap.common.entity.Email;
 import rs.ltt.jmap.common.entity.filter.EmailFilterCondition;
 import rs.ltt.jmap.common.entity.filter.FilterOperator;
 import rs.ltt.jmap.common.entity.query.EmailQuery;
 import rs.ltt.jmap.mock.server.JmapDispatcher;
 import rs.ltt.jmap.mock.server.MockMailServer;
+import rs.ltt.jmap.mua.cache.InMemoryCache;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.concurrent.ExecutionException;
 
 public class MockMailServerTest {
@@ -53,5 +57,38 @@ public class MockMailServerTest {
             mua.query(query).get();
         }
         server.shutdown();
+    }
+
+    @Test
+    public void addEmailAndRefresh() throws ExecutionException, InterruptedException, IOException {
+        final MockWebServer server = new MockWebServer();
+        final MockMailServer mailServer = new MockMailServer(128);
+        server.setDispatcher(mailServer);
+        final MyInMemoryCache cache = new MyInMemoryCache();
+        try (final Mua mua = Mua.builder()
+                .cache(cache)
+                .sessionResource(server.url(JmapDispatcher.WELL_KNOWN_PATH))
+                .username(JmapDispatcher.USERNAME)
+                .password(JmapDispatcher.PASSWORD)
+                .accountId(JmapDispatcher.ACCOUNT_ID)
+                .build()) {
+            mua.query(EmailQuery.unfiltered()).get();
+            final Email email = mailServer.generateEmailOnTop();
+            final Status status = mua.refresh().get();
+            Assertions.assertEquals(Status.UPDATED, status);
+            Assertions.assertTrue(cache.getEmailIds().contains(email.getId()),"new email id not found in cache");
+            Assertions.assertTrue(cache.getThreadIds().contains(email.getThreadId()),"new thread id not found in cache");
+        }
+        server.shutdown();
+    }
+
+    private static class MyInMemoryCache extends InMemoryCache {
+        public Collection<String> getEmailIds() {
+            return emails.keySet();
+        }
+
+        public Collection<String> getThreadIds() {
+            return threads.keySet();
+        }
     }
 }

@@ -53,6 +53,8 @@ public class MockMailServer extends StubMailServer {
     protected final Map<String, Email> emails = new HashMap<>();
     protected final Map<String, MailboxInfo> mailboxes = new HashMap<>();
 
+    protected final Map<String, Update> updates = new HashMap<>();
+
     private int state = 0;
 
     public MockMailServer(int numThreads) {
@@ -77,8 +79,22 @@ public class MockMailServer extends StubMailServer {
         }
     }
 
+    public Email generateEmailOnTop() {
+        final Email email = EmailGenerator.getOnTop("0", emails.size());
+        final String oldVersion = getState();
+        emails.put(email.getId(), email);
+        incrementState();
+        final String newVersion = getState();
+        this.updates.put(oldVersion, Update.created(email, newVersion));
+        return email;
+    }
+
     protected void incrementState() {
         this.state++;
+    }
+
+    protected String getState() {
+        return String.valueOf(this.state);
     }
 
     @Override
@@ -95,7 +111,22 @@ public class MockMailServer extends StubMailServer {
                             .build()
             };
         } else {
-            return new MethodResponse[]{new CannotCalculateChangesMethodErrorResponse()};
+            final Update update = this.updates.get(since);
+            if (update == null) {
+                return new MethodResponse[]{new CannotCalculateChangesMethodErrorResponse()};
+            } else {
+                final Changes changes = update.getChangesFor(Email.class);
+                return new MethodResponse[]{
+                        ChangesEmailMethodResponse.builder()
+                                .oldState(since)
+                                .newState(update.getNewVersion())
+                                .updated(changes.updated)
+                                .created(changes.created)
+                                .destroyed(new String[0])
+                                .hasMoreChanges(!update.getNewVersion().equals(getState()))
+                                .build()
+                };
+            }
         }
     }
 
@@ -175,7 +206,22 @@ public class MockMailServer extends StubMailServer {
                             .build()
             };
         } else {
-            return new MethodResponse[]{new CannotCalculateChangesMethodErrorResponse()};
+            final Update update = this.updates.get(since);
+            if (update == null) {
+                return new MethodResponse[]{new CannotCalculateChangesMethodErrorResponse()};
+            } else {
+                final Changes changes = update.getChangesFor(Mailbox.class);
+                return new MethodResponse[]{
+                        ChangesMailboxMethodResponse.builder()
+                                .oldState(since)
+                                .newState(update.getNewVersion())
+                                .updated(changes.updated)
+                                .created(changes.created)
+                                .destroyed(new String[0])
+                                .hasMoreChanges(!update.getNewVersion().equals(getState()))
+                                .build()
+                };
+            }
         }
     }
 
@@ -213,7 +259,22 @@ public class MockMailServer extends StubMailServer {
                             .build()
             };
         } else {
-            return new MethodResponse[]{new CannotCalculateChangesMethodErrorResponse()};
+            final Update update = this.updates.get(since);
+            if (update == null) {
+                return new MethodResponse[]{new CannotCalculateChangesMethodErrorResponse()};
+            } else {
+                final Changes changes = update.getChangesFor(Thread.class);
+                return new MethodResponse[]{
+                        ChangesThreadMethodResponse.builder()
+                                .oldState(since)
+                                .newState(update.getNewVersion())
+                                .updated(changes.updated)
+                                .created(changes.created)
+                                .destroyed(new String[0])
+                                .hasMoreChanges(!update.getNewVersion().equals(getState()))
+                                .build()
+                };
+            }
         }
     }
 
@@ -244,10 +305,6 @@ public class MockMailServer extends StubMailServer {
                         .state(getState())
                         .build()
         };
-    }
-
-    protected String getState() {
-        return String.valueOf(this.state);
     }
 
     protected static class MailboxInfo {
