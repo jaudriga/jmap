@@ -22,7 +22,9 @@ import rs.ltt.jmap.annotation.JmapNamespace;
 import rs.ltt.jmap.common.method.MethodCall;
 
 import java.lang.reflect.Field;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 public final class Namespace {
 
@@ -37,16 +39,40 @@ public final class Namespace {
     }
 
 
-    public static List<String> getImplicit(Class<? extends MethodCall> clazz) {
+    public static List<String> getImplicit(MethodCall methodCall) {
+        final Class<? extends MethodCall> clazz = methodCall.getClass();
         final ImmutableList.Builder<String> listBuilder = new ImmutableList.Builder<>();
         for (final Field field : clazz.getDeclaredFields()) {
             final JmapImplicitNamespace implicitNamespace = field.getAnnotation(JmapImplicitNamespace.class);
             final String namespace = implicitNamespace == null ? null : implicitNamespace.value();
-            if (namespace != null) {
+            if (namespace == null) {
+                continue;
+            }
+            try {
+                field.setAccessible(true);
+                final Object value = field.get(methodCall);
+                if (isNullOrEmpty(value)) {
+                    continue;
+                }
+                listBuilder.add(namespace);
+            } catch (final IllegalAccessException e) {
                 listBuilder.add(namespace);
             }
         }
         return listBuilder.build();
+    }
+
+    private static boolean isNullOrEmpty(final Object value) {
+        if (value == null) {
+            return true;
+        }
+        if (value instanceof Map && ((Map<?, ?>) value).isEmpty()) {
+            return true;
+        }
+        if (value instanceof Collection && ((Collection<?>) value).isEmpty()) {
+            return true;
+        }
+        return false;
     }
 
 }

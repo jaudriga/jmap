@@ -26,7 +26,7 @@ import java.util.*;
 
 public class Request {
 
-    private static final Map<Class<? extends MethodCall>, List<String>> NAMESPACE_CACHE = new HashMap<>();
+    private static final Map<Class<? extends MethodCall>, String> NAMESPACE_CACHE = new HashMap<>();
     private final String[] using;
     private final Invocation[] methodCalls;
 
@@ -35,9 +35,9 @@ public class Request {
         this.methodCalls = methodCalls;
     }
 
-    private static List<String> getNamespacesFor(Class<? extends MethodCall> clazz) {
+    private static String getNamespaceFor(final Class<? extends MethodCall> clazz) {
         synchronized (NAMESPACE_CACHE) {
-            final List<String> cached = NAMESPACE_CACHE.get(clazz);
+            final String cached = NAMESPACE_CACHE.get(clazz);
             if (cached != null) {
                 return cached;
             }
@@ -47,12 +47,8 @@ public class Request {
                         String.format("%s is missing a namespace. Annotate package with @JmapNamespace", clazz.getSimpleName())
                 );
             }
-            ImmutableList.Builder<String> listBuilder = new ImmutableList.Builder<>();
-            listBuilder.add(namespace);
-            listBuilder.addAll(Namespace.getImplicit(clazz));
-            List<String> namespaces = listBuilder.build();
-            NAMESPACE_CACHE.put(clazz, namespaces);
-            return namespaces;
+            NAMESPACE_CACHE.put(clazz, namespace);
+            return namespace;
         }
     }
 
@@ -138,8 +134,8 @@ public class Request {
 
     public static class Builder {
 
-        private List<Invocation> invocations = new ArrayList<>();
-        private Set<String> using = new TreeSet<>();
+        private final List<Invocation> invocations = new ArrayList<>();
+        private final Set<String> using = new TreeSet<>();
 
         public Builder() {
 
@@ -154,13 +150,14 @@ public class Request {
         public Builder add(Invocation invocation) {
             this.invocations.add(invocation);
             final Class<? extends MethodCall> clazz = invocation.methodCall.getClass();
-            this.using.addAll(getNamespacesFor(clazz));
-            if (invocation.methodCall instanceof SetEmailSubmissionMethodCall) {
+            this.using.add(getNamespaceFor(clazz));
+            this.using.addAll(Namespace.getImplicit(invocation.methodCall));
+            /*if (invocation.methodCall instanceof SetEmailSubmissionMethodCall) {
                 final SetEmailSubmissionMethodCall call = (SetEmailSubmissionMethodCall) invocation.methodCall;
                 if (call.getOnSuccessUpdateEmail() != null && !call.getOnSuccessUpdateEmail().isEmpty()) {
                     this.using.add(rs.ltt.jmap.Namespace.MAIL);
                 }
-            }
+            }*/
             return this;
         }
 

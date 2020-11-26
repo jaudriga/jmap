@@ -61,4 +61,29 @@ public class SetEmailSubmissionMethodCallTest extends AbstractGsonTest {
         Request request = new Request.Builder().call(submissionCall).build();
         Assertions.assertEquals(readResourceAsString("request/set-email-submission.json"), gson.toJson(request));
     }
+
+    @Test
+    public void setEmailSubmissionNoImplicitEmailUpdate() throws IOException {
+        final GsonBuilder builder = new GsonBuilder();
+        JmapAdapters.register(builder);
+        final Gson gson = builder.create();
+
+        final Patches.Builder patchesBuilder = Patches.builder();
+        patchesBuilder.remove("keywords/" + Keyword.DRAFT);
+        patchesBuilder.set("mailboxIds/MB3", true);
+        SetEmailSubmissionMethodCall submissionCall = SetEmailSubmissionMethodCall.builder()
+                .accountId("accountId")
+                .create(
+                        ImmutableMap.of(
+                                "es0",
+                                EmailSubmission.builder()
+                                        .emailId("M1234")
+                                        .identityId("I0")
+                                        .build()
+                        )
+                )
+                .build();
+        final Request request = new Request.Builder().call(submissionCall).build();
+        Assertions.assertEquals(readResourceAsString("request/set-email-submission-no-implicit.json"), gson.toJson(request));
+    }
 }
