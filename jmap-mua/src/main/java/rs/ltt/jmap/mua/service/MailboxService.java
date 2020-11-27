@@ -18,12 +18,13 @@ package rs.ltt.jmap.mua.service;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.google.common.util.concurrent.SettableFuture;
 import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 import org.checkerframework.checker.nullness.compatqual.NullableDecl;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rs.ltt.jmap.client.JmapClient;
@@ -39,7 +40,6 @@ import rs.ltt.jmap.common.method.response.mailbox.SetMailboxMethodResponse;
 import rs.ltt.jmap.mua.MuaSession;
 import rs.ltt.jmap.mua.SetMailboxException;
 import rs.ltt.jmap.mua.Status;
-import rs.ltt.jmap.mua.cache.CacheWriteException;
 import rs.ltt.jmap.mua.cache.ObjectsState;
 import rs.ltt.jmap.mua.cache.Update;
 import rs.ltt.jmap.mua.util.CreateUtil;
@@ -47,7 +47,6 @@ import rs.ltt.jmap.mua.util.MailboxUtil;
 import rs.ltt.jmap.mua.util.UpdateUtil;
 
 import java.util.Collection;
-import java.util.concurrent.ExecutionException;
 
 public class MailboxService extends MuaService {
 
@@ -78,22 +77,15 @@ public class MailboxService extends MuaService {
 
     protected ListenableFuture<Status> loadMailboxes(final JmapClient.MultiCall multiCall) {
         LOGGER.info("Fetching mailboxes");
-        final SettableFuture<Status> settableFuture = SettableFuture.create();
         final ListenableFuture<MethodResponses> getMailboxMethodResponsesFuture = multiCall.call(
                 GetMailboxMethodCall.builder().accountId(accountId).build()
         ).getMethodResponses();
-        getMailboxMethodResponsesFuture.addListener(() -> {
-            try {
-                GetMailboxMethodResponse response = getMailboxMethodResponsesFuture.get().getMain(GetMailboxMethodResponse.class);
-                Mailbox[] mailboxes = response.getList();
-                cache.setMailboxes(response.getTypedState(), mailboxes);
-                settableFuture.set(Status.of(mailboxes.length > 0));
-            } catch (InterruptedException | ExecutionException | CacheWriteException e) {
-                settableFuture.setException(extractException(e));
-            }
-
+        return Futures.transformAsync(getMailboxMethodResponsesFuture, methodResponses -> {
+            GetMailboxMethodResponse response = methodResponses.getMain(GetMailboxMethodResponse.class);
+            Mailbox[] mailboxes = response.getList();
+            cache.setMailboxes(response.getTypedState(), mailboxes);
+            return Futures.immediateFuture(Status.of(mailboxes.length > 0));
         }, ioExecutorService);
-        return settableFuture;
     }
 
     private ListenableFuture<Status> updateMailboxes(final String state) {

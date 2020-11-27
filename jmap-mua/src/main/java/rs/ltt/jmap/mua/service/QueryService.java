@@ -195,15 +195,14 @@ public class QueryService extends MuaService {
 
                 addQueryResult(query, afterEmailId, queryResult);
 
-                fetchMissing(query.toQueryString())
-                        .addListener(
-                                () -> settableFuture.set(queryResult.items.length > 0 ? Status.UPDATED : Status.UNCHANGED),
-                                MoreExecutors.directExecutor()
-                        );
-            } catch (ExecutionException exception) {
+                fetchMissing(query.toQueryString()).addListener(
+                        () -> settableFuture.set(queryResult.items.length > 0 ? Status.UPDATED : Status.UNCHANGED),
+                        MoreExecutors.directExecutor()
+                );
+            } catch (final ExecutionException exception) {
                 invalidateQueryCache(queryRefreshFuture, query, exception);
                 settableFuture.setException(extractException(exception));
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 settableFuture.setException(extractException(e));
             }
         }, ioExecutorService);
@@ -337,7 +336,6 @@ public class QueryService extends MuaService {
         );
 
         LOGGER.info("Performing initial query for {}", query.toString());
-        final SettableFuture<Status> settableFuture = SettableFuture.create();
         JmapClient.MultiCall multiCall = jmapClient.newMultiCall();
 
         //these need to be processed *before* the Query call or else the fetchMissing will not honor newly fetched ids
@@ -384,44 +382,39 @@ public class QueryService extends MuaService {
         }
 
         multiCall.execute();
-        queryResponsesFuture.addListener(() -> {
-            try {
-                QueryEmailMethodResponse queryResponse = queryResponsesFuture.get().getMain(QueryEmailMethodResponse.class);
-                GetEmailMethodResponse getThreadIdsResponse = getThreadIdsResponsesFuture.get().getMain(GetEmailMethodResponse.class);
+        return Futures.transformAsync(queryResponsesFuture, methodResponses -> {
+            QueryEmailMethodResponse queryResponse = methodResponses.getMain(QueryEmailMethodResponse.class);
+            GetEmailMethodResponse getThreadIdsResponse = getThreadIdsResponsesFuture.get().getMain(GetEmailMethodResponse.class);
 
-                final QueryResult queryResult = QueryResult.of(queryResponse, getThreadIdsResponse);
+            final QueryResult queryResult = QueryResult.of(queryResponse, getThreadIdsResponse);
 
-                //processing order is:
-                //  1) update Objects (Email, Threads, and Mailboxes)
-                //  2) if getThread or getEmails calls where made process those results
-                //  3) store query results; If query cache sees an outdated email state it will fail
-                transform(piggyBackedFuturesList).get();
+            //processing order is:
+            //  1) update Objects (Email, Threads, and Mailboxes)
+            //  2) if getThread or getEmails calls where made process those results
+            //  3) store query results; If query cache sees an outdated email state it will fail
+            transform(piggyBackedFuturesList).get();
 
-                if (getThreadsResponsesFuture != null && getEmailResponsesFuture != null) {
-                    GetThreadMethodResponse getThreadsResponse = getThreadsResponsesFuture.get().getMain(GetThreadMethodResponse.class);
-                    GetEmailMethodResponse getEmailResponse = getEmailResponsesFuture.get().getMain(GetEmailMethodResponse.class);
-                    cache.setThreadsAndEmails(getThreadsResponse.getTypedState(), getThreadsResponse.getList(), getEmailResponse.getTypedState(), getEmailResponse.getList());
-                }
+            if (getThreadsResponsesFuture != null && getEmailResponsesFuture != null) {
+                GetThreadMethodResponse getThreadsResponse = getThreadsResponsesFuture.get().getMain(GetThreadMethodResponse.class);
+                GetEmailMethodResponse getEmailResponse = getEmailResponsesFuture.get().getMain(GetEmailMethodResponse.class);
+                cache.setThreadsAndEmails(getThreadsResponse.getTypedState(), getThreadsResponse.getList(), getEmailResponse.getTypedState(), getEmailResponse.getList());
+            }
 
-                if (queryResult.position != 0) {
-                    throw new IllegalStateException("Server reported position " + queryResult.position + " in response to initial query. We expected 0");
-                }
+            if (queryResult.position != 0) {
+                throw new IllegalStateException("Server reported position " + queryResult.position + " in response to initial query. We expected 0");
+            }
 
-                cache.setQueryResult(query.toQueryString(), queryResult);
+            cache.setQueryResult(query.toQueryString(), queryResult);
 
-                if (getThreadsResponsesFuture != null && getEmailResponsesFuture != null) {
-                    settableFuture.set(Status.UPDATED);
-                } else {
-                    List<ListenableFuture<Status>> list = new ArrayList<>();
-                    list.add(Futures.immediateFuture(Status.UPDATED));
-                    list.add(fetchMissing(query.toQueryString()));
-                    settableFuture.setFuture(transform(list));
-                }
-            } catch (final Exception e) {
-                settableFuture.setException(extractException(e));
+            if (getThreadsResponsesFuture != null && getEmailResponsesFuture != null) {
+                return Futures.immediateFuture(Status.UPDATED);
+            } else {
+                List<ListenableFuture<Status>> list = new ArrayList<>();
+                list.add(Futures.immediateFuture(Status.UPDATED));
+                list.add(fetchMissing(query.toQueryString()));
+                return transform(list);
             }
         }, ioExecutorService);
-        return settableFuture;
     }
 
     //TODO we need to test this
@@ -462,7 +455,6 @@ public class QueryService extends MuaService {
             return Futures.immediateFuture(Status.UNCHANGED);
         }
         LOGGER.info("fetching " + missing.threadIds.size() + " missing threads");
-        final SettableFuture<Status> settableFuture = SettableFuture.create();
         final JmapClient.MultiCall multiCall = jmapClient.newMultiCall();
         final ListenableFuture<Status> updateThreadsFuture = getService(ThreadService.class).updateThreads(missing.threadState, multiCall);
         final ListenableFuture<Status> updateEmailsFuture = getService(EmailService.class).updateEmails(missing.emailState, multiCall);
@@ -481,29 +473,22 @@ public class QueryService extends MuaService {
                         .build()
         ).getMethodResponses();
         multiCall.execute();
-        getThreadsResponsesFuture.addListener(() -> {
-            try {
-                Status updateThreadsStatus = updateThreadsFuture.get();
-                if (updateThreadsStatus == Status.HAS_MORE) {
-                    //throw
-                }
-
-                Status updateEmailStatus = updateEmailsFuture.get();
-                if (updateEmailStatus == Status.HAS_MORE) {
-                    //throw
-                }
-
-                GetThreadMethodResponse getThreadMethodResponse = getThreadsResponsesFuture.get().getMain(GetThreadMethodResponse.class);
-                GetEmailMethodResponse getEmailMethodResponse = getEmailsResponsesFuture.get().getMain(GetEmailMethodResponse.class);
-                cache.addThreadsAndEmail(getThreadMethodResponse.getTypedState(), getThreadMethodResponse.getList(), getEmailMethodResponse.getTypedState(), getEmailMethodResponse.getList());
-
-                settableFuture.set(Status.UPDATED);
-
-            } catch (Exception e) {
-                settableFuture.setException(extractException(e));
+        return Futures.transformAsync(getThreadsResponsesFuture, methodResponses -> {
+            Status updateThreadsStatus = updateThreadsFuture.get();
+            if (updateThreadsStatus == Status.HAS_MORE) {
+                //throw
             }
 
+            Status updateEmailStatus = updateEmailsFuture.get();
+            if (updateEmailStatus == Status.HAS_MORE) {
+                //throw
+            }
+
+            GetThreadMethodResponse getThreadMethodResponse = methodResponses.getMain(GetThreadMethodResponse.class);
+            GetEmailMethodResponse getEmailMethodResponse = getEmailsResponsesFuture.get().getMain(GetEmailMethodResponse.class);
+            cache.addThreadsAndEmail(getThreadMethodResponse.getTypedState(), getThreadMethodResponse.getList(), getEmailMethodResponse.getTypedState(), getEmailMethodResponse.getList());
+
+            return Futures.immediateFuture(Status.UPDATED);
         }, ioExecutorService);
-        return settableFuture;
     }
 }

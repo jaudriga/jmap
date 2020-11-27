@@ -17,7 +17,9 @@
 package rs.ltt.jmap.mua.service;
 
 import com.google.common.base.Preconditions;
-import com.google.common.util.concurrent.*;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rs.ltt.jmap.client.JmapClient;
@@ -58,21 +60,15 @@ public class IdentityService extends MuaService {
     }
 
     private ListenableFuture<Status> loadIdentities(final JmapClient.MultiCall multiCall) {
-        final SettableFuture<Status> settableFuture = SettableFuture.create();
         final ListenableFuture<MethodResponses> responseFuture = multiCall.call(
                 GetIdentityMethodCall.builder().accountId(accountId).build()
         ).getMethodResponses();
-        responseFuture.addListener(() -> {
-            try {
-                final GetIdentityMethodResponse response = responseFuture.get().getMain(GetIdentityMethodResponse.class);
-                final Identity[] identities = response.getList();
-                cache.setIdentities(response.getTypedState(), identities);
-                settableFuture.set(Status.of(identities.length > 0));
-            } catch (Exception e) {
-                settableFuture.setException(extractException(e));
-            }
+        return Futures.transformAsync(responseFuture, methodResponses -> {
+            final GetIdentityMethodResponse response = methodResponses.getMain(GetIdentityMethodResponse.class);
+            final Identity[] identities = response.getList();
+            cache.setIdentities(response.getTypedState(), identities);
+            return Futures.immediateFuture(Status.of(identities.length > 0));
         }, ioExecutorService);
-        return settableFuture;
     }
 
     private ListenableFuture<Status> updateIdentities(final String state) {
