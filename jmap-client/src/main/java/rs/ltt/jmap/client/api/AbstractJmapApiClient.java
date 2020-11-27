@@ -16,9 +16,11 @@
 
 package rs.ltt.jmap.client.api;
 
-import com.google.common.util.concurrent.SettableFuture;
+import com.google.common.util.concurrent.*;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
+import org.jetbrains.annotations.Nullable;
 import rs.ltt.jmap.client.JmapRequest;
 import rs.ltt.jmap.client.MethodResponses;
 import rs.ltt.jmap.client.util.ResponseAnalyzer;
@@ -30,7 +32,6 @@ import rs.ltt.jmap.common.method.MethodErrorResponse;
 import rs.ltt.jmap.common.method.MethodResponse;
 import rs.ltt.jmap.gson.JmapAdapters;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Map;
@@ -46,9 +47,10 @@ public abstract class AbstractJmapApiClient implements JmapApiClient {
 
     @Override
     public void execute(final JmapRequest jmapRequest) {
-        try {
-            final Gson gson = gsonBuilder.create();
-            try (final InputStream inputStream = send(gson.toJson(jmapRequest.getRequest()))) {
+        final Gson gson = gsonBuilder.create();
+        Futures.addCallback(send(gson.toJson(jmapRequest.getRequest())), new FutureCallback<InputStream>() {
+            @Override
+            public void onSuccess(final InputStream inputStream) {
                 final GenericResponse genericResponse = gson.fromJson(new InputStreamReader(inputStream), GenericResponse.class);
                 if (genericResponse instanceof ErrorResponse) {
                     jmapRequest.setException(new ErrorResponseException((ErrorResponse) genericResponse));
@@ -60,7 +62,7 @@ public abstract class AbstractJmapApiClient implements JmapApiClient {
                     // Notify about potentially updated session state *before* setting the response futures. This way we'll
                     // make sure that additional requests guarded by a wait on one of the response futures will trigger
                     // re-fetching the session resource.
-                    this.onSessionStateRetrieved(response.getSessionState());
+                    onSessionStateRetrieved(response.getSessionState());
 
                     for (Map.Entry<Request.Invocation, SettableFuture<MethodResponses>> entry : map.entrySet()) {
                         final Request.Invocation invocation = entry.getKey();
@@ -72,8 +74,7 @@ public abstract class AbstractJmapApiClient implements JmapApiClient {
                         }
                         final MethodResponse main = methodResponses.getMain();
                         if (main instanceof MethodErrorResponse) {
-                            future.setException(new MethodErrorResponseException(
-                                    (MethodErrorResponse) main,
+                            future.setException(new MethodErrorResponseException((MethodErrorResponse) main,
                                     methodResponses.getAdditional(),
                                     invocation.getMethodCall())
                             );
@@ -83,12 +84,15 @@ public abstract class AbstractJmapApiClient implements JmapApiClient {
                     }
                 }
             }
-        } catch (Exception e) {
-            jmapRequest.setException(e);
-        }
+
+            @Override
+            public void onFailure(@NonNullDecl Throwable throwable) {
+                jmapRequest.setException(throwable);
+            }
+        }, MoreExecutors.directExecutor());
     }
 
     abstract void onSessionStateRetrieved(String sessionState);
 
-    abstract InputStream send(String out) throws IOException, JmapApiException;
+    abstract ListenableFuture<InputStream> send(String out);
 }

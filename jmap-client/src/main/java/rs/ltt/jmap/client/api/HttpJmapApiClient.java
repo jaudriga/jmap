@@ -17,8 +17,11 @@
 package rs.ltt.jmap.client.api;
 
 
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 import okhttp3.*;
 import okhttp3.logging.HttpLoggingInterceptor;
+import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -81,25 +84,45 @@ public class HttpJmapApiClient extends AbstractJmapApiClient {
     }
 
     @Override
-    InputStream send(String out) throws IOException, JmapApiException {
-        Request.Builder requestBuilder = new Request.Builder();
+    ListenableFuture<InputStream> send(final String out) {
+        final SettableFuture<InputStream> settableInputStreamFuture = SettableFuture.create();
+        final Request.Builder requestBuilder = new Request.Builder();
         requestBuilder.url(apiUrl);
         this.httpAuthentication.authenticate(requestBuilder);
-        requestBuilder.post(RequestBody.create(MEDIA_TYPE_JSON, out));
-        final Response response = OK_HTTP_CLIENT.newCall(requestBuilder.build()).execute();
-        final int code = response.code();
-        if (code == 404) {
-            throw new EndpointNotFoundException(String.format("API URL(%s) not found", apiUrl));
-        }
-        if (code == 401) {
-            throw new UnauthorizedException(String.format("API URL(%s) was unauthorized", apiUrl));
-        }
+        requestBuilder.post(RequestBody.create(out, MEDIA_TYPE_JSON));
+        OK_HTTP_CLIENT.newCall(requestBuilder.build()).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NonNullDecl Call call, @NonNullDecl IOException e) {
+                settableInputStreamFuture.setException(e);
+            }
 
-        //TODO: code 500+ should probably just throw internal server error exception
-        final ResponseBody body = response.body();
-        if (body == null) {
-            throw new IllegalStateException("response body was empty");
-        }
-        return body.byteStream();
+            @Override
+            public void onResponse(@NonNullDecl Call call, @NonNullDecl Response response) throws IOException {
+                final int code = response.code();
+                if (code == 404) {
+                    settableInputStreamFuture.setException(
+                            new EndpointNotFoundException(String.format("API URL(%s) not found", apiUrl))
+                    );
+                    return;
+                }
+                if (code == 401) {
+                    settableInputStreamFuture.setException(
+                            new UnauthorizedException(String.format("API URL(%s) was unauthorized", apiUrl))
+                    );
+                    return;
+                }
+
+                //TODO: code 500+ should probably just throw internal server error exception
+                final ResponseBody body = response.body();
+                if (body == null) {
+                    settableInputStreamFuture.setException(
+                            new IllegalStateException("response body was empty")
+                    );
+                    return;
+                }
+                settableInputStreamFuture.set(body.byteStream());
+            }
+        });
+        return settableInputStreamFuture;
     }
 }
