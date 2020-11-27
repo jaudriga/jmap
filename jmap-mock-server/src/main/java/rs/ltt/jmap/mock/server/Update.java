@@ -49,7 +49,7 @@ public class Update {
         final ImmutableMap.Builder<Class<? extends AbstractIdentifiableEntity>, Changes> builder = new ImmutableMap.Builder<>();
         builder.put(Email.class, new Changes(emails.stream().map(Email::getId).toArray(String[]::new), new String[0]));
         builder.put(Thread.class, new Changes(new String[0], new String[0]));
-        builder.put(Mailbox.class, new Changes(emails.stream().map(email -> email.getMailboxIds().keySet()).flatMap(Collection::stream).toArray(String[]::new), new String[0]));
+        builder.put(Mailbox.class, new Changes(emails.stream().map(email -> email.getMailboxIds().keySet()).flatMap(Collection::stream).distinct().toArray(String[]::new), new String[0]));
         return new Update(builder.build(), newVersion);
     }
 

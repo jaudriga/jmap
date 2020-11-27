@@ -22,6 +22,10 @@ import rs.ltt.jmap.common.entity.TypedState;
 import rs.ltt.jmap.common.method.response.standard.ChangesMethodResponse;
 import rs.ltt.jmap.common.method.response.standard.GetMethodResponse;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
 //TODO: together with AbstractUpdate and QueryUpdate this can probably be moved to jmap-client
 public class Update<T extends AbstractIdentifiableEntity> extends AbstractUpdate<T> {
 
@@ -37,12 +41,28 @@ public class Update<T extends AbstractIdentifiableEntity> extends AbstractUpdate
     }
 
     public static <T extends AbstractIdentifiableEntity> Update<T> of(ChangesMethodResponse<T> changesMethodResponse, GetMethodResponse<T> createdMethodResponse, GetMethodResponse<T> updatedMethodResponse) {
+        checkEquals(
+                Arrays.asList(changesMethodResponse.getCreated()),
+                Arrays.stream(createdMethodResponse.getList()).map(AbstractIdentifiableEntity::getId).collect(Collectors.toList()),
+                String.format("IDs returned by %s.created does not match ids found in Get call", changesMethodResponse.getClass().getSimpleName())
+        );
+        checkEquals(
+                Arrays.asList(changesMethodResponse.getUpdated()),
+                Arrays.stream(updatedMethodResponse.getList()).map(AbstractIdentifiableEntity::getId).collect(Collectors.toList()),
+                String.format("IDs returned by %s.updated does not match ids found in Get call", changesMethodResponse.getClass().getSimpleName())
+        );
         return new Update<T>(changesMethodResponse.getTypedOldState(),
                 changesMethodResponse.getTypedNewState(),
                 createdMethodResponse.getList(),
                 updatedMethodResponse.getList(),
                 changesMethodResponse.getDestroyed(),
                 changesMethodResponse.isHasMoreChanges());
+    }
+
+    private static void checkEquals(List<String> a, List<String> b, String message) {
+        if (!a.equals(b)) {
+            throw new IllegalStateException(message);
+        }
     }
 
     public T[] getCreated() {
