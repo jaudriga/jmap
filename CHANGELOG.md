@@ -1,3 +1,10 @@
+### 0.5.0
+
+* added server-side JSON (de)serializer
+* added mock-server for better unit tests
+* bumped OkHttp version
+* run JMAP response processing on OkHttp threads via callbacks 
+
 ### 0.4.0 (2020-07-16)
 
 * Internal code refactor and clean-ups
