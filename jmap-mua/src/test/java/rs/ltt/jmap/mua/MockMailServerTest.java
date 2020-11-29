@@ -19,16 +19,14 @@ package rs.ltt.jmap.mua;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import rs.ltt.jmap.common.entity.Email;
-import rs.ltt.jmap.common.entity.IdentifiableEmailWithKeywords;
-import rs.ltt.jmap.common.entity.Keyword;
-import rs.ltt.jmap.common.entity.Mailbox;
+import rs.ltt.jmap.common.entity.*;
 import rs.ltt.jmap.common.entity.filter.EmailFilterCondition;
 import rs.ltt.jmap.common.entity.filter.FilterOperator;
 import rs.ltt.jmap.common.entity.query.EmailQuery;
 import rs.ltt.jmap.mock.server.JmapDispatcher;
 import rs.ltt.jmap.mock.server.MockMailServer;
 import rs.ltt.jmap.mua.cache.InMemoryCache;
+import rs.ltt.jmap.mua.util.MailboxUtil;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -106,15 +104,15 @@ public class MockMailServerTest {
                 .accountId(JmapDispatcher.ACCOUNT_ID)
                 .build()) {
             mua.query(EmailQuery.unfiltered()).get();
-            final Mailbox mailboxBeforeModification = cache.getMailbox("0");
+            final Mailbox mailboxBeforeModification = cache.getMailbox(Role.INBOX);
             Assertions.assertEquals(2, mailboxBeforeModification.getUnreadThreads(), "Miss match in unread threads");
             Assertions.assertEquals(3, mailboxBeforeModification.getUnreadEmails(), "Miss match in unread emails");
-            final List<IdentifiableEmailWithKeywords> emails = cache.getEmails("T1");
+            final List<CachedEmail> emails = cache.getEmails("T1");
             mua.setKeyword(emails, Keyword.SEEN).get();
 
             mua.refresh().get();
 
-            final Mailbox mailboxAfterModification = cache.getMailbox("0");
+            final Mailbox mailboxAfterModification = cache.getMailbox(Role.INBOX);
             Assertions.assertEquals(
                     1,
                     mailboxAfterModification.getUnreadThreads(),
@@ -129,6 +127,39 @@ public class MockMailServerTest {
         server.shutdown();
     }
 
+    @Test
+    public void queryAndRemoveFromInbox() throws ExecutionException, InterruptedException {
+        final MockWebServer server = new MockWebServer();
+        final MockMailServer mailServer = new MockMailServer(2);
+        server.setDispatcher(mailServer);
+        final MyInMemoryCache cache = new MyInMemoryCache();
+        try (final Mua mua = Mua.builder()
+                .cache(cache)
+                .sessionResource(server.url(JmapDispatcher.WELL_KNOWN_PATH))
+                .username(JmapDispatcher.USERNAME)
+                .password(JmapDispatcher.PASSWORD)
+                .accountId(JmapDispatcher.ACCOUNT_ID)
+                .build()) {
+            mua.query(EmailQuery.unfiltered()).get();
+            final List<CachedEmail> emails = cache.getEmails("T1");
+            mua.archive(emails).get();
+            //creating the archive mailbox and adding email are two steps / two versions
+            Assertions.assertEquals(Status.HAS_MORE, mua.refresh().get());
+            Assertions.assertEquals(Status.UPDATED, mua.refresh().get());
+
+            final Mailbox inboxAfterModification = cache.getMailbox(Role.INBOX);
+            final Mailbox archiveAfterModification = cache.getMailbox(Role.ARCHIVE);
+
+            Assertions.assertNotNull(archiveAfterModification);
+
+            Assertions.assertEquals(1, archiveAfterModification.getUnreadThreads());
+            Assertions.assertEquals(1, inboxAfterModification.getUnreadThreads());
+
+            Assertions.assertEquals(2, archiveAfterModification.getTotalEmails());
+            Assertions.assertEquals(1, inboxAfterModification.getTotalEmails());
+        }
+    }
+
     private static class MyInMemoryCache extends InMemoryCache {
         public Collection<String> getEmailIds() {
             return emails.keySet();
@@ -138,21 +169,21 @@ public class MockMailServerTest {
             return threads.keySet();
         }
 
-        private List<IdentifiableEmailWithKeywords> getEmails(final String threadId) {
+        private List<CachedEmail> getEmails(final String threadId) {
             List<String> emailIds = this.threads.get(threadId).getEmailIds();
-            return emailIds.stream().map(id -> new MyIdentifiableEmailWithKeywords(emails.get(id))).collect(Collectors.toList());
+            return emailIds.stream().map(id -> new CachedEmail(emails.get(id))).collect(Collectors.toList());
         }
 
-        public Mailbox getMailbox(final String id) {
-            return this.mailboxes.get(id);
+        public Mailbox getMailbox(final Role role) {
+            return (Mailbox) MailboxUtil.find(this.mailboxes.values(), role);
         }
     }
 
-    private static class MyIdentifiableEmailWithKeywords implements IdentifiableEmailWithKeywords {
+    private static class CachedEmail implements IdentifiableEmailWithKeywords, IdentifiableEmailWithMailboxIds {
 
         private final Email inner;
 
-        private MyIdentifiableEmailWithKeywords(Email inner) {
+        private CachedEmail(Email inner) {
             this.inner = inner;
         }
 
@@ -165,6 +196,12 @@ public class MockMailServerTest {
         @Override
         public String getId() {
             return inner.getId();
+        }
+
+        @Override
+        public Map<String, Boolean> getMailboxIds() {
+            final Map<String, Boolean> mailboxIds = inner.getMailboxIds();
+            return mailboxIds == null ? Collections.emptyMap() : mailboxIds;
         }
     }
 }

@@ -21,8 +21,10 @@ import rs.ltt.jmap.common.entity.AbstractIdentifiableEntity;
 import rs.ltt.jmap.common.entity.Email;
 import rs.ltt.jmap.common.entity.Mailbox;
 import rs.ltt.jmap.common.entity.Thread;
+import rs.ltt.jmap.common.method.response.mailbox.SetMailboxMethodResponse;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 
 public class Update {
@@ -37,6 +39,22 @@ public class Update {
         this.newVersion = newVersion;
     }
 
+    public static Update of(SetMailboxMethodResponse setMailboxMethodResponse, final String newVersion) {
+        return new Update(
+                ImmutableMap.of(
+                        Mailbox.class,
+                        new Changes(
+                                nullToEmpty(setMailboxMethodResponse.getUpdated()).keySet().toArray(new String[0]),
+                                nullToEmpty(setMailboxMethodResponse.getCreated()).values().stream().map(Mailbox::getId).toArray(String[]::new))
+                        ),
+                newVersion
+        );
+    }
+
+    private static <T extends AbstractIdentifiableEntity> Map<String,T> nullToEmpty(Map<String, T> value) {
+        return value == null ? Collections.emptyMap() : value;
+    }
+
     public static Update created(Email email, String newVersion) {
         final ImmutableMap.Builder<Class<? extends AbstractIdentifiableEntity>, Changes> builder = new ImmutableMap.Builder<>();
         builder.put(Email.class, new Changes(new String[0], new String[]{email.getId()}));
@@ -45,11 +63,11 @@ public class Update {
         return new Update(builder.build(), newVersion);
     }
 
-    public static Update updated(final Collection<Email> emails, String newVersion) {
+    public static Update updated(final Collection<Email> emails, final Collection<String> mailboxes, String newVersion) {
         final ImmutableMap.Builder<Class<? extends AbstractIdentifiableEntity>, Changes> builder = new ImmutableMap.Builder<>();
         builder.put(Email.class, new Changes(emails.stream().map(Email::getId).toArray(String[]::new), new String[0]));
         builder.put(Thread.class, new Changes(new String[0], new String[0]));
-        builder.put(Mailbox.class, new Changes(emails.stream().map(email -> email.getMailboxIds().keySet()).flatMap(Collection::stream).distinct().toArray(String[]::new), new String[0]));
+        builder.put(Mailbox.class, new Changes(mailboxes.toArray(new String[0]), new String[0]));
         return new Update(builder.build(), newVersion);
     }
 

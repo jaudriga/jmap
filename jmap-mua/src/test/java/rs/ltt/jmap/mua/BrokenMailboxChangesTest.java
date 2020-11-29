@@ -16,7 +16,6 @@
 
 package rs.ltt.jmap.mua;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ListMultimap;
 import okhttp3.mockwebserver.MockWebServer;
 import org.hamcrest.CoreMatchers;
@@ -42,12 +41,10 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 /**
- *
  * This patches MockMailServer to ignore the resultReference in Mailbox/get. This leads to GetMailbox always returning
  * all mailboxes. Even for calls triggered by changes.created and changes.updated
  * This means when processing the update on the client side we will find mailboxes returned that are not references by
  * the result of Mailbox/changes
- *
  */
 public class BrokenMailboxChangesTest {
 
@@ -101,19 +98,14 @@ public class BrokenMailboxChangesTest {
 
         @Override
         protected MethodResponse[] execute(GetMailboxMethodCall methodCall, ListMultimap<String, Response.Invocation> previousResponses) {
-            final ImmutableList.Builder<Mailbox> mailboxListBuilder = new ImmutableList.Builder<>();
-            for (final Map.Entry<String, MailboxInfo> entry : mailboxes.entrySet()) {
-                final String id = entry.getKey();
-                final MailboxInfo mailboxInfo = entry.getValue();
-                mailboxListBuilder.add(Mailbox.builder()
-                        .id(id)
-                        .name(mailboxInfo.name)
-                        .role(mailboxInfo.role)
-                        .build());
-            }
             return new MethodResponse[]{
                     GetMailboxMethodResponse.builder()
-                            .list(mailboxListBuilder.build().toArray(new Mailbox[0]))
+                            .list(mailboxes.values().stream()
+                                    .map(mailboxInfo -> Mailbox.builder()
+                                            .id(mailboxInfo.getId())
+                                            .name(mailboxInfo.getName())
+                                            .role(mailboxInfo.getRole())
+                                            .build()).toArray(Mailbox[]::new))
                             .state(getState())
                             .build()
             };

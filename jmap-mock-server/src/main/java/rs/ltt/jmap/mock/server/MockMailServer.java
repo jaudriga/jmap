@@ -16,10 +16,12 @@
 
 package rs.ltt.jmap.mock.server;
 
+import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ListMultimap;
+import com.google.common.collect.Maps;
 import rs.ltt.jmap.common.Request;
 import rs.ltt.jmap.common.Response;
 import rs.ltt.jmap.common.entity.*;
@@ -28,15 +30,19 @@ import rs.ltt.jmap.common.method.MethodResponse;
 import rs.ltt.jmap.common.method.call.email.*;
 import rs.ltt.jmap.common.method.call.mailbox.ChangesMailboxMethodCall;
 import rs.ltt.jmap.common.method.call.mailbox.GetMailboxMethodCall;
+import rs.ltt.jmap.common.method.call.mailbox.SetMailboxMethodCall;
 import rs.ltt.jmap.common.method.call.thread.ChangesThreadMethodCall;
 import rs.ltt.jmap.common.method.call.thread.GetThreadMethodCall;
 import rs.ltt.jmap.common.method.error.CannotCalculateChangesMethodErrorResponse;
 import rs.ltt.jmap.common.method.error.InvalidResultReferenceMethodErrorResponse;
+import rs.ltt.jmap.common.method.error.UnknownMethodMethodErrorResponse;
 import rs.ltt.jmap.common.method.response.email.*;
 import rs.ltt.jmap.common.method.response.mailbox.ChangesMailboxMethodResponse;
 import rs.ltt.jmap.common.method.response.mailbox.GetMailboxMethodResponse;
+import rs.ltt.jmap.common.method.response.mailbox.SetMailboxMethodResponse;
 import rs.ltt.jmap.common.method.response.thread.ChangesThreadMethodResponse;
 import rs.ltt.jmap.common.method.response.thread.GetThreadMethodResponse;
+import rs.ltt.jmap.mua.util.MailboxUtil;
 
 import java.util.*;
 import java.util.Comparator;
@@ -58,9 +64,17 @@ public class MockMailServer extends StubMailServer {
     }
 
     protected void setup(int numThreads) {
-        final String inboxId = "0";
-        this.mailboxes.put(inboxId, new MailboxInfo("Inbox", Role.INBOX));
-        generateEmail(inboxId, numThreads);
+        this.mailboxes.putAll(Maps.uniqueIndex(generateMailboxes(), MailboxInfo::getId));
+        generateEmail(
+                MailboxUtil.find(mailboxes.values(), Role.INBOX).getId(),
+                numThreads
+        );
+    }
+
+    protected List<MailboxInfo> generateMailboxes() {
+        return Arrays.asList(
+                 new MailboxInfo(UUID.randomUUID().toString(), "Inbox", Role.INBOX)
+        );
     }
 
     private void generateEmail(final String mailboxId, final int numThreads) {
@@ -76,7 +90,10 @@ public class MockMailServer extends StubMailServer {
     }
 
     public Email generateEmailOnTop() {
-        final Email email = EmailGenerator.getOnTop("0", emails.size());
+        final Email email = EmailGenerator.getOnTop(
+                MailboxUtil.find(mailboxes.values(), Role.INBOX).getId(),
+                emails.size()
+        );
         final String oldVersion = getState();
         emails.put(email.getId(), email);
         incrementState();
@@ -120,8 +137,8 @@ public class MockMailServer extends StubMailServer {
                         ChangesEmailMethodResponse.builder()
                                 .oldState(since)
                                 .newState(update.getNewVersion())
-                                .updated(changes.updated)
-                                .created(changes.created)
+                                .updated(changes == null ? new String[0] : changes.updated)
+                                .created(changes == null ? new String[0] : changes.created)
                                 .destroyed(new String[0])
                                 .hasMoreChanges(!update.getNewVersion().equals(getState()))
                                 .build()
@@ -187,6 +204,21 @@ public class MockMailServer extends StubMailServer {
                         } else {
                             throw new IllegalStateException("Keyword modification was not split into two parts");
                         }
+                    } else if (parameter.equals("mailboxIds")) {
+                        if (pathParts.size() == 2 && modification instanceof Boolean) {
+                            final String mailboxId = pathParts.get(1);
+                            final Boolean value = (Boolean) modification;
+                            emailBuilder.mailboxId(mailboxId, value);
+                        } else if (modification instanceof Map){
+                            final Map<String, Boolean> mailboxMap = (Map<String, Boolean>) modification;
+                            emailBuilder.clearMailboxIds();
+                            for(Map.Entry<String, Boolean> mailboxEntry : mailboxMap.entrySet()) {
+                                final String mailboxId = CreationIdResolver.resolveIfNecessary(mailboxEntry.getKey(), previousResponses);
+                                emailBuilder.mailboxId(mailboxId, mailboxEntry.getValue());
+                            }
+                        } else {
+                            throw new IllegalStateException("Unknown patch object for path "+fullPath);
+                        }
                     } else {
                         throw new IllegalStateException("Unable to patch "+fullPath);
                     }
@@ -198,7 +230,7 @@ public class MockMailServer extends StubMailServer {
             }
             incrementState();
             final String newState = getState();
-            updates.put(oldState, Update.updated(modifiedEmail, newState));
+            updates.put(oldState, Update.updated(modifiedEmail, this.mailboxes.keySet(), newState));
         }
         return new MethodResponse[]{
                 //jmap-mua mostly ignores the return values and instead just fetches again
@@ -273,6 +305,31 @@ public class MockMailServer extends StubMailServer {
         }
     }
 
+    private Mailbox toMailbox(MailboxInfo mailboxInfo) {
+        return Mailbox.builder()
+                .id(mailboxInfo.getId())
+                .name(mailboxInfo.name)
+                .role(mailboxInfo.role)
+                .totalEmails(emails.values().stream()
+                        .filter(e->e.getMailboxIds().containsKey(mailboxInfo.getId()))
+                        .count()
+                )
+                .unreadEmails(emails.values().stream()
+                        .filter(e->e.getMailboxIds().containsKey(mailboxInfo.getId()))
+                        .filter(e->!e.getKeywords().containsKey(Keyword.SEEN))
+                        .count())
+                .totalThreads(emails.values().stream()
+                        .filter(e->e.getMailboxIds().containsKey(mailboxInfo.getId()))
+                        .map(Email::getThreadId)
+                        .distinct().count())
+                .unreadThreads(emails.values().stream()
+                        .filter(e->e.getMailboxIds().containsKey(mailboxInfo.getId()))
+                        .filter(e->!e.getKeywords().containsKey(Keyword.SEEN))
+                        .map(Email::getThreadId)
+                        .distinct().count())
+                .build();
+    }
+
     @Override
     protected MethodResponse[] execute(GetMailboxMethodCall methodCall, ListMultimap<String, Response.Invocation> previousResponses) {
         final Request.Invocation.ResultReference idsReference = methodCall.getIdsReference();
@@ -287,38 +344,36 @@ public class MockMailServer extends StubMailServer {
             final String[] idsParameter = methodCall.getIds();
             ids = idsParameter == null ? null : Arrays.asList(idsParameter);
         }
-        final ImmutableList.Builder<Mailbox> mailboxListBuilder = new ImmutableList.Builder<>();
-        for (final Map.Entry<String, MailboxInfo> entry : mailboxes.entrySet()) {
-            final String id = entry.getKey();
-            final MailboxInfo mailboxInfo = entry.getValue();
-            mailboxListBuilder.add(Mailbox.builder()
-                    .id(id)
-                    .name(mailboxInfo.name)
-                    .role(mailboxInfo.role)
-                    .totalEmails(emails.values().stream()
-                            .filter(e->e.getMailboxIds().containsKey(id))
-                            .count()
-                    )
-                    .unreadEmails(emails.values().stream()
-                            .filter(e->e.getMailboxIds().containsKey(id))
-                            .filter(e->!e.getKeywords().containsKey(Keyword.SEEN))
-                            .count())
-                    .totalThreads(emails.values().stream()
-                            .filter(e->e.getMailboxIds().containsKey(id))
-                            .map(Email::getThreadId)
-                            .distinct().count())
-                    .unreadThreads(emails.values().stream()
-                            .filter(e->e.getMailboxIds().containsKey(id))
-                            .filter(e->!e.getKeywords().containsKey(Keyword.SEEN))
-                            .map(Email::getThreadId)
-                            .distinct().count())
-                    .build());
-        }
+        Stream<Mailbox> mailboxStream = mailboxes.values().stream().map(this::toMailbox);
         return new MethodResponse[]{
                 GetMailboxMethodResponse.builder()
-                        .list(mailboxListBuilder.build().stream().filter(m -> ids == null || ids.contains(m.getId())).toArray(Mailbox[]::new))
+                        .list(mailboxStream.filter(m -> ids == null || ids.contains(m.getId())).toArray(Mailbox[]::new))
                         .state(getState())
                         .build()
+        };
+    }
+
+    protected MethodResponse[] execute(final SetMailboxMethodCall methodCall, ListMultimap<String, Response.Invocation> previousResponses) {
+        final Map<String, Mailbox> create = methodCall.getCreate();
+        final SetMailboxMethodResponse.SetMailboxMethodResponseBuilder responseBuilder = SetMailboxMethodResponse.builder();
+        for(Map.Entry<String, Mailbox> entry : create.entrySet()) {
+            final String createId = entry.getKey();
+            final Mailbox mailbox = entry.getValue();
+            final String id = UUID.randomUUID().toString();
+            final MailboxInfo mailboxInfo = new MailboxInfo(
+                    id,
+                    mailbox.getName(),
+                    mailbox.getRole()
+            );
+            this.mailboxes.put(id, mailboxInfo);
+            responseBuilder.created(createId, toMailbox(mailboxInfo));
+        }
+        final String oldVersion = getState();
+        incrementState();
+        final SetMailboxMethodResponse setMailboxResponse = responseBuilder.build();
+        updates.put(oldVersion, Update.of(setMailboxResponse, getState()));
+        return new MethodResponse[]{
+                setMailboxResponse
         };
     }
 
@@ -345,8 +400,8 @@ public class MockMailServer extends StubMailServer {
                         ChangesThreadMethodResponse.builder()
                                 .oldState(since)
                                 .newState(update.getNewVersion())
-                                .updated(changes.updated)
-                                .created(changes.created)
+                                .updated(changes == null ? new String[0] : changes.updated)
+                                .created(changes == null ? new String[0] : changes.created)
                                 .destroyed(new String[0])
                                 .hasMoreChanges(!update.getNewVersion().equals(getState()))
                                 .build()
@@ -384,13 +439,30 @@ public class MockMailServer extends StubMailServer {
         };
     }
 
-    protected static class MailboxInfo {
-        public final String name;
-        public final Role role;
+    protected static class MailboxInfo implements IdentifiableMailboxWithRole {
 
-        public MailboxInfo(String name, Role role) {
+        private final String id;
+        private final String name;
+        private final Role role;
+
+        public MailboxInfo(final String id, String name, Role role) {
+            this.id = id;
             this.name = name;
             this.role = role;
+        }
+
+        @Override
+        public Role getRole() {
+            return this.role;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        @Override
+        public String getId() {
+            return id;
         }
     }
 

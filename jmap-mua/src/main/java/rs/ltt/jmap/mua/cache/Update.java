@@ -61,6 +61,7 @@ public class Update<T extends AbstractIdentifiableEntity> extends AbstractUpdate
 
     private static void checkEquals(List<String> a, List<String> b, String message) {
         if (!a.equals(b)) {
+            System.out.println("comparing "+a+" and "+b);
             throw new IllegalStateException(message);
         }
     }

@@ -17,6 +17,7 @@
 package rs.ltt.jmap.common.method.response.mailbox;
 
 import lombok.Builder;
+import lombok.Singular;
 import rs.ltt.jmap.annotation.JmapMethod;
 import rs.ltt.jmap.common.entity.Mailbox;
 import rs.ltt.jmap.common.entity.SetError;
@@ -31,7 +32,7 @@ public class SetMailboxMethodResponse extends SetMethodResponse<Mailbox> {
     public SetMailboxMethodResponse(String accountId,
                                     String oldState,
                                     String newState,
-                                    Map<String, Mailbox> created,
+                                    @Singular("created") Map<String, Mailbox> created,
                                     Map<String, Mailbox> updated,
                                     String[] destroyed,
                                     Map<String, SetError> notCreated,
