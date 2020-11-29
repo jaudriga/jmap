@@ -24,7 +24,7 @@ import rs.ltt.jmap.common.entity.filter.MailboxFilterCondition;
 
 @Getter
 @JmapEntity(filterCondition = MailboxFilterCondition.class)
-public class Mailbox extends AbstractIdentifiableEntity implements IdentifiableMailboxWithRole {
+public class Mailbox extends AbstractIdentifiableEntity implements IdentifiableMailboxWithRoleAndName {
 
     private String name;
 

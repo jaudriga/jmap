@@ -20,12 +20,15 @@ import com.google.common.base.MoreObjects;
 
 public class SetError {
 
-    //TODO: maybe convert this into enum
+    public SetError(SetErrorType type, String description) {
+        this.type = type;
+        this.description = description;
+    }
 
-    private String type;
+    private SetErrorType type;
     private String description;
 
-    public String getType() {
+    public SetErrorType getType() {
         return type;
     }
 

@@ -138,6 +138,23 @@ public class InMemoryCache implements Cache {
     }
 
     @Override
+    public IdentifiableMailboxWithRoleAndName getMailboxByNameAndParent(String name, String parentId) throws NotSynchronizedException {
+        synchronized (this.mailboxes) {
+            if (this.mailboxState == null) {
+                throw new NotSynchronizedException("Mailboxes have not been synchronized yet. Run refresh() first.");
+            }
+            return this.mailboxes.values().stream()
+                    .filter(mailbox -> mailbox.getName().equals(name) && matches(mailbox.getParentId(), parentId))
+                    .findFirst()
+                    .orElse(null);
+        }
+    }
+
+    private static boolean matches(final String a, final String b) {
+        return (a == null && b == null || (a != null && a.equals(b)));
+    }
+
+    @Override
     public void setThreadsAndEmails(TypedState<Thread> threadState, Thread[] threads, TypedState<Email> emailState, Email[] emails) {
         setThreads(threadState, threads);
         setEmails(emailState, emails);

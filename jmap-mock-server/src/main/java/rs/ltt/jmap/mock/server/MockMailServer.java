@@ -16,16 +16,14 @@
 
 package rs.ltt.jmap.mock.server;
 
-import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Collections2;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Maps;
 import rs.ltt.jmap.common.Request;
 import rs.ltt.jmap.common.Response;
-import rs.ltt.jmap.common.entity.*;
 import rs.ltt.jmap.common.entity.Thread;
+import rs.ltt.jmap.common.entity.*;
 import rs.ltt.jmap.common.method.MethodResponse;
 import rs.ltt.jmap.common.method.call.email.*;
 import rs.ltt.jmap.common.method.call.mailbox.ChangesMailboxMethodCall;
@@ -35,7 +33,6 @@ import rs.ltt.jmap.common.method.call.thread.ChangesThreadMethodCall;
 import rs.ltt.jmap.common.method.call.thread.GetThreadMethodCall;
 import rs.ltt.jmap.common.method.error.CannotCalculateChangesMethodErrorResponse;
 import rs.ltt.jmap.common.method.error.InvalidResultReferenceMethodErrorResponse;
-import rs.ltt.jmap.common.method.error.UnknownMethodMethodErrorResponse;
 import rs.ltt.jmap.common.method.response.email.*;
 import rs.ltt.jmap.common.method.response.mailbox.ChangesMailboxMethodResponse;
 import rs.ltt.jmap.common.method.response.mailbox.GetMailboxMethodResponse;
@@ -44,8 +41,8 @@ import rs.ltt.jmap.common.method.response.thread.ChangesThreadMethodResponse;
 import rs.ltt.jmap.common.method.response.thread.GetThreadMethodResponse;
 import rs.ltt.jmap.mua.util.MailboxUtil;
 
-import java.util.*;
 import java.util.Comparator;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -65,19 +62,17 @@ public class MockMailServer extends StubMailServer {
 
     protected void setup(int numThreads) {
         this.mailboxes.putAll(Maps.uniqueIndex(generateMailboxes(), MailboxInfo::getId));
-        generateEmail(
-                MailboxUtil.find(mailboxes.values(), Role.INBOX).getId(),
-                numThreads
-        );
+        generateEmail(numThreads);
     }
 
     protected List<MailboxInfo> generateMailboxes() {
         return Arrays.asList(
-                 new MailboxInfo(UUID.randomUUID().toString(), "Inbox", Role.INBOX)
+                new MailboxInfo(UUID.randomUUID().toString(), "Inbox", Role.INBOX)
         );
     }
 
-    private void generateEmail(final String mailboxId, final int numThreads) {
+    private void generateEmail(final int numThreads) {
+        final String mailboxId = MailboxUtil.find(mailboxes.values(), Role.INBOX).getId();
         int emailCount = 0;
         for (int thread = 0; thread < numThreads; ++thread) {
             final int numInThread = (thread % 4) + 1;
@@ -102,16 +97,16 @@ public class MockMailServer extends StubMailServer {
         return email;
     }
 
-    public void setReportCanCalculateQueryChanges(final boolean reportCanCalculateQueryChanges) {
-        this.reportCanCalculateQueryChanges = reportCanCalculateQueryChanges;
-    }
-
     protected void incrementState() {
         this.state++;
     }
 
     protected String getState() {
         return String.valueOf(this.state);
+    }
+
+    public void setReportCanCalculateQueryChanges(final boolean reportCanCalculateQueryChanges) {
+        this.reportCanCalculateQueryChanges = reportCanCalculateQueryChanges;
     }
 
     @Override
@@ -176,69 +171,6 @@ public class MockMailServer extends StubMailServer {
     }
 
     @Override
-    protected MethodResponse[] execute(SetEmailMethodCall methodCall, ListMultimap<String, Response.Invocation> previousResponses) {
-        final Map<String, Map<String, Object>> update = methodCall.getUpdate();
-        final Map<String, Email> create = methodCall.getCreate();
-        final String[] destroy = methodCall.getDestroy();
-        if ((create != null && create.size() > 0) || (destroy != null && destroy.length > 0)) {
-            throw new IllegalStateException("MockMailServer does not know how to create and destroy");
-        }
-        //TODO verify ifInState
-        final String oldState = getState();
-        if (update != null) {
-            final List<Email> modifiedEmail = new ArrayList<>();
-            for(final Map.Entry<String, Map<String, Object>> entry : update.entrySet()) {
-                final String id = entry.getKey();
-                final Email.EmailBuilder emailBuilder = emails.get(id).toBuilder();
-                final Map<String, Object> patchMap = entry.getValue();
-                for(final Map.Entry<String, Object> patch : patchMap.entrySet()) {
-                    final String fullPath = patch.getKey();
-                    final Object modification = patch.getValue();
-                    final List<String> pathParts = Splitter.on('/').splitToList(fullPath);
-                    final String parameter = pathParts.get(0);
-                    if (parameter.equals("keywords")) {
-                        if (pathParts.size() == 2 && modification instanceof Boolean) {
-                            final String keyword = pathParts.get(1);
-                            final Boolean value = (Boolean) modification;
-                            emailBuilder.keyword(keyword, value);
-                        } else {
-                            throw new IllegalStateException("Keyword modification was not split into two parts");
-                        }
-                    } else if (parameter.equals("mailboxIds")) {
-                        if (pathParts.size() == 2 && modification instanceof Boolean) {
-                            final String mailboxId = pathParts.get(1);
-                            final Boolean value = (Boolean) modification;
-                            emailBuilder.mailboxId(mailboxId, value);
-                        } else if (modification instanceof Map){
-                            final Map<String, Boolean> mailboxMap = (Map<String, Boolean>) modification;
-                            emailBuilder.clearMailboxIds();
-                            for(Map.Entry<String, Boolean> mailboxEntry : mailboxMap.entrySet()) {
-                                final String mailboxId = CreationIdResolver.resolveIfNecessary(mailboxEntry.getKey(), previousResponses);
-                                emailBuilder.mailboxId(mailboxId, mailboxEntry.getValue());
-                            }
-                        } else {
-                            throw new IllegalStateException("Unknown patch object for path "+fullPath);
-                        }
-                    } else {
-                        throw new IllegalStateException("Unable to patch "+fullPath);
-                    }
-                }
-                modifiedEmail.add(emailBuilder.build());
-            }
-            for(final Email email : modifiedEmail) {
-                emails.put(email.getId(), email);
-            }
-            incrementState();
-            final String newState = getState();
-            updates.put(oldState, Update.updated(modifiedEmail, this.mailboxes.keySet(), newState));
-        }
-        return new MethodResponse[]{
-                //jmap-mua mostly ignores the return values and instead just fetches again
-                SetEmailMethodResponse.builder().build()
-        };
-    }
-
-    @Override
     protected MethodResponse[] execute(QueryChangesEmailMethodCall methodCall, ListMultimap<String, Response.Invocation> previousResponses) {
         final String since = methodCall.getSinceQueryState();
         if (since != null && since.equals(getState())) {
@@ -269,6 +201,78 @@ public class MockMailServer extends StubMailServer {
                         .position(0L)
                         .build()
         };
+    }
+
+    @Override
+    protected MethodResponse[] execute(SetEmailMethodCall methodCall, ListMultimap<String, Response.Invocation> previousResponses) {
+        final Map<String, Map<String, Object>> update = methodCall.getUpdate();
+        final Map<String, Email> create = methodCall.getCreate();
+        final String[] destroy = methodCall.getDestroy();
+        if ((create != null && create.size() > 0) || (destroy != null && destroy.length > 0)) {
+            throw new IllegalStateException("MockMailServer does not know how to create and destroy");
+        }
+        final SetEmailMethodResponse.SetEmailMethodResponseBuilder responseBuilder = SetEmailMethodResponse.builder();
+        //TODO verify ifInState
+        final String oldState = getState();
+        if (update != null) {
+            final List<Email> modifiedEmails = new ArrayList<>();
+            for (final Map.Entry<String, Map<String, Object>> entry : update.entrySet()) {
+                final String id = entry.getKey();
+                try {
+                    final Email modifiedEmail = patchEmail(id, entry.getValue(), previousResponses);
+                    modifiedEmails.add(modifiedEmail);
+                    responseBuilder.updated(id, modifiedEmail);
+                } catch (final IllegalArgumentException e) {
+                    responseBuilder.notUpdated(id, new SetError(SetErrorType.INVALID_PROPERTIES, e.getMessage()));
+                }
+            }
+            for (final Email email : modifiedEmails) {
+                emails.put(email.getId(), email);
+            }
+            incrementState();
+            final String newState = getState();
+            updates.put(oldState, Update.updated(modifiedEmails, this.mailboxes.keySet(), newState));
+        }
+        return new MethodResponse[]{
+                responseBuilder.build()
+        };
+    }
+
+    private Email patchEmail(final String id, final Map<String, Object> patches, ListMultimap<String, Response.Invocation> previousResponses) {
+        final Email.EmailBuilder emailBuilder = emails.get(id).toBuilder();
+        for (final Map.Entry<String, Object> patch : patches.entrySet()) {
+            final String fullPath = patch.getKey();
+            final Object modification = patch.getValue();
+            final List<String> pathParts = Splitter.on('/').splitToList(fullPath);
+            final String parameter = pathParts.get(0);
+            if (parameter.equals("keywords")) {
+                if (pathParts.size() == 2 && modification instanceof Boolean) {
+                    final String keyword = pathParts.get(1);
+                    final Boolean value = (Boolean) modification;
+                    emailBuilder.keyword(keyword, value);
+                } else {
+                    throw new IllegalArgumentException("Keyword modification was not split into two parts");
+                }
+            } else if (parameter.equals("mailboxIds")) {
+                if (pathParts.size() == 2 && modification instanceof Boolean) {
+                    final String mailboxId = pathParts.get(1);
+                    final Boolean value = (Boolean) modification;
+                    emailBuilder.mailboxId(mailboxId, value);
+                } else if (modification instanceof Map) {
+                    final Map<String, Boolean> mailboxMap = (Map<String, Boolean>) modification;
+                    emailBuilder.clearMailboxIds();
+                    for (Map.Entry<String, Boolean> mailboxEntry : mailboxMap.entrySet()) {
+                        final String mailboxId = CreationIdResolver.resolveIfNecessary(mailboxEntry.getKey(), previousResponses);
+                        emailBuilder.mailboxId(mailboxId, mailboxEntry.getValue());
+                    }
+                } else {
+                    throw new IllegalArgumentException("Unknown patch object for path " + fullPath);
+                }
+            } else {
+                throw new IllegalArgumentException("Unable to patch " + fullPath);
+            }
+        }
+        return emailBuilder.build();
     }
 
     @Override
@@ -305,31 +309,6 @@ public class MockMailServer extends StubMailServer {
         }
     }
 
-    private Mailbox toMailbox(MailboxInfo mailboxInfo) {
-        return Mailbox.builder()
-                .id(mailboxInfo.getId())
-                .name(mailboxInfo.name)
-                .role(mailboxInfo.role)
-                .totalEmails(emails.values().stream()
-                        .filter(e->e.getMailboxIds().containsKey(mailboxInfo.getId()))
-                        .count()
-                )
-                .unreadEmails(emails.values().stream()
-                        .filter(e->e.getMailboxIds().containsKey(mailboxInfo.getId()))
-                        .filter(e->!e.getKeywords().containsKey(Keyword.SEEN))
-                        .count())
-                .totalThreads(emails.values().stream()
-                        .filter(e->e.getMailboxIds().containsKey(mailboxInfo.getId()))
-                        .map(Email::getThreadId)
-                        .distinct().count())
-                .unreadThreads(emails.values().stream()
-                        .filter(e->e.getMailboxIds().containsKey(mailboxInfo.getId()))
-                        .filter(e->!e.getKeywords().containsKey(Keyword.SEEN))
-                        .map(Email::getThreadId)
-                        .distinct().count())
-                .build();
-    }
-
     @Override
     protected MethodResponse[] execute(GetMailboxMethodCall methodCall, ListMultimap<String, Response.Invocation> previousResponses) {
         final Request.Invocation.ResultReference idsReference = methodCall.getIdsReference();
@@ -353,16 +332,49 @@ public class MockMailServer extends StubMailServer {
         };
     }
 
+    private Mailbox toMailbox(MailboxInfo mailboxInfo) {
+        return Mailbox.builder()
+                .id(mailboxInfo.getId())
+                .name(mailboxInfo.name)
+                .role(mailboxInfo.role)
+                .totalEmails(emails.values().stream()
+                        .filter(e -> e.getMailboxIds().containsKey(mailboxInfo.getId()))
+                        .count()
+                )
+                .unreadEmails(emails.values().stream()
+                        .filter(e -> e.getMailboxIds().containsKey(mailboxInfo.getId()))
+                        .filter(e -> !e.getKeywords().containsKey(Keyword.SEEN))
+                        .count())
+                .totalThreads(emails.values().stream()
+                        .filter(e -> e.getMailboxIds().containsKey(mailboxInfo.getId()))
+                        .map(Email::getThreadId)
+                        .distinct().count())
+                .unreadThreads(emails.values().stream()
+                        .filter(e -> e.getMailboxIds().containsKey(mailboxInfo.getId()))
+                        .filter(e -> !e.getKeywords().containsKey(Keyword.SEEN))
+                        .map(Email::getThreadId)
+                        .distinct().count())
+                .build();
+    }
+
     protected MethodResponse[] execute(final SetMailboxMethodCall methodCall, ListMultimap<String, Response.Invocation> previousResponses) {
         final Map<String, Mailbox> create = methodCall.getCreate();
         final SetMailboxMethodResponse.SetMailboxMethodResponseBuilder responseBuilder = SetMailboxMethodResponse.builder();
-        for(Map.Entry<String, Mailbox> entry : create.entrySet()) {
+        for (Map.Entry<String, Mailbox> entry : create.entrySet()) {
             final String createId = entry.getKey();
             final Mailbox mailbox = entry.getValue();
+            final String name = mailbox.getName();
+            if (mailboxes.values().stream().anyMatch(mailboxInfo -> mailboxInfo.getName().equals(name))) {
+                responseBuilder.notCreated(
+                        createId,
+                        new SetError(SetErrorType.INVALID_PROPERTIES, "A mailbox with the name " + name + " already exists")
+                );
+                continue;
+            }
             final String id = UUID.randomUUID().toString();
             final MailboxInfo mailboxInfo = new MailboxInfo(
                     id,
-                    mailbox.getName(),
+                    name,
                     mailbox.getRole()
             );
             this.mailboxes.put(id, mailboxInfo);

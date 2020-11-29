@@ -42,7 +42,7 @@ public class CreationIdResolver {
                 }
             }
         }
-        throw new IllegalStateException("Creation ID not found");
+        throw new IllegalArgumentException(String.format("Creation id %s not found", strippedId));
     }
 
     private static boolean isCreationId(final String id) {

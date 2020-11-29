@@ -21,21 +21,17 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.*;
 import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 import org.checkerframework.checker.nullness.compatqual.NullableDecl;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rs.ltt.jmap.client.JmapClient;
 import rs.ltt.jmap.client.JmapRequest;
 import rs.ltt.jmap.client.MethodResponses;
-import rs.ltt.jmap.client.api.MethodErrorResponseException;
 import rs.ltt.jmap.common.Request;
 import rs.ltt.jmap.common.entity.*;
 import rs.ltt.jmap.common.entity.filter.EmailFilterCondition;
-import rs.ltt.jmap.common.method.MethodErrorResponse;
 import rs.ltt.jmap.common.method.call.email.QueryEmailMethodCall;
 import rs.ltt.jmap.common.method.call.email.SetEmailMethodCall;
 import rs.ltt.jmap.common.method.call.submission.SetEmailSubmissionMethodCall;
-import rs.ltt.jmap.common.method.error.CannotCalculateChangesMethodErrorResponse;
 import rs.ltt.jmap.common.method.response.email.ChangesEmailMethodResponse;
 import rs.ltt.jmap.common.method.response.email.GetEmailMethodResponse;
 import rs.ltt.jmap.common.method.response.email.SetEmailMethodResponse;
@@ -43,8 +39,6 @@ import rs.ltt.jmap.common.method.response.mailbox.SetMailboxMethodResponse;
 import rs.ltt.jmap.common.method.response.submission.SetEmailSubmissionMethodResponse;
 import rs.ltt.jmap.common.util.Patches;
 import rs.ltt.jmap.mua.*;
-import rs.ltt.jmap.mua.cache.CacheConflictException;
-import rs.ltt.jmap.mua.cache.CacheWriteException;
 import rs.ltt.jmap.mua.cache.ObjectsState;
 import rs.ltt.jmap.mua.cache.Update;
 import rs.ltt.jmap.mua.util.CreateUtil;
@@ -54,7 +48,6 @@ import rs.ltt.jmap.mua.util.UpdateUtil;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 
 @SuppressWarnings("UnstableApiUsage")
 public class EmailService extends MuaService {
@@ -531,7 +524,15 @@ public class EmailService extends MuaService {
             final IdentifiableMailboxWithRole inbox = MailboxUtil.find(mailboxes, Role.INBOX);
             Preconditions.checkState(inbox != null, "Inbox mailbox not found. Calling archive (remove from inbox) on a collection of emails even though there is no inbox does not make sense");
             final IdentifiableMailboxWithRole archive = MailboxUtil.find(mailboxes, Role.ARCHIVE);
-            return archive(emails, inbox, archive);
+            if (archive == null) {
+                return Futures.transformAsync(
+                        getService(MailboxService.class).ensureNoPreexistingMailbox(Role.ARCHIVE),
+                        unused -> archive(emails, inbox, null),
+                        MoreExecutors.directExecutor()
+                );
+            } else {
+                return archive(emails, inbox, archive);
+            }
         }, MoreExecutors.directExecutor());
     }
 

@@ -18,13 +18,11 @@ package rs.ltt.jmap.mua.service;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 import org.checkerframework.checker.nullness.compatqual.NullableDecl;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rs.ltt.jmap.client.JmapClient;
@@ -40,6 +38,7 @@ import rs.ltt.jmap.common.method.response.mailbox.SetMailboxMethodResponse;
 import rs.ltt.jmap.mua.MuaSession;
 import rs.ltt.jmap.mua.SetMailboxException;
 import rs.ltt.jmap.mua.Status;
+import rs.ltt.jmap.mua.cache.PreexistingMailboxException;
 import rs.ltt.jmap.mua.cache.ObjectsState;
 import rs.ltt.jmap.mua.cache.Update;
 import rs.ltt.jmap.mua.util.CreateUtil;
@@ -160,6 +159,14 @@ public class MailboxService extends MuaService {
             updateMailboxes(objectsState.mailboxState, multiCall);
         }
         return future;
+    }
+
+    protected ListenableFuture<Void> ensureNoPreexistingMailbox(@NonNullDecl final Role role) {
+        return Futures.transform(
+                ioExecutorService.submit(() -> cache.getMailboxByNameAndParent(MailboxUtil.create(role).getName(), null)),
+                PreexistingMailboxException::throwIfNotNull,
+                MoreExecutors.directExecutor()
+        );
     }
 
 }

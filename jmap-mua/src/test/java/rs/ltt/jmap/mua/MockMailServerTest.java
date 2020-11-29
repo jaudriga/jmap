@@ -135,8 +135,8 @@ public class MockMailServerTest {
                 .accountId(JmapDispatcher.ACCOUNT_ID)
                 .build()) {
             mua.query(EmailQuery.unfiltered()).get();
-            final List<CachedEmail> emails = cache.getEmails("T1");
-            mua.archive(emails).get();
+            final List<CachedEmail> threadT1 = cache.getEmails("T1");
+            mua.archive(threadT1).get();
             //creating the archive mailbox and adding email are two steps / two versions
             Assertions.assertEquals(Status.HAS_MORE, mua.refresh().get());
             Assertions.assertEquals(Status.UPDATED, mua.refresh().get());
@@ -151,6 +151,18 @@ public class MockMailServerTest {
 
             Assertions.assertEquals(2, archiveAfterModification.getTotalEmails());
             Assertions.assertEquals(1, inboxAfterModification.getTotalEmails());
+
+            final List<CachedEmail> threadT0 = cache.getEmails("T0");
+
+            mua.archive(threadT0).get();
+
+            mua.refresh().get();
+
+            final Mailbox inboxAfterSecondModification = cache.getMailbox(Role.INBOX);
+            final Mailbox archiveAfterSecondModification = cache.getMailbox(Role.ARCHIVE);
+            Assertions.assertEquals(0, inboxAfterSecondModification.getTotalEmails());
+            Assertions.assertEquals(3, archiveAfterSecondModification.getTotalEmails());
+
         }
     }
 
