@@ -25,16 +25,10 @@ import rs.ltt.jmap.common.entity.filter.FilterOperator;
 import rs.ltt.jmap.common.entity.query.EmailQuery;
 import rs.ltt.jmap.mock.server.JmapDispatcher;
 import rs.ltt.jmap.mock.server.MockMailServer;
-import rs.ltt.jmap.mua.cache.InMemoryCache;
-import rs.ltt.jmap.mua.util.MailboxUtil;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
 
 public class MockMailServerTest {
 
@@ -160,48 +154,4 @@ public class MockMailServerTest {
         }
     }
 
-    private static class MyInMemoryCache extends InMemoryCache {
-        public Collection<String> getEmailIds() {
-            return emails.keySet();
-        }
-
-        public Collection<String> getThreadIds() {
-            return threads.keySet();
-        }
-
-        private List<CachedEmail> getEmails(final String threadId) {
-            List<String> emailIds = this.threads.get(threadId).getEmailIds();
-            return emailIds.stream().map(id -> new CachedEmail(emails.get(id))).collect(Collectors.toList());
-        }
-
-        public Mailbox getMailbox(final Role role) {
-            return (Mailbox) MailboxUtil.find(this.mailboxes.values(), role);
-        }
-    }
-
-    private static class CachedEmail implements IdentifiableEmailWithKeywords, IdentifiableEmailWithMailboxIds {
-
-        private final Email inner;
-
-        private CachedEmail(Email inner) {
-            this.inner = inner;
-        }
-
-        @Override
-        public Map<String, Boolean> getKeywords() {
-            final Map<String, Boolean> keywords = inner.getKeywords();
-            return keywords == null ? Collections.emptyMap() : keywords;
-        }
-
-        @Override
-        public String getId() {
-            return inner.getId();
-        }
-
-        @Override
-        public Map<String, Boolean> getMailboxIds() {
-            final Map<String, Boolean> mailboxIds = inner.getMailboxIds();
-            return mailboxIds == null ? Collections.emptyMap() : mailboxIds;
-        }
-    }
 }
