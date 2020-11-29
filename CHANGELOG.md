@@ -1,3 +1,10 @@
+### 0.5.1
+
+### 0.5.1
+
+* fixed bug when pulling multiple Object changes from Cyrus
+* Introduce new `getMailboxByNameAndParent` method to cache interface
+
 ### 0.5.0
 
 * added server-side JSON (de)serializer
