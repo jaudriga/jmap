@@ -48,7 +48,7 @@ public class HttpJmapClientTest {
     private static String ACCOUNT_ID = "test@example.com";
     private static String USERNAME = "test@example.com";
     private static String PASSWORD = "secret";
-    private static String WELL_KNOWN_PATH = ".well-known/jmap";
+    public static String WELL_KNOWN_PATH = ".well-known/jmap";
 
     @Test
     public void fetchMailboxes() throws Exception {
@@ -76,7 +76,7 @@ public class HttpJmapClientTest {
         server.shutdown();
     }
 
-    private static String readResourceAsString(String filename) throws IOException {
+    public static String readResourceAsString(String filename) throws IOException {
         return Resources.asCharSource(Resources.getResource(filename), Charsets.UTF_8).read().trim();
     }
 

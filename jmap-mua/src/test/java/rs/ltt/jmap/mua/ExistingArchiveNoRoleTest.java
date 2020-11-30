@@ -49,11 +49,17 @@ public class ExistingArchiveNoRoleTest {
                 .accountId(JmapDispatcher.ACCOUNT_ID)
                 .build()) {
             mua.query(EmailQuery.unfiltered()).get();
+            //just reconfirming that mock server is setup correctly
+            Assertions.assertNull(cache.getMailbox(Role.ARCHIVE));
             final List<CachedEmail> threadT1 = cache.getEmails("T1");
             final ExecutionException executionException = Assertions.assertThrows(ExecutionException.class,()->{
                 mua.archive(threadT1).get();
             });
             MatcherAssert.assertThat(executionException.getCause(), CoreMatchers.instanceOf(PreexistingMailboxException.class));
+            final PreexistingMailboxException preexistingMailboxException = (PreexistingMailboxException) executionException.getCause();
+            mua.setRole(preexistingMailboxException.getPreexistingMailbox(), preexistingMailboxException.getTargetRole()).get();
+            Assertions.assertEquals(Status.UPDATED, mua.refresh().get());
+            Assertions.assertNotNull(cache.getMailbox(Role.ARCHIVE));
         } finally {
             server.shutdown();
         }

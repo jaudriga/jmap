@@ -37,6 +37,7 @@ import rs.ltt.jmap.mua.service.MailboxService;
 import rs.ltt.jmap.mua.service.QueryService;
 
 import java.util.Collection;
+import java.util.List;
 
 public class Mua extends MuaSession {
 
@@ -269,6 +270,10 @@ public class Mua extends MuaSession {
 
     public ListenableFuture<Boolean> emptyTrash(@NonNullDecl IdentifiableMailboxWithRole trash) {
         return getService(EmailService.class).emptyTrash(trash);
+    }
+
+    public ListenableFuture<Boolean> setRole(final IdentifiableMailboxWithRole mailbox, final Role role) {
+        return getService(MailboxService.class).setRole(mailbox, role);
     }
 
     public static class Builder {

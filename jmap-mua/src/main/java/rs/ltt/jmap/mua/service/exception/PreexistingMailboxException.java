@@ -17,22 +17,29 @@
 package rs.ltt.jmap.mua.service.exception;
 
 import rs.ltt.jmap.common.entity.IdentifiableMailboxWithRoleAndName;
+import rs.ltt.jmap.common.entity.Role;
 
 public class PreexistingMailboxException extends IllegalStateException {
 
     private final IdentifiableMailboxWithRoleAndName preexistingMailbox;
+    private final Role targetRole;
 
-    public PreexistingMailboxException(IdentifiableMailboxWithRoleAndName preexistingMailbox) {
+    public PreexistingMailboxException(IdentifiableMailboxWithRoleAndName preexistingMailbox, final Role role) {
         this.preexistingMailbox = preexistingMailbox;
+        this.targetRole = role;
     }
 
     public IdentifiableMailboxWithRoleAndName getPreexistingMailbox() {
         return this.preexistingMailbox;
     }
 
-    public static Void throwIfNotNull(IdentifiableMailboxWithRoleAndName mailbox) {
+    public Role getTargetRole() {
+        return this.targetRole;
+    }
+
+    public static Void throwIfNotNull(final IdentifiableMailboxWithRoleAndName mailbox, final Role role) {
         if (mailbox != null) {
-            throw new PreexistingMailboxException(mailbox);
+            throw new PreexistingMailboxException(mailbox, role);
         }
         return null;
     }

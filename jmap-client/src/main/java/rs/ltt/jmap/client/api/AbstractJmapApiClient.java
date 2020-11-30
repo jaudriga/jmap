@@ -20,7 +20,6 @@ import com.google.common.util.concurrent.*;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
-import org.jetbrains.annotations.Nullable;
 import rs.ltt.jmap.client.JmapRequest;
 import rs.ltt.jmap.client.MethodResponses;
 import rs.ltt.jmap.client.util.ResponseAnalyzer;
@@ -48,7 +47,14 @@ public abstract class AbstractJmapApiClient implements JmapApiClient {
     @Override
     public void execute(final JmapRequest jmapRequest) {
         final Gson gson = gsonBuilder.create();
-        Futures.addCallback(send(gson.toJson(jmapRequest.getRequest())), new FutureCallback<InputStream>() {
+        final String json;
+        try {
+            json = gson.toJson(jmapRequest.getRequest());
+        } catch (final Throwable throwable) {
+            jmapRequest.setException(throwable);
+            return;
+        }
+        Futures.addCallback(send(json), new FutureCallback<InputStream>() {
             @Override
             public void onSuccess(final InputStream inputStream) {
                 final GenericResponse genericResponse = gson.fromJson(new InputStreamReader(inputStream), GenericResponse.class);

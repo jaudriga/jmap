@@ -16,13 +16,16 @@
 
 package rs.ltt.jmap.mua.service;
 
+import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 import org.checkerframework.checker.nullness.compatqual.NullableDecl;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rs.ltt.jmap.client.JmapClient;
@@ -32,15 +35,18 @@ import rs.ltt.jmap.common.entity.Mailbox;
 import rs.ltt.jmap.common.entity.Role;
 import rs.ltt.jmap.common.method.call.mailbox.GetMailboxMethodCall;
 import rs.ltt.jmap.common.method.call.mailbox.SetMailboxMethodCall;
+import rs.ltt.jmap.common.method.response.email.SetEmailMethodResponse;
 import rs.ltt.jmap.common.method.response.mailbox.ChangesMailboxMethodResponse;
 import rs.ltt.jmap.common.method.response.mailbox.GetMailboxMethodResponse;
 import rs.ltt.jmap.common.method.response.mailbox.SetMailboxMethodResponse;
+import rs.ltt.jmap.common.util.Patches;
 import rs.ltt.jmap.mua.MuaSession;
-import rs.ltt.jmap.mua.service.exception.SetMailboxException;
 import rs.ltt.jmap.mua.Status;
-import rs.ltt.jmap.mua.service.exception.PreexistingMailboxException;
 import rs.ltt.jmap.mua.cache.ObjectsState;
 import rs.ltt.jmap.mua.cache.Update;
+import rs.ltt.jmap.mua.service.exception.PreexistingMailboxException;
+import rs.ltt.jmap.mua.service.exception.SetEmailException;
+import rs.ltt.jmap.mua.service.exception.SetMailboxException;
 import rs.ltt.jmap.mua.util.CreateUtil;
 import rs.ltt.jmap.mua.util.MailboxUtil;
 import rs.ltt.jmap.mua.util.UpdateUtil;
@@ -164,9 +170,27 @@ public class MailboxService extends MuaService {
     protected ListenableFuture<Void> ensureNoPreexistingMailbox(@NonNullDecl final Role role) {
         return Futures.transform(
                 ioExecutorService.submit(() -> cache.getMailboxByNameAndParent(MailboxUtil.create(role).getName(), null)),
-                PreexistingMailboxException::throwIfNotNull,
+                mb -> PreexistingMailboxException.throwIfNotNull(mb, role),
                 MoreExecutors.directExecutor()
         );
     }
 
+    public ListenableFuture<Boolean> setRole(final IdentifiableMailboxWithRole mailbox, final Role role) {
+        return Futures.transformAsync(getObjectsState(), objectsState -> setRole(mailbox, role, objectsState), MoreExecutors.directExecutor());
+    }
+
+    private ListenableFuture<Boolean> setRole(final IdentifiableMailboxWithRole mailbox,
+                                              final Role role,
+                                              final ObjectsState objectsState) {
+        final SetMailboxMethodCall setMailboxMethodCall = SetMailboxMethodCall.builder()
+                .accountId(this.accountId)
+                .ifInState(objectsState == null ? null : objectsState.mailboxState)
+                .update(ImmutableMap.of(mailbox.getId(), Patches.set("role", role)))
+                .build();
+        return Futures.transformAsync(jmapClient.call(setMailboxMethodCall), methodResponses -> {
+            final SetMailboxMethodResponse setMailboxMethodResponse = methodResponses.getMain(SetMailboxMethodResponse.class);
+            SetMailboxException.throwIfFailed(setMailboxMethodResponse);
+            return Futures.immediateFuture(setMailboxMethodResponse.getUpdatedCreatedCount() > 0);
+        }, ioExecutorService);
+    }
 }

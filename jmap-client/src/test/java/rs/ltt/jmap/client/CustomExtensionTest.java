@@ -18,35 +18,43 @@ package rs.ltt.jmap.client;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonIOException;
+import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.MockWebServer;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import rs.ltt.jmap.client.dummy.SetDummyMethodCall;
 import rs.ltt.jmap.common.method.call.core.EchoMethodCall;
 import rs.ltt.jmap.common.method.response.core.EchoMethodResponse;
 import rs.ltt.jmap.common.util.Mapper;
 import rs.ltt.jmap.gson.JmapAdapters;
 
+import java.io.IOException;
 import java.util.concurrent.ExecutionException;
+
+import static rs.ltt.jmap.client.HttpJmapClientTest.WELL_KNOWN_PATH;
+import static rs.ltt.jmap.client.HttpJmapClientTest.readResourceAsString;
 
 public class CustomExtensionTest {
 
-    private static String ACCOUNT_ID = "test@example.com";
-    private static String USERNAME = "test@example.com";
-    private static String PASSWORD = "secret";
+    private static final String ACCOUNT_ID = "test@example.com";
+    private static final String USERNAME = "test@example.com";
+    private static final String PASSWORD = "secret";
 
-    private static String EXPECTED_JSON_QUERY_CALL = "{\"accountId\":\"accountId\",\"filter\":{\"isPlaceholder\":true}}";
+    private static final String EXPECTED_JSON_QUERY_CALL = "{\"accountId\":\"accountId\",\"filter\":{\"isPlaceholder\":true}}";
 
     @Test
     public void findDummyAndCommonMethodCalls() {
-        Assertions.assertTrue(Mapper.METHOD_CALLS.values().contains(GetDummyMethodCall.class));
-        Assertions.assertTrue(Mapper.METHOD_CALLS.values().contains(EchoMethodCall.class));
+        Assertions.assertTrue(Mapper.METHOD_CALLS.containsValue(GetDummyMethodCall.class));
+        Assertions.assertTrue(Mapper.METHOD_CALLS.containsValue(EchoMethodCall.class));
     }
 
     @Test
     public void findDummyAndCommonMethodResponses() {
-        Assertions.assertTrue(Mapper.METHOD_RESPONSES.values().contains(GetDummyMethodResponse.class));
-        Assertions.assertTrue(Mapper.METHOD_RESPONSES.values().contains(EchoMethodResponse.class));
+        Assertions.assertTrue(Mapper.METHOD_RESPONSES.containsValue(GetDummyMethodResponse.class));
+        Assertions.assertTrue(Mapper.METHOD_RESPONSES.containsValue(EchoMethodResponse.class));
     }
 
     @Test
@@ -56,6 +64,30 @@ public class CustomExtensionTest {
             client.call(new GetDummyMethodCall(ACCOUNT_ID)).get();
         });
 
+    }
+
+    @Test
+    public void notAnnotatedSet() throws IOException {
+        final MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setBody(readResourceAsString("fetch-mailboxes/01-session.json")));
+        server.start();
+
+        final JmapClient client = new JmapClient(
+                USERNAME,
+                PASSWORD,
+                server.url(WELL_KNOWN_PATH)
+        );
+        final ExecutionException executionException = Assertions.assertThrows(ExecutionException.class, ()->{
+           client.call(new SetDummyMethodCall(
+                   ACCOUNT_ID,
+                   null,
+                   null,
+                   null,
+                   null,
+                   null
+           )).get();
+        });
+        MatcherAssert.assertThat(executionException.getCause(), CoreMatchers.instanceOf(JsonIOException.class));
     }
 
     @Test

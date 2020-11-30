@@ -39,6 +39,7 @@ import rs.ltt.jmap.common.method.response.mailbox.GetMailboxMethodResponse;
 import rs.ltt.jmap.common.method.response.mailbox.SetMailboxMethodResponse;
 import rs.ltt.jmap.common.method.response.thread.ChangesThreadMethodResponse;
 import rs.ltt.jmap.common.method.response.thread.GetThreadMethodResponse;
+import rs.ltt.jmap.mock.server.util.FuzzyRoleParser;
 import rs.ltt.jmap.mua.util.MailboxUtil;
 
 import java.util.Comparator;
@@ -358,8 +359,25 @@ public class MockMailServer extends StubMailServer {
     }
 
     protected MethodResponse[] execute(final SetMailboxMethodCall methodCall, ListMultimap<String, Response.Invocation> previousResponses) {
-        final Map<String, Mailbox> create = methodCall.getCreate();
         final SetMailboxMethodResponse.SetMailboxMethodResponseBuilder responseBuilder = SetMailboxMethodResponse.builder();
+        final Map<String, Mailbox> create = methodCall.getCreate();
+        final Map<String, Map<String, Object>> update = methodCall.getUpdate();
+        if (create != null && create.size() > 0) {
+            processCreateMailbox(create, responseBuilder);
+        }
+        if (update != null && update.size() > 0) {
+            processUpdateMailbox(update, responseBuilder, previousResponses);
+        }
+        final String oldVersion = getState();
+        incrementState();
+        final SetMailboxMethodResponse setMailboxResponse = responseBuilder.build();
+        updates.put(oldVersion, Update.of(setMailboxResponse, getState()));
+        return new MethodResponse[]{
+                setMailboxResponse
+        };
+    }
+
+    private void processCreateMailbox(final Map<String, Mailbox> create, final SetMailboxMethodResponse.SetMailboxMethodResponseBuilder responseBuilder) {
         for (Map.Entry<String, Mailbox> entry : create.entrySet()) {
             final String createId = entry.getKey();
             final Mailbox mailbox = entry.getValue();
@@ -380,13 +398,40 @@ public class MockMailServer extends StubMailServer {
             this.mailboxes.put(id, mailboxInfo);
             responseBuilder.created(createId, toMailbox(mailboxInfo));
         }
-        final String oldVersion = getState();
-        incrementState();
-        final SetMailboxMethodResponse setMailboxResponse = responseBuilder.build();
-        updates.put(oldVersion, Update.of(setMailboxResponse, getState()));
-        return new MethodResponse[]{
-                setMailboxResponse
-        };
+    }
+
+    private void processUpdateMailbox(Map<String, Map<String, Object>> update, SetMailboxMethodResponse.SetMailboxMethodResponseBuilder responseBuilder, ListMultimap<String, Response.Invocation> previousResponses) {
+        for (final Map.Entry<String, Map<String, Object>> entry : update.entrySet()) {
+            final String id = entry.getKey();
+            try {
+                final MailboxInfo modifiedMailbox = patchMailbox(id, entry.getValue(), previousResponses);
+                responseBuilder.updated(id, toMailbox(modifiedMailbox));
+                this.mailboxes.put(modifiedMailbox.getId(), modifiedMailbox);
+            } catch (final IllegalArgumentException e) {
+                responseBuilder.notUpdated(id, new SetError(SetErrorType.INVALID_PROPERTIES, e.getMessage()));
+            }
+        }
+    }
+
+    private MailboxInfo patchMailbox(final String id, final Map<String, Object> patches, ListMultimap<String, Response.Invocation> previousResponses) {
+        final MailboxInfo currentMailbox = this.mailboxes.get(id);
+        for (final Map.Entry<String, Object> patch : patches.entrySet()) {
+            final String fullPath = patch.getKey();
+            final Object modification = patch.getValue();
+            final List<String> pathParts = Splitter.on('/').splitToList(fullPath);
+            final String parameter = pathParts.get(0);
+            if ("role".equals(parameter)) {
+                final Role role = FuzzyRoleParser.parse((String) modification);
+                return new MailboxInfo(
+                        currentMailbox.getId(),
+                        currentMailbox.getName(),
+                        role
+                );
+            } else {
+                throw new IllegalArgumentException("Unable to patch " + fullPath);
+            }
+        }
+        return currentMailbox;
     }
 
     @Override

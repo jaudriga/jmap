@@ -18,6 +18,7 @@ package rs.ltt.jmap.gson.adapter;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonIOException;
 import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
@@ -54,7 +55,7 @@ public class RequestInvocationTypeAdapter extends TypeAdapter<Request.Invocation
         final Class<? extends MethodCall> clazz = methodCall.getClass();
         final String name = METHOD_CALLS.inverse().get(clazz);
         if (name == null) {
-            throw new IOException(String.format("%s is not a registered @JmapMethod", clazz.getName()));
+            throw new JsonIOException(String.format("%s is not a registered @JmapMethod", clazz.getName()));
         }
         jsonWriter.beginArray();
         jsonWriter.value(name);

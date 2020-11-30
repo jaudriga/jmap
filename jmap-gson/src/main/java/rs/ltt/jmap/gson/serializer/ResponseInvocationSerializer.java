@@ -38,11 +38,23 @@ public class ResponseInvocationSerializer implements JsonSerializer<Response.Inv
         if (methodResponse instanceof MethodErrorResponse) {
             jsonArray.add("error");
             final String errorType = Mapper.METHOD_ERROR_RESPONSES.inverse().get(methodResponse.getClass());
+            if (errorType == null) {
+                throw new JsonIOException(String.format(
+                        "Unable to serialize %s. Did you annotate the Method with @JmapError",
+                        methodResponse.getClass()
+                ));
+            }
             final JsonObject jsonObject = (JsonObject) context.serialize(methodResponse);
             jsonObject.addProperty("type", errorType);
             jsonArray.add(jsonObject);
         } else {
             final String name = Mapper.METHOD_RESPONSES.inverse().get(methodResponse.getClass());
+            if (name == null) {
+                throw new JsonIOException(String.format(
+                        "Unable to serialize %s. Did you annotate the method with @JmapMethod?",
+                        methodResponse.getClass()
+                ));
+            }
             jsonArray.add(name);
             jsonArray.add(context.serialize(methodResponse));
         }
