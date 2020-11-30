@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Daniel Gultsch
+ * Copyright 2020 Daniel Gultsch
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -14,7 +14,7 @@
  *
  */
 
-package rs.ltt.jmap.mua.cache;
+package rs.ltt.jmap.mua.cache.exception;
 
 /**
  * A cache implementation will throw that for errors that can be recovered from automatically like state mismatched

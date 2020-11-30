@@ -48,6 +48,10 @@ import rs.ltt.jmap.common.method.response.thread.GetThreadMethodResponse;
 import rs.ltt.jmap.mua.MuaSession;
 import rs.ltt.jmap.mua.Status;
 import rs.ltt.jmap.mua.cache.*;
+import rs.ltt.jmap.mua.cache.exception.CacheReadException;
+import rs.ltt.jmap.mua.cache.exception.CacheWriteException;
+import rs.ltt.jmap.mua.cache.exception.CorruptCacheException;
+import rs.ltt.jmap.mua.cache.exception.InconsistentQueryStateException;
 import rs.ltt.jmap.mua.util.QueryResult;
 import rs.ltt.jmap.mua.util.QueryResultItem;
 

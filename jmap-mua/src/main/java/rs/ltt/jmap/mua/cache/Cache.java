@@ -20,6 +20,10 @@ import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 import rs.ltt.jmap.common.entity.Thread;
 import rs.ltt.jmap.common.entity.*;
+import rs.ltt.jmap.mua.cache.exception.CacheConflictException;
+import rs.ltt.jmap.mua.cache.exception.CacheReadException;
+import rs.ltt.jmap.mua.cache.exception.CacheWriteException;
+import rs.ltt.jmap.mua.cache.exception.NotSynchronizedException;
 import rs.ltt.jmap.mua.util.QueryResult;
 import rs.ltt.jmap.mua.util.QueryResultItem;
 

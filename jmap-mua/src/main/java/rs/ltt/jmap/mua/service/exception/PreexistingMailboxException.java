@@ -14,7 +14,7 @@
  *
  */
 
-package rs.ltt.jmap.mua.cache;
+package rs.ltt.jmap.mua.service.exception;
 
 import rs.ltt.jmap.common.entity.IdentifiableMailboxWithRoleAndName;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Daniel Gultsch
+ * Copyright 2020 Daniel Gultsch
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -14,14 +14,14 @@
  *
  */
 
-package rs.ltt.jmap.mua;
+package rs.ltt.jmap.mua.service.exception;
 
 import com.google.common.base.MoreObjects;
 import rs.ltt.jmap.common.entity.SetError;
 
 import java.util.Map;
 
-public class SetException extends Exception {
+public abstract class SetException extends Exception {
 
     private final Map<String, SetError> notCreated;
     private final Map<String, SetError> notUpdated;

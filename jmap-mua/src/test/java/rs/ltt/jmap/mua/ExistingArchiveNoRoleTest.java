@@ -25,7 +25,7 @@ import rs.ltt.jmap.common.entity.Role;
 import rs.ltt.jmap.common.entity.query.EmailQuery;
 import rs.ltt.jmap.mock.server.JmapDispatcher;
 import rs.ltt.jmap.mock.server.MockMailServer;
-import rs.ltt.jmap.mua.cache.PreexistingMailboxException;
+import rs.ltt.jmap.mua.service.exception.PreexistingMailboxException;
 
 import java.io.IOException;
 import java.util.Arrays;
