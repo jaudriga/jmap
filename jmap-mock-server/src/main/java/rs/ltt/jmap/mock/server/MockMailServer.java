@@ -72,7 +72,7 @@ public class MockMailServer extends StubMailServer {
         );
     }
 
-    private void generateEmail(final int numThreads) {
+    protected void generateEmail(final int numThreads) {
         final String mailboxId = MailboxUtil.find(mailboxes.values(), Role.INBOX).getId();
         int emailCount = 0;
         for (int thread = 0; thread < numThreads; ++thread) {

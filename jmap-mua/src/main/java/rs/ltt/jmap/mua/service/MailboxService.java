@@ -19,10 +19,7 @@ package rs.ltt.jmap.mua.service;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.util.concurrent.AsyncFunction;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.*;
 import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 import org.jetbrains.annotations.Nullable;
@@ -52,6 +49,8 @@ import rs.ltt.jmap.mua.util.MailboxUtil;
 import rs.ltt.jmap.mua.util.UpdateUtil;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class MailboxService extends MuaService {
 
@@ -173,6 +172,11 @@ public class MailboxService extends MuaService {
                 mb -> PreexistingMailboxException.throwIfNotNull(mb, role),
                 MoreExecutors.directExecutor()
         );
+    }
+
+    protected ListenableFuture<Void> ensureNoPreexistingMailbox(final List<Role> roles) {
+        final List<ListenableFuture<Void>> futures = roles.stream().map(this::ensureNoPreexistingMailbox).collect(Collectors.toList());
+        return Futures.transform(Futures.allAsList(futures), voids -> null, MoreExecutors.directExecutor());
     }
 
     public ListenableFuture<Boolean> setRole(final IdentifiableMailboxWithRole mailbox, final Role role) {
