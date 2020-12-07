@@ -1,4 +1,4 @@
-### 0.5.2
+### 0.5.2 (2020-12-07)
 
 * jmap-mua throw exception if automagic mailbox creation will probably fail
 
