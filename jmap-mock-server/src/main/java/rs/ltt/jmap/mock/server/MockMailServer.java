@@ -26,6 +26,7 @@ import rs.ltt.jmap.common.entity.Thread;
 import rs.ltt.jmap.common.entity.*;
 import rs.ltt.jmap.common.method.MethodResponse;
 import rs.ltt.jmap.common.method.call.email.*;
+import rs.ltt.jmap.common.method.call.identity.GetIdentityMethodCall;
 import rs.ltt.jmap.common.method.call.mailbox.ChangesMailboxMethodCall;
 import rs.ltt.jmap.common.method.call.mailbox.GetMailboxMethodCall;
 import rs.ltt.jmap.common.method.call.mailbox.SetMailboxMethodCall;
@@ -33,7 +34,9 @@ import rs.ltt.jmap.common.method.call.thread.ChangesThreadMethodCall;
 import rs.ltt.jmap.common.method.call.thread.GetThreadMethodCall;
 import rs.ltt.jmap.common.method.error.CannotCalculateChangesMethodErrorResponse;
 import rs.ltt.jmap.common.method.error.InvalidResultReferenceMethodErrorResponse;
+import rs.ltt.jmap.common.method.error.UnknownMethodMethodErrorResponse;
 import rs.ltt.jmap.common.method.response.email.*;
+import rs.ltt.jmap.common.method.response.identity.GetIdentityMethodResponse;
 import rs.ltt.jmap.common.method.response.mailbox.ChangesMailboxMethodResponse;
 import rs.ltt.jmap.common.method.response.mailbox.GetMailboxMethodResponse;
 import rs.ltt.jmap.common.method.response.mailbox.SetMailboxMethodResponse;
@@ -108,6 +111,20 @@ public class MockMailServer extends StubMailServer {
 
     public void setReportCanCalculateQueryChanges(final boolean reportCanCalculateQueryChanges) {
         this.reportCanCalculateQueryChanges = reportCanCalculateQueryChanges;
+    }
+
+    @Override
+    protected MethodResponse[] execute(GetIdentityMethodCall methodCall, ListMultimap<String, Response.Invocation> previousResponses) {
+        return new MethodResponse[]{
+                GetIdentityMethodResponse.builder()
+                        .list(new Identity[]{Identity.builder()
+                                .id(ACCOUNT_ID)
+                                .email(ACCOUNT_ID)
+                                .name(ACCOUNT_NAME)
+                                .build()})
+                        .build()
+
+        };
     }
 
     @Override

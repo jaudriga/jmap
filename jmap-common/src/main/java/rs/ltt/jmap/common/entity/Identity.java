@@ -23,7 +23,6 @@ import lombok.Getter;
 import java.util.List;
 
 @Getter
-@Builder
 public class Identity extends AbstractIdentifiableEntity implements IdentifiableIdentity {
     private String name;
 
@@ -38,6 +37,25 @@ public class Identity extends AbstractIdentifiableEntity implements Identifiable
     private String htmlSignature;
 
     private Boolean mayDelete;
+
+    @Builder
+    public Identity(final String id,
+                    String name,
+                    String email,
+                    List<EmailAddress> replyTo,
+                    List<EmailAddress> bcc,
+                    String textSignature,
+                    String htmlSignature,
+                    Boolean mayDelete) {
+        this.id = id;
+        this.name = name;
+        this.email = email;
+        this.replyTo = replyTo;
+        this.bcc = bcc;
+        this.textSignature = textSignature;
+        this.htmlSignature = htmlSignature;
+        this.mayDelete = mayDelete;
+    }
 
     @Override
     public String toString() {

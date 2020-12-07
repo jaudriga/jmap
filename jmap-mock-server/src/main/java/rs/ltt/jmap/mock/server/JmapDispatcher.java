@@ -40,6 +40,7 @@ import rs.ltt.jmap.gson.JmapAdapters;
 public abstract class JmapDispatcher extends Dispatcher {
 
     public static final String ACCOUNT_ID = "test@example.com";
+    public static final String ACCOUNT_NAME = "Alice Test";
     public static final String USERNAME = "test@example.com";
     public static final String PASSWORD = "secret";
     private static final Gson GSON;
