@@ -1,4 +1,6 @@
-### 0.5.1
+### 0.5.2
+
+* jmap-mua throw exception if automagic mailbox creation will probably fail
 
 ### 0.5.1
 
