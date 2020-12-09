@@ -37,8 +37,12 @@ public class MailboxUtil {
         return null;
     }
 
-    public static Mailbox create(Role role) {
-        return Mailbox.builder().role(role).name(CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, role.toString())).build();
+    public static Mailbox create(final Role role) {
+        return Mailbox.builder().role(role).name(humanReadable(role)).build();
+    }
+
+    public static String humanReadable(final Role role) {
+        return CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, role.toString());
     }
 
     public static boolean anyIn(Collection<? extends IdentifiableEmailWithMailboxIds> emails, String mailboxId) {
