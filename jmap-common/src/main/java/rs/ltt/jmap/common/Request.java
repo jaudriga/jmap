@@ -150,14 +150,9 @@ public class Request {
         public Builder add(Invocation invocation) {
             this.invocations.add(invocation);
             final Class<? extends MethodCall> clazz = invocation.methodCall.getClass();
+            this.using.add(rs.ltt.jmap.Namespace.CORE);
             this.using.add(getNamespaceFor(clazz));
             this.using.addAll(Namespace.getImplicit(invocation.methodCall));
-            /*if (invocation.methodCall instanceof SetEmailSubmissionMethodCall) {
-                final SetEmailSubmissionMethodCall call = (SetEmailSubmissionMethodCall) invocation.methodCall;
-                if (call.getOnSuccessUpdateEmail() != null && !call.getOnSuccessUpdateEmail().isEmpty()) {
-                    this.using.add(rs.ltt.jmap.Namespace.MAIL);
-                }
-            }*/
             return this;
         }
 

@@ -1,1 +1,1 @@
-{"using":["urn:ietf:params:jmap:submission"],"methodCalls":[["EmailSubmission/set",{"accountId":"accountId","create":{"es0":{"identityId":"I0","emailId":"M1234"}}},"0"]]}
+{"using":["urn:ietf:params:jmap:core","urn:ietf:params:jmap:submission"],"methodCalls":[["EmailSubmission/set",{"accountId":"accountId","create":{"es0":{"identityId":"I0","emailId":"M1234"}}},"0"]]}
