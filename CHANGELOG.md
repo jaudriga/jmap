@@ -1,3 +1,7 @@
+### 0.5.3 (2020-12-09)
+
+* add core namespace to all requests
+
 ### 0.5.2 (2020-12-07)
 
 * jmap-mua throw exception if automagic mailbox creation will probably fail
