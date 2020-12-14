@@ -57,7 +57,7 @@ public class IndexableStringUtils {
                 }
             } else if (o instanceof Iterable) {
                 int j = 0;
-                for (Object element : (Iterable) o) {
+                for (Object element : (Iterable<?>) o) {
                     if (j != 0) {
                         builder.append(b);
                     }
