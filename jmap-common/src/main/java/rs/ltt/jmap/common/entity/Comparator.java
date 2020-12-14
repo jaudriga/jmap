@@ -17,7 +17,7 @@
 package rs.ltt.jmap.common.entity;
 
 import rs.ltt.jmap.common.entity.filter.QueryString;
-import rs.ltt.jmap.common.util.IndexableStringUtils;
+import rs.ltt.jmap.common.util.QueryStringUtils;
 
 public class Comparator implements QueryString {
 
@@ -39,6 +39,6 @@ public class Comparator implements QueryString {
 
     @Override
     public String toQueryString() {
-        return IndexableStringUtils.toIndexableString(L2_DIVIDER, L3_DIVIDER, property, isAscending, collation);
+        return QueryStringUtils.toQueryString(L2_DIVIDER, L3_DIVIDER, property, isAscending, collation);
     }
 }

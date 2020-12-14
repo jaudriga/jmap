@@ -20,7 +20,7 @@ import com.google.common.base.MoreObjects;
 import rs.ltt.jmap.common.entity.Comparator;
 import rs.ltt.jmap.common.entity.Email;
 import rs.ltt.jmap.common.entity.filter.Filter;
-import rs.ltt.jmap.common.util.IndexableStringUtils;
+import rs.ltt.jmap.common.util.QueryStringUtils;
 
 public class EmailQuery extends Query<Email> {
 
@@ -33,7 +33,7 @@ public class EmailQuery extends Query<Email> {
 
     @Override
     public String toQueryString() {
-        return IndexableStringUtils.toIndexableString(L0_DIVIDER, L1_DIVIDER, filter, comparators, collapseThreads);
+        return QueryStringUtils.toQueryString(L0_DIVIDER, L1_DIVIDER, filter, comparators, collapseThreads);
     }
 
     public static EmailQuery unfiltered() {

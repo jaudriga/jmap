@@ -19,8 +19,6 @@ package rs.ltt.jmap.mua;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ListenableFuture;
 import okhttp3.HttpUrl;
-import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
-import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rs.ltt.jmap.client.JmapClient;
@@ -36,8 +34,9 @@ import rs.ltt.jmap.mua.service.IdentityService;
 import rs.ltt.jmap.mua.service.MailboxService;
 import rs.ltt.jmap.mua.service.QueryService;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.Collection;
-import java.util.List;
 
 public class Mua extends MuaSession {
 
@@ -71,11 +70,11 @@ public class Mua extends MuaSession {
         return getService(QueryService.class).query(filter);
     }
 
-    public ListenableFuture<Status> query(@NonNullDecl final EmailQuery query) {
+    public ListenableFuture<Status> query(@Nonnull final EmailQuery query) {
         return getService(QueryService.class).query(query);
     }
 
-    public ListenableFuture<Status> query(@NonNullDecl final EmailQuery query, final String afterEmailId) {
+    public ListenableFuture<Status> query(@Nonnull final EmailQuery query, final String afterEmailId) {
         return getService(QueryService.class).query(query, afterEmailId);
     }
 
@@ -135,7 +134,7 @@ public class Mua extends MuaSession {
      *                       fail.
      * @return
      */
-    public ListenableFuture<Boolean> submit(final String emailId, final IdentifiableIdentity identity, @NullableDecl String draftMailboxId, final IdentifiableMailboxWithRole sent) {
+    public ListenableFuture<Boolean> submit(final String emailId, final IdentifiableIdentity identity, @Nullable String draftMailboxId, final IdentifiableMailboxWithRole sent) {
         return getService(EmailService.class).submit(emailId, identity, draftMailboxId, sent);
     }
 
@@ -147,7 +146,7 @@ public class Mua extends MuaSession {
         return getService(EmailService.class).setKeyword(emails, keyword);
     }
 
-    public ListenableFuture<Boolean> discardDraft(final @NonNullDecl IdentifiableEmailWithKeywords email) {
+    public ListenableFuture<Boolean> discardDraft(final @Nonnull IdentifiableEmailWithKeywords email) {
         return getService(EmailService.class).discardDraft(email);
     }
 
@@ -163,7 +162,7 @@ public class Mua extends MuaSession {
      * @param emails A collection of emails. Usually all messages in a thread
      * @return
      */
-    public ListenableFuture<Boolean> copyToImportant(@NonNullDecl final Collection<? extends IdentifiableEmailWithMailboxIds> emails) {
+    public ListenableFuture<Boolean> copyToImportant(@Nonnull final Collection<? extends IdentifiableEmailWithMailboxIds> emails) {
         return getService(EmailService.class).copyToImportant(emails);
     }
 
@@ -233,8 +232,8 @@ public class Mua extends MuaSession {
      *                one and fail.
      */
     public ListenableFuture<Boolean> removeFromMailbox(final Collection<? extends IdentifiableEmailWithMailboxIds> emails,
-                                                       @NonNullDecl final Mailbox mailbox,
-                                                       @NullableDecl final IdentifiableMailboxWithRole archive) {
+                                                       @Nonnull final Mailbox mailbox,
+                                                       @Nullable final IdentifiableMailboxWithRole archive) {
         return getService(EmailService.class).removeFromMailbox(emails, mailbox, archive);
     }
 
@@ -268,7 +267,7 @@ public class Mua extends MuaSession {
         return getService(EmailService.class).emptyTrash();
     }
 
-    public ListenableFuture<Boolean> emptyTrash(@NonNullDecl IdentifiableMailboxWithRole trash) {
+    public ListenableFuture<Boolean> emptyTrash(@Nonnull IdentifiableMailboxWithRole trash) {
         return getService(EmailService.class).emptyTrash(trash);
     }
 

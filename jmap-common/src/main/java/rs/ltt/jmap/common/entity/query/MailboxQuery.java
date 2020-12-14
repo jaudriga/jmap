@@ -19,7 +19,7 @@ package rs.ltt.jmap.common.entity.query;
 import rs.ltt.jmap.common.entity.Comparator;
 import rs.ltt.jmap.common.entity.Mailbox;
 import rs.ltt.jmap.common.entity.filter.Filter;
-import rs.ltt.jmap.common.util.IndexableStringUtils;
+import rs.ltt.jmap.common.util.QueryStringUtils;
 
 public class MailboxQuery extends Query<Mailbox> {
 
@@ -35,7 +35,7 @@ public class MailboxQuery extends Query<Mailbox> {
 
     @Override
     public String toQueryString() {
-        return IndexableStringUtils.toIndexableString(L0_DIVIDER, L1_DIVIDER, filter, comparators, sortAsTree, filterAsTree);
+        return QueryStringUtils.toQueryString(L0_DIVIDER, L1_DIVIDER, filter, comparators, sortAsTree, filterAsTree);
     }
 
     public static MailboxQuery unfiltered() {

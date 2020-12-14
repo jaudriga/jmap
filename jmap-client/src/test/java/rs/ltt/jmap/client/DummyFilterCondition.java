@@ -16,9 +16,10 @@
 
 package rs.ltt.jmap.client;
 
-import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 import rs.ltt.jmap.common.entity.filter.Filter;
 import rs.ltt.jmap.common.entity.filter.FilterCondition;
+
+import javax.annotation.Nonnull;
 
 public class DummyFilterCondition implements FilterCondition<Dummy> {
 
@@ -29,7 +30,7 @@ public class DummyFilterCondition implements FilterCondition<Dummy> {
     }
 
     @Override
-    public int compareTo(@NonNullDecl Filter<Dummy> dummyFilter) {
+    public int compareTo(@Nonnull Filter<Dummy> dummyFilter) {
         return 0;
     }
 

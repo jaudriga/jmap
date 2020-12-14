@@ -21,10 +21,10 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ComparisonChain;
 import lombok.Builder;
 import lombok.Getter;
-import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 import rs.ltt.jmap.common.entity.Email;
-import rs.ltt.jmap.common.util.IndexableStringUtils;
+import rs.ltt.jmap.common.util.QueryStringUtils;
 
+import javax.annotation.Nonnull;
 import java.time.Instant;
 
 @Getter
@@ -71,7 +71,7 @@ public class EmailFilterCondition implements FilterCondition<Email> {
 
     @Override
     public String toQueryString() {
-        return IndexableStringUtils.toIndexableString(
+        return QueryStringUtils.toQueryString(
                 L3_DIVIDER,
                 L4_DIVIDER,
                 inMailbox,
@@ -97,14 +97,14 @@ public class EmailFilterCondition implements FilterCondition<Email> {
     }
 
     @Override
-    public int compareTo(@NonNullDecl Filter<Email> filter) {
+    public int compareTo(@Nonnull final Filter<Email> filter) {
         if (filter instanceof EmailFilterCondition) {
-            EmailFilterCondition other = (EmailFilterCondition) filter;
+            final EmailFilterCondition other = (EmailFilterCondition) filter;
             return ComparisonChain.start()
                     .compare(Strings.nullToEmpty(inMailbox), Strings.nullToEmpty(other.inMailbox))
-                    .compare(inMailboxOtherThan, other.inMailboxOtherThan, IndexableStringUtils.STRING_ARRAY_COMPARATOR)
-                    .compare(before, other.before, IndexableStringUtils.INSTANT_COMPARATOR)
-                    .compare(after, other.after, IndexableStringUtils.INSTANT_COMPARATOR)
+                    .compare(inMailboxOtherThan, other.inMailboxOtherThan, QueryStringUtils.STRING_ARRAY_COMPARATOR)
+                    .compare(before, other.before, QueryStringUtils.INSTANT_COMPARATOR)
+                    .compare(after, other.after, QueryStringUtils.INSTANT_COMPARATOR)
                     .compare(minSize == null ? 0L : minSize, other.minSize == null ? 0L : other.minSize)
                     .compare(maxSize == null ? 0L : maxSize, other.maxSize == null ? 0L : other.maxSize)
                     .compare(Strings.nullToEmpty(allInThreadHaveKeyword), Strings.nullToEmpty(other.allInThreadHaveKeyword))

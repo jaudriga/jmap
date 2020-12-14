@@ -28,7 +28,9 @@ public class QueryStringTest {
                 FilterOperator.not(EmailFilterCondition.builder().text("three").build())
         );
         Assertions.assertEquals(emailFilter1.toQueryString(), emailFilter2.toQueryString());
+        Assertions.assertEquals(emailFilter1.asHash(), emailFilter2.asHash());
         Assertions.assertEquals(emailFilter2.toQueryString(), emailFilter3.toQueryString());
+        Assertions.assertEquals(emailFilter2.asHash(), emailFilter3.asHash());
     }
 
     @Test

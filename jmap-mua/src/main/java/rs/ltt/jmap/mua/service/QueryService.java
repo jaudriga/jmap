@@ -19,8 +19,6 @@ package rs.ltt.jmap.mua.service;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.*;
-import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rs.ltt.jmap.client.JmapClient;
@@ -55,6 +53,8 @@ import rs.ltt.jmap.mua.cache.exception.InconsistentQueryStateException;
 import rs.ltt.jmap.mua.util.QueryResult;
 import rs.ltt.jmap.mua.util.QueryResultItem;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -114,7 +114,7 @@ public class QueryService extends MuaService {
         return query(EmailQuery.of(filter));
     }
 
-    public ListenableFuture<Status> query(@NonNullDecl final EmailQuery query) {
+    public ListenableFuture<Status> query(@Nonnull final EmailQuery query) {
         final ListenableFuture<QueryStateWrapper> queryStateFuture = ioExecutorService.submit(() -> cache.getQueryState(query.toQueryString()));
 
         return Futures.transformAsync(queryStateFuture, queryStateWrapper -> {
@@ -130,7 +130,7 @@ public class QueryService extends MuaService {
         }, MoreExecutors.directExecutor());
     }
 
-    public ListenableFuture<Status> query(@NonNullDecl final EmailQuery query, final String afterEmailId) {
+    public ListenableFuture<Status> query(@Nonnull final EmailQuery query, final String afterEmailId) {
         final ListenableFuture<QueryStateWrapper> queryStateFuture = ioExecutorService.submit(() -> cache.getQueryState(query.toQueryString()));
         return Futures.transformAsync(
                 queryStateFuture,
@@ -139,7 +139,7 @@ public class QueryService extends MuaService {
         );
     }
 
-    private ListenableFuture<Status> query(@NonNullDecl final EmailQuery query, @NonNullDecl final String afterEmailId, final QueryStateWrapper queryStateWrapper) {
+    private ListenableFuture<Status> query(@Nonnull final EmailQuery query, @Nonnull final String afterEmailId, final QueryStateWrapper queryStateWrapper) {
         Preconditions.checkNotNull(query, "Query can not be null");
         Preconditions.checkNotNull(afterEmailId, "afterEmailId can not be null");
         Preconditions.checkNotNull(queryStateWrapper, "QueryStateWrapper can not be null when paging");
@@ -246,15 +246,15 @@ public class QueryService extends MuaService {
 
     }
 
-    private ListenableFuture<Status> refreshQuery(@NonNullDecl final EmailQuery query, @NonNullDecl final QueryStateWrapper queryStateWrapper) {
+    private ListenableFuture<Status> refreshQuery(@Nonnull final EmailQuery query, @Nonnull final QueryStateWrapper queryStateWrapper) {
         final JmapClient.MultiCall multiCall = jmapClient.newMultiCall();
         ListenableFuture<Status> future = refreshQuery(query, queryStateWrapper, multiCall);
         multiCall.execute();
         return future;
     }
 
-    private ListenableFuture<Status> refreshQuery(@NonNullDecl final EmailQuery query,
-                                                  @NonNullDecl final QueryStateWrapper queryStateWrapper,
+    private ListenableFuture<Status> refreshQuery(@Nonnull final EmailQuery query,
+                                                  @Nonnull final QueryStateWrapper queryStateWrapper,
                                                   final JmapClient.MultiCall multiCall) {
         Preconditions.checkNotNull(queryStateWrapper.queryState, "QueryState can not be null when attempting to refresh query");
         LOGGER.info("Refreshing query {}", query.toString());
@@ -316,7 +316,7 @@ public class QueryService extends MuaService {
             }
 
             @Override
-            public void onFailure(@NonNullDecl Throwable throwable) {
+            public void onFailure(@Nonnull Throwable throwable) {
                 if (MethodErrorResponseException.matches(throwable, CannotCalculateChangesMethodErrorResponse.class)) {
                     cache.invalidateQueryResult(query.toQueryString());
                 }
@@ -324,7 +324,7 @@ public class QueryService extends MuaService {
         }, ioExecutorService);
     }
 
-    private ListenableFuture<Status> initialQuery(@NonNullDecl final EmailQuery query, @NonNullDecl final QueryStateWrapper queryStateWrapper) {
+    private ListenableFuture<Status> initialQuery(@Nonnull final EmailQuery query, @Nonnull final QueryStateWrapper queryStateWrapper) {
         return Futures.transformAsync(
                 jmapClient.getSession(), session -> initialQuery(query, queryStateWrapper, Preconditions.checkNotNull(session, "Session object must not be null")),
                 MoreExecutors.directExecutor()
@@ -332,7 +332,7 @@ public class QueryService extends MuaService {
 
     }
 
-    private ListenableFuture<Status> initialQuery(@NonNullDecl final EmailQuery query, @NonNullDecl final QueryStateWrapper queryStateWrapper, @NonNullDecl Session session) {
+    private ListenableFuture<Status> initialQuery(@Nonnull final EmailQuery query, @Nonnull final QueryStateWrapper queryStateWrapper, @Nonnull Session session) {
 
         Preconditions.checkState(
                 !queryStateWrapper.canCalculateChanges || queryStateWrapper.upTo == null,
@@ -443,7 +443,7 @@ public class QueryService extends MuaService {
         }
     }
 
-    private ListenableFuture<Status> fetchMissing(@NonNullDecl final String queryString) {
+    private ListenableFuture<Status> fetchMissing(@Nonnull final String queryString) {
         Preconditions.checkNotNull(queryString, "QueryString can not be null");
         try {
             return fetchMissing(cache.getMissing(queryString));

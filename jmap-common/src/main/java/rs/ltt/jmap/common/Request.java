@@ -17,9 +17,7 @@
 package rs.ltt.jmap.common;
 
 import com.google.common.base.MoreObjects;
-import com.google.common.collect.ImmutableList;
 import rs.ltt.jmap.common.method.MethodCall;
-import rs.ltt.jmap.common.method.call.submission.SetEmailSubmissionMethodCall;
 import rs.ltt.jmap.common.util.Namespace;
 
 import java.util.*;

@@ -16,6 +16,9 @@
 
 package rs.ltt.jmap.common.entity.filter;
 
+import com.google.common.base.Charsets;
+import com.google.common.hash.Hashing;
+
 public interface QueryString {
 
     char L0_DIVIDER = '\u000b';
@@ -25,4 +28,8 @@ public interface QueryString {
     char L4_DIVIDER = '\u001f';
 
     String toQueryString();
+
+    default String asHash() {
+        return Hashing.sha256().hashString(this.toQueryString(), Charsets.UTF_8).toString();
+    }
 }

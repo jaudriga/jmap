@@ -20,8 +20,6 @@ package rs.ltt.jmap.client;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.*;
 import okhttp3.HttpUrl;
-import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
-import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 import rs.ltt.jmap.client.api.HttpJmapApiClient;
 import rs.ltt.jmap.client.api.JmapApiClient;
 import rs.ltt.jmap.client.api.SessionStateListener;
@@ -32,6 +30,8 @@ import rs.ltt.jmap.client.session.SessionCache;
 import rs.ltt.jmap.client.session.SessionClient;
 import rs.ltt.jmap.common.method.MethodCall;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.Closeable;
 import java.util.concurrent.Executors;
 
@@ -87,14 +87,14 @@ public class JmapClient implements Closeable {
     private void execute(final JmapRequest request) {
         Futures.addCallback(getSession(), new FutureCallback<Session>() {
             @Override
-            public void onSuccess(@NullableDecl Session session) {
+            public void onSuccess(@Nullable Session session) {
                 Preconditions.checkState(session != null, "Session was null");
                 JmapApiClient apiClient = new HttpJmapApiClient(session.getApiUrl(), authentication, sessionStateListener);
                 apiClient.execute(request);
             }
 
             @Override
-            public void onFailure(@NonNullDecl Throwable throwable) {
+            public void onFailure(@Nonnull Throwable throwable) {
                 request.setException(throwable);
             }
         }, executorService);

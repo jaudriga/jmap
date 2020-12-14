@@ -20,14 +20,14 @@ package rs.ltt.jmap.client.api;
 import okhttp3.Interceptor;
 import okhttp3.Request;
 import okhttp3.Response;
-import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 import rs.ltt.jmap.client.Version;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 
 public class UserAgentInterceptor implements Interceptor {
     @Override
-    @NonNullDecl
+    @Nonnull
     public Response intercept(final Chain chain) throws IOException {
         final Request original = chain.request();
         final Request modified = original.newBuilder()

@@ -24,7 +24,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
-import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 import rs.ltt.jmap.client.MethodResponses;
 import rs.ltt.jmap.common.entity.AddedItem;
 import rs.ltt.jmap.common.entity.Email;
@@ -45,7 +44,7 @@ public class QueryResult {
     public final long position;
     public final TypedState<Email> objectState;
 
-    private QueryResult(@NonNullDecl final QueryResultItem[] items,
+    private QueryResult(@Nonnull final QueryResultItem[] items,
                         final TypedState<Email> queryState,
                         final boolean canCalculateChanges,
                         final long position,

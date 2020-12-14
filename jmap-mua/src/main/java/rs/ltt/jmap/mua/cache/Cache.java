@@ -16,8 +16,6 @@
 
 package rs.ltt.jmap.mua.cache;
 
-import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
-import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 import rs.ltt.jmap.common.entity.Thread;
 import rs.ltt.jmap.common.entity.*;
 import rs.ltt.jmap.mua.cache.exception.CacheConflictException;
@@ -27,6 +25,8 @@ import rs.ltt.jmap.mua.cache.exception.NotSynchronizedException;
 import rs.ltt.jmap.mua.util.QueryResult;
 import rs.ltt.jmap.mua.util.QueryResultItem;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.Collection;
 
 public interface Cache {
@@ -36,10 +36,10 @@ public interface Cache {
 
     String getMailboxState();
 
-    @NonNullDecl
-    QueryStateWrapper getQueryState(@NullableDecl String query);
+    @Nonnull
+    QueryStateWrapper getQueryState(@Nullable String query);
 
-    @NonNullDecl
+    @Nonnull
     ObjectsState getObjectsState();
 
     void setMailboxes(TypedState<Mailbox> state, Mailbox[] mailboxes) throws CacheWriteException;

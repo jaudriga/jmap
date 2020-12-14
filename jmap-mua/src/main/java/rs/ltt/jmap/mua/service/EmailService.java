@@ -23,8 +23,6 @@ import com.google.common.util.concurrent.AsyncCallable;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
-import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
-import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rs.ltt.jmap.client.JmapClient;
@@ -53,6 +51,8 @@ import rs.ltt.jmap.mua.util.CreateUtil;
 import rs.ltt.jmap.mua.util.MailboxUtil;
 import rs.ltt.jmap.mua.util.UpdateUtil;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -193,7 +193,7 @@ public class EmailService extends MuaService {
 
     public ListenableFuture<Boolean> submit(final String emailId,
                                             final IdentifiableIdentity identity,
-                                            @NullableDecl String draftMailboxId,
+                                            @Nullable String draftMailboxId,
                                             final IdentifiableMailboxWithRole sent) {
         final JmapClient.MultiCall multiCall = jmapClient.newMultiCall();
         final ListenableFuture<Boolean> future = submit(emailId, identity, draftMailboxId, sent, multiCall);
@@ -201,10 +201,10 @@ public class EmailService extends MuaService {
         return future;
     }
 
-    private ListenableFuture<Boolean> submit(@NonNullDecl final String emailId,
-                                             @NonNullDecl final IdentifiableIdentity identity,
-                                             @NullableDecl String draftMailboxId,
-                                             @NullableDecl final IdentifiableMailboxWithRole sent,
+    private ListenableFuture<Boolean> submit(@Nonnull final String emailId,
+                                             @Nonnull final IdentifiableIdentity identity,
+                                             @Nullable String draftMailboxId,
+                                             @Nullable final IdentifiableMailboxWithRole sent,
                                              final JmapClient.MultiCall multiCall) {
         Preconditions.checkNotNull(emailId, "emailId can not be null when attempting to submit");
         Preconditions.checkNotNull(identity, "identity can not be null when attempting to submit an email");
@@ -371,13 +371,13 @@ public class EmailService extends MuaService {
         cache.invalidateEmails();
     }
 
-    public ListenableFuture<Boolean> discardDraft(final @NonNullDecl IdentifiableEmailWithKeywords email) {
+    public ListenableFuture<Boolean> discardDraft(final @Nonnull IdentifiableEmailWithKeywords email) {
         Preconditions.checkNotNull(email);
         Preconditions.checkArgument(email.getKeywords().containsKey(Keyword.DRAFT), "Email does not have $draft keyword");
         return Futures.transformAsync(getObjectsState(), objectsState -> discardDraft(email, objectsState), MoreExecutors.directExecutor());
     }
 
-    private ListenableFuture<Boolean> discardDraft(final @NonNullDecl IdentifiableEmailWithKeywords email, final ObjectsState objectsState) {
+    private ListenableFuture<Boolean> discardDraft(final @Nonnull IdentifiableEmailWithKeywords email, final ObjectsState objectsState) {
         Preconditions.checkNotNull(objectsState);
         final JmapClient.MultiCall multiCall = jmapClient.newMultiCall();
         final ListenableFuture<Boolean> future = discardDraft(email, objectsState, multiCall);
@@ -385,7 +385,7 @@ public class EmailService extends MuaService {
         return future;
     }
 
-    private ListenableFuture<Boolean> discardDraft(final @NonNullDecl IdentifiableEmailWithKeywords email,
+    private ListenableFuture<Boolean> discardDraft(final @Nonnull IdentifiableEmailWithKeywords email,
                                                    final ObjectsState objectsState,
                                                    final JmapClient.MultiCall multiCall) {
         final ListenableFuture<MethodResponses> future = multiCall.call(
@@ -428,7 +428,7 @@ public class EmailService extends MuaService {
         return applyEmailPatches(patches, objectsState);
     }
 
-    public ListenableFuture<Boolean> copyToImportant(@NonNullDecl final Collection<? extends IdentifiableEmailWithMailboxIds> emails) {
+    public ListenableFuture<Boolean> copyToImportant(@Nonnull final Collection<? extends IdentifiableEmailWithMailboxIds> emails) {
         return Futures.transformAsync(getService(MailboxService.class).getMailboxes(), mailboxes -> {
             Preconditions.checkNotNull(mailboxes, "SpecialMailboxes collection must not be null but can be empty");
             final IdentifiableMailboxWithRole important = MailboxUtil.find(mailboxes, Role.IMPORTANT);
@@ -437,11 +437,11 @@ public class EmailService extends MuaService {
         }, MoreExecutors.directExecutor());
     }
 
-    private ListenableFuture<Boolean> copyToImportant(@NonNullDecl final Collection<? extends IdentifiableEmailWithMailboxIds> emails, @NullableDecl final IdentifiableMailboxWithRole important) {
+    private ListenableFuture<Boolean> copyToImportant(@Nonnull final Collection<? extends IdentifiableEmailWithMailboxIds> emails, @Nullable final IdentifiableMailboxWithRole important) {
         return Futures.transformAsync(getObjectsState(), objectsState -> copyToImportant(emails, important, objectsState), MoreExecutors.directExecutor());
     }
 
-    private ListenableFuture<Boolean> copyToImportant(@NonNullDecl final Collection<? extends IdentifiableEmailWithMailboxIds> emails, @NullableDecl final IdentifiableMailboxWithRole important, final ObjectsState objectsState) {
+    private ListenableFuture<Boolean> copyToImportant(@Nonnull final Collection<? extends IdentifiableEmailWithMailboxIds> emails, @Nullable final IdentifiableMailboxWithRole important, final ObjectsState objectsState) {
         Preconditions.checkNotNull(emails, "emails can not be null when attempting to copy them to important");
         if (important != null) {
             Preconditions.checkArgument(important.getRole() == Role.IMPORTANT, "Supplied important mailbox must have the role IMPORTANT");
@@ -600,8 +600,8 @@ public class EmailService extends MuaService {
     }
 
     private ListenableFuture<Boolean> archive(final Collection<? extends IdentifiableEmailWithMailboxIds> emails,
-                                              @NonNullDecl final IdentifiableMailboxWithRole inbox,
-                                              @NullableDecl final IdentifiableMailboxWithRole archive) {
+                                              @Nonnull final IdentifiableMailboxWithRole inbox,
+                                              @Nullable final IdentifiableMailboxWithRole archive) {
         return Futures.transformAsync(
                 getObjectsState(),
                 objectsState -> archive(emails, inbox, archive, objectsState),
@@ -610,8 +610,8 @@ public class EmailService extends MuaService {
     }
 
     private ListenableFuture<Boolean> archive(final Collection<? extends IdentifiableEmailWithMailboxIds> emails,
-                                              @NonNullDecl final IdentifiableMailboxWithRole inbox,
-                                              @NullableDecl final IdentifiableMailboxWithRole archive,
+                                              @Nonnull final IdentifiableMailboxWithRole inbox,
+                                              @Nullable final IdentifiableMailboxWithRole archive,
                                               final ObjectsState objectsState) {
         Preconditions.checkNotNull(emails, "emails can not be null when attempting to archive them");
 
@@ -660,7 +660,7 @@ public class EmailService extends MuaService {
         }, MoreExecutors.directExecutor());
     }
 
-    public ListenableFuture<Boolean> removeFromMailbox(Collection<? extends IdentifiableEmailWithMailboxIds> emails, @NonNullDecl Mailbox mailbox, @NullableDecl final IdentifiableMailboxWithRole archive) {
+    public ListenableFuture<Boolean> removeFromMailbox(Collection<? extends IdentifiableEmailWithMailboxIds> emails, @Nonnull Mailbox mailbox, @Nullable final IdentifiableMailboxWithRole archive) {
         Preconditions.checkNotNull(mailbox, "Mailbox can not be null when attempting to remove it from a collection of emails");
         if (archive != null) {
             Preconditions.checkArgument(archive.getRole() == Role.ARCHIVE, "Supplied archive mailbox must have the role ARCHIVE");
@@ -670,7 +670,7 @@ public class EmailService extends MuaService {
 
     private ListenableFuture<Boolean> removeFromMailbox(final Collection<? extends IdentifiableEmailWithMailboxIds> emails,
                                                         final String mailboxId,
-                                                        @NullableDecl final IdentifiableMailboxWithRole archive) {
+                                                        @Nullable final IdentifiableMailboxWithRole archive) {
         return Futures.transformAsync(
                 getObjectsState(),
                 objectsState -> removeFromMailbox(emails, mailboxId, archive, objectsState),
@@ -680,7 +680,7 @@ public class EmailService extends MuaService {
 
     private ListenableFuture<Boolean> removeFromMailbox(final Collection<? extends IdentifiableEmailWithMailboxIds> emails,
                                                         final String mailboxId,
-                                                        @NullableDecl final IdentifiableMailboxWithRole archive,
+                                                        @Nullable final IdentifiableMailboxWithRole archive,
                                                         final ObjectsState objectsState) {
         Preconditions.checkNotNull(emails, "emails can not be null when attempting to remove them from a mailbox");
         Preconditions.checkNotNull(mailboxId, "mailboxId can not be null when attempting to remove emails");
@@ -747,7 +747,7 @@ public class EmailService extends MuaService {
     }
 
     public ListenableFuture<Boolean> moveToTrash(final Collection<? extends IdentifiableEmailWithMailboxIds> emails,
-                                                 @NullableDecl final IdentifiableMailboxWithRole trash) {
+                                                 @Nullable final IdentifiableMailboxWithRole trash) {
         return Futures.transformAsync(
                 getObjectsState(),
                 objectsState -> moveToTrash(emails, trash, objectsState),
@@ -756,7 +756,7 @@ public class EmailService extends MuaService {
     }
 
     private ListenableFuture<Boolean> moveToTrash(final Collection<? extends IdentifiableEmailWithMailboxIds> emails,
-                                                  @NullableDecl final IdentifiableMailboxWithRole trash,
+                                                  @Nullable final IdentifiableMailboxWithRole trash,
                                                   final ObjectsState objectsState) {
         final JmapClient.MultiCall multiCall = jmapClient.newMultiCall();
         final ListenableFuture<MethodResponses> mailboxCreateFuture;
@@ -809,7 +809,7 @@ public class EmailService extends MuaService {
 
     }
 
-    public ListenableFuture<Boolean> emptyTrash(@NonNullDecl IdentifiableMailboxWithRole trash) {
+    public ListenableFuture<Boolean> emptyTrash(@Nonnull IdentifiableMailboxWithRole trash) {
         final JmapClient.MultiCall multiCall = jmapClient.newMultiCall();
         final EmailFilterCondition filter = EmailFilterCondition.builder().inMailbox(trash.getId()).build();
         final JmapRequest.Call queryCall = multiCall.call(

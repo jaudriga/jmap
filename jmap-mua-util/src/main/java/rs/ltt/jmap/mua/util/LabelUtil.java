@@ -16,36 +16,22 @@
 
 package rs.ltt.jmap.mua.util;
 
-import com.google.common.base.Function;
 import com.google.common.base.Strings;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ComparisonChain;
-import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 import rs.ltt.jmap.common.entity.Role;
 
 import java.util.*;
 
 public class LabelUtil {
 
-    private static final Comparator<? super Label> COMPARATOR = new Comparator<Label>() {
-
-        @Override
-        public int compare(Label a, Label b) {
-            return ComparisonChain.start()
-                    .compare(order(a.getRole()), (order(b.getRole())))
-                    .compare(Strings.nullToEmpty(a.getName()), Strings.nullToEmpty(b.getName()))
-                    .result();
-        }
-    };
-    private static Collection<KeywordLabel> KEYWORD_LABELS = Collections2.transform(
+    private static final Comparator<? super Label> COMPARATOR = (Comparator<Label>) (a, b) -> ComparisonChain.start()
+            .compare(order(a.getRole()), (order(b.getRole())))
+            .compare(Strings.nullToEmpty(a.getName()), Strings.nullToEmpty(b.getName()))
+            .result();
+    private static final Collection<KeywordLabel> KEYWORD_LABELS = Collections2.transform(
             KeywordUtil.KEYWORD_ROLE.entrySet(),
-            new Function<Map.Entry<String, Role>, KeywordLabel>() {
-                @NullableDecl
-                @Override
-                public KeywordLabel apply(@NullableDecl Map.Entry<String, Role> entry) {
-                    return new KeywordLabel(entry.getKey(), entry.getValue());
-                }
-            });
+            entry -> new KeywordLabel(entry.getKey(), entry.getValue()));
 
     public static List<Label> fillUpAndSort(List<? extends Label> mailboxes) {
         final ArrayList<Label> labels = new ArrayList<>(mailboxes);
@@ -54,7 +40,7 @@ public class LabelUtil {
                 labels.add(keywordLabel);
             }
         }
-        Collections.sort(labels, COMPARATOR);
+        labels.sort(COMPARATOR);
         return labels;
     }
 

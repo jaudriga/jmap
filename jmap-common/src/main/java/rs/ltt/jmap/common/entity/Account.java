@@ -19,7 +19,6 @@ package rs.ltt.jmap.common.entity;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
-import rs.ltt.jmap.common.SessionResource;
 import rs.ltt.jmap.common.util.Property;
 
 import java.util.Collection;

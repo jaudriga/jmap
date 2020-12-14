@@ -16,13 +16,9 @@
 
 package rs.ltt.jmap.mua.service;
 
-import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.*;
-import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
-import org.checkerframework.checker.nullness.compatqual.NullableDecl;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rs.ltt.jmap.client.JmapClient;
@@ -32,7 +28,6 @@ import rs.ltt.jmap.common.entity.Mailbox;
 import rs.ltt.jmap.common.entity.Role;
 import rs.ltt.jmap.common.method.call.mailbox.GetMailboxMethodCall;
 import rs.ltt.jmap.common.method.call.mailbox.SetMailboxMethodCall;
-import rs.ltt.jmap.common.method.response.email.SetEmailMethodResponse;
 import rs.ltt.jmap.common.method.response.mailbox.ChangesMailboxMethodResponse;
 import rs.ltt.jmap.common.method.response.mailbox.GetMailboxMethodResponse;
 import rs.ltt.jmap.common.method.response.mailbox.SetMailboxMethodResponse;
@@ -42,12 +37,13 @@ import rs.ltt.jmap.mua.Status;
 import rs.ltt.jmap.mua.cache.ObjectsState;
 import rs.ltt.jmap.mua.cache.Update;
 import rs.ltt.jmap.mua.service.exception.PreexistingMailboxException;
-import rs.ltt.jmap.mua.service.exception.SetEmailException;
 import rs.ltt.jmap.mua.service.exception.SetMailboxException;
 import rs.ltt.jmap.mua.util.CreateUtil;
 import rs.ltt.jmap.mua.util.MailboxUtil;
 import rs.ltt.jmap.mua.util.UpdateUtil;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -153,7 +149,7 @@ public class MailboxService extends MuaService {
      * @param multiCall    The MultiCall that will later have the SetEmailMethodCall added to it.
      * @return
      */
-    protected ListenableFuture<MethodResponses> createMailbox(@NonNullDecl final Role role, @NullableDecl ObjectsState objectsState, final JmapClient.MultiCall multiCall) {
+    protected ListenableFuture<MethodResponses> createMailbox(@Nonnull final Role role, @Nullable ObjectsState objectsState, final JmapClient.MultiCall multiCall) {
         final SetMailboxMethodCall setMailboxMethodCall = SetMailboxMethodCall.builder()
                 .accountId(this.accountId)
                 .ifInState(objectsState == null ? null : objectsState.mailboxState)
@@ -166,7 +162,7 @@ public class MailboxService extends MuaService {
         return future;
     }
 
-    protected ListenableFuture<Void> ensureNoPreexistingMailbox(@NonNullDecl final Role role) {
+    protected ListenableFuture<Void> ensureNoPreexistingMailbox(@Nonnull final Role role) {
         return Futures.transform(
                 ioExecutorService.submit(() -> cache.getMailboxByNameAndParent(MailboxUtil.create(role).getName(), null)),
                 mb -> PreexistingMailboxException.throwIfNotNull(mb, role),

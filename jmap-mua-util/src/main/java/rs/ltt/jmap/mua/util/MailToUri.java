@@ -21,7 +21,6 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableMap;
 import lombok.*;
-import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 import rs.ltt.jmap.common.entity.EmailAddress;
 
 import javax.annotation.Nonnull;
@@ -157,9 +156,9 @@ public class MailToUri {
 
     private static Collection<EmailAddress> stripNames(Collection<EmailAddress> emailAddresses) {
         return Collections2.transform(emailAddresses, new Function<EmailAddress, EmailAddress>() {
-            @NullableDecl
+            @Nullable
             @Override
-            public EmailAddress apply(@NullableDecl EmailAddress emailAddress) {
+            public EmailAddress apply(@Nullable EmailAddress emailAddress) {
                 if (emailAddress == null || Strings.isNullOrEmpty(emailAddress.getName())) {
                     return emailAddress;
                 } else {

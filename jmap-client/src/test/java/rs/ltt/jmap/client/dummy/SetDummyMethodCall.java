@@ -16,10 +16,8 @@
 
 package rs.ltt.jmap.client.dummy;
 
-import rs.ltt.jmap.annotation.JmapMethod;
 import rs.ltt.jmap.client.Dummy;
 import rs.ltt.jmap.common.Request;
-import rs.ltt.jmap.common.method.call.standard.GetMethodCall;
 import rs.ltt.jmap.common.method.call.standard.SetMethodCall;
 
 import java.util.Map;

@@ -19,7 +19,6 @@ package rs.ltt.jmap.client.api;
 import com.google.common.util.concurrent.*;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 import rs.ltt.jmap.client.JmapRequest;
 import rs.ltt.jmap.client.MethodResponses;
 import rs.ltt.jmap.client.util.ResponseAnalyzer;
@@ -31,6 +30,7 @@ import rs.ltt.jmap.common.method.MethodErrorResponse;
 import rs.ltt.jmap.common.method.MethodResponse;
 import rs.ltt.jmap.gson.JmapAdapters;
 
+import javax.annotation.Nonnull;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Map;
@@ -92,7 +92,7 @@ public abstract class AbstractJmapApiClient implements JmapApiClient {
             }
 
             @Override
-            public void onFailure(@NonNullDecl Throwable throwable) {
+            public void onFailure(@Nonnull Throwable throwable) {
                 jmapRequest.setException(throwable);
             }
         }, MoreExecutors.directExecutor());

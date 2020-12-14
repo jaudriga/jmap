@@ -17,11 +17,10 @@
 package rs.ltt.jmap.common.entity.filter;
 
 import com.google.common.base.MoreObjects;
-import com.google.common.base.Objects;
-import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 import rs.ltt.jmap.common.entity.AbstractIdentifiableEntity;
-import rs.ltt.jmap.common.util.IndexableStringUtils;
+import rs.ltt.jmap.common.util.QueryStringUtils;
 
+import javax.annotation.Nonnull;
 import java.util.Arrays;
 
 public class FilterOperator<T extends AbstractIdentifiableEntity> implements Filter<T> {
@@ -54,11 +53,11 @@ public class FilterOperator<T extends AbstractIdentifiableEntity> implements Fil
 
     @Override
     public String toQueryString() {
-        return IndexableStringUtils.toIndexableString(L1_DIVIDER, L2_DIVIDER, conditions, operator);
+        return QueryStringUtils.toQueryString(L1_DIVIDER, L2_DIVIDER, conditions, operator);
     }
 
     @Override
-    public int compareTo(@NonNullDecl Filter<T> filter) {
+    public int compareTo(@Nonnull Filter<T> filter) {
         if (filter instanceof FilterOperator) {
             return 0;
         } else {

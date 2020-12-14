@@ -19,7 +19,7 @@ package rs.ltt.jmap.common.entity.query;
 import rs.ltt.jmap.common.entity.Comparator;
 import rs.ltt.jmap.common.entity.EmailSubmission;
 import rs.ltt.jmap.common.entity.filter.Filter;
-import rs.ltt.jmap.common.util.IndexableStringUtils;
+import rs.ltt.jmap.common.util.QueryStringUtils;
 
 public class EmailSubmissionQuery extends Query<EmailSubmission> {
 
@@ -29,7 +29,7 @@ public class EmailSubmissionQuery extends Query<EmailSubmission> {
 
     @Override
     public String toQueryString() {
-        return IndexableStringUtils.toIndexableString(L0_DIVIDER, L1_DIVIDER, filter, comparators);
+        return QueryStringUtils.toQueryString(L0_DIVIDER, L1_DIVIDER, filter, comparators);
     }
 
     public static EmailSubmissionQuery unfiltered() {

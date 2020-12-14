@@ -21,7 +21,7 @@ import com.google.common.hash.Hashing;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import okhttp3.HttpUrl;
-import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rs.ltt.jmap.gson.JmapAdapters;
@@ -41,7 +41,7 @@ public class FileSessionCache implements SessionCache {
         this.directory = null;
     }
 
-    public FileSessionCache(@NonNullDecl File directory) {
+    public FileSessionCache(@NonNull File directory) {
         JmapAdapters.register(this.gsonBuilder);
         this.directory = directory;
         LOGGER.debug("Initialize cache in {}", directory.getAbsolutePath());

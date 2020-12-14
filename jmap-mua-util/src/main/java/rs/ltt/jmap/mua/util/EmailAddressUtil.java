@@ -18,7 +18,6 @@ package rs.ltt.jmap.mua.util;
 import com.google.common.base.Function;
 import com.google.common.base.Strings;
 import com.google.common.collect.Collections2;
-import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 import rs.ltt.jmap.common.entity.EmailAddress;
 
 import java.util.*;
@@ -71,13 +70,7 @@ public class EmailAddressUtil {
     public static Collection<EmailAddress> parse(final String userInput) {
         return Collections2.transform(
                 EmailAddressTokenizer.tokenize(userInput),
-                new Function<EmailAddressToken, EmailAddress>() {
-                    @NullableDecl
-                    @Override
-                    public EmailAddress apply(@NullableDecl EmailAddressToken token) {
-                        return token != null ? token.getEmailAddress() : null;
-                    }
-                }
+                token -> token != null ? token.getEmailAddress() : null
         );
     }
 

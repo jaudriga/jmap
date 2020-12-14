@@ -19,12 +19,10 @@ package rs.ltt.jmap.common.util;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableBiMap;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.io.Resources;
 import com.google.gson.reflect.TypeToken;
-import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rs.ltt.jmap.common.Utils;
@@ -49,7 +47,7 @@ import java.util.List;
 
 public final class Mapper {
 
-    private static Logger LOGGER = LoggerFactory.getLogger(Mapper.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(Mapper.class);
     public static final ImmutableBiMap<String, Class<? extends MethodCall>> METHOD_CALLS = Mapper.get(MethodCall.class);
     public static final ImmutableBiMap<String, Class<? extends MethodResponse>> METHOD_RESPONSES = Mapper.get(MethodResponse.class);
     public static final ImmutableBiMap<String, Class<? extends MethodErrorResponse>> METHOD_ERROR_RESPONSES = Mapper.get(MethodErrorResponse.class);
@@ -113,16 +111,12 @@ public final class Mapper {
             }
             return Collections.singletonList(new BufferedReader(new InputStreamReader(is)));
         } else {
-            return Iterables.transform(urls, new Function<URL, BufferedReader>() {
-                @NullableDecl
-                @Override
-                public BufferedReader apply(final URL url) {
-                    try {
-                        return new BufferedReader(Resources.asCharSource(url, Charsets.UTF_8).openStream());
-                    } catch (IOException e) {
-                        LOGGER.warn("Unable to to read mappings for type {} from url {}", type.getName(), url.toString());
-                        return null;
-                    }
+            return Iterables.transform(urls, url -> {
+                try {
+                    return new BufferedReader(Resources.asCharSource(url, Charsets.UTF_8).openStream());
+                } catch (IOException e) {
+                    LOGGER.warn("Unable to to read mappings for type {} from url {}", type.getName(), url.toString());
+                    return null;
                 }
             });
         }

@@ -19,12 +19,12 @@ package rs.ltt.jmap.common.entity.filter;
 import com.google.common.base.Strings;
 import com.google.common.collect.ComparisonChain;
 import lombok.Builder;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 import rs.ltt.jmap.common.entity.Mailbox;
 import rs.ltt.jmap.common.entity.Role;
-import rs.ltt.jmap.common.util.IndexableStringUtils;
+import rs.ltt.jmap.common.util.QueryStringUtils;
+
+import javax.annotation.Nonnull;
 
 @Getter
 @Builder
@@ -41,15 +41,15 @@ public class MailboxFilterCondition implements FilterCondition<Mailbox> {
     private Boolean isSubscribed;
 
     @Override
-    public int compareTo(@NonNullDecl Filter<Mailbox> filter) {
+    public int compareTo(@Nonnull Filter<Mailbox> filter) {
         if (filter instanceof MailboxFilterCondition) {
             final MailboxFilterCondition other = (MailboxFilterCondition) filter;
             return ComparisonChain.start()
                     .compare(Strings.nullToEmpty(parentId), Strings.nullToEmpty(other.parentId))
                     .compare(Strings.nullToEmpty(name), Strings.nullToEmpty(other.name))
-                    .compare(IndexableStringUtils.nullToEmpty(role), IndexableStringUtils.nullToEmpty(other.role))
-                    .compare(hasAnyRole, other.hasAnyRole, IndexableStringUtils.BOOLEAN_COMPARATOR)
-                    .compare(isSubscribed, other.isSubscribed, IndexableStringUtils.BOOLEAN_COMPARATOR)
+                    .compare(QueryStringUtils.nullToEmpty(role), QueryStringUtils.nullToEmpty(other.role))
+                    .compare(hasAnyRole, other.hasAnyRole, QueryStringUtils.BOOLEAN_COMPARATOR)
+                    .compare(isSubscribed, other.isSubscribed, QueryStringUtils.BOOLEAN_COMPARATOR)
                     .result();
         } else {
             return 1;
@@ -58,7 +58,7 @@ public class MailboxFilterCondition implements FilterCondition<Mailbox> {
 
     @Override
     public String toQueryString() {
-        return IndexableStringUtils.toIndexableString(L3_DIVIDER, L4_DIVIDER, parentId, name, role, hasAnyRole, isSubscribed);
+        return QueryStringUtils.toQueryString(L3_DIVIDER, L4_DIVIDER, parentId, name, role, hasAnyRole, isSubscribed);
     }
 
 }

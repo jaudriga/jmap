@@ -21,13 +21,13 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import okhttp3.*;
 import okhttp3.logging.HttpLoggingInterceptor;
-import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
-import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rs.ltt.jmap.client.http.BasicAuthHttpAuthentication;
 import rs.ltt.jmap.client.http.HttpAuthentication;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -69,7 +69,7 @@ public class HttpJmapApiClient extends AbstractJmapApiClient {
         this(apiUrl,httpAuthentication, null);
     }
 
-    public HttpJmapApiClient(final HttpUrl apiUrl, final HttpAuthentication httpAuthentication, @NullableDecl final SessionStateListener sessionStateListener) {
+    public HttpJmapApiClient(final HttpUrl apiUrl, final HttpAuthentication httpAuthentication, @Nullable final SessionStateListener sessionStateListener) {
         this.apiUrl = apiUrl;
         this.httpAuthentication = httpAuthentication;
         this.sessionStateListener = sessionStateListener;
@@ -92,12 +92,12 @@ public class HttpJmapApiClient extends AbstractJmapApiClient {
         requestBuilder.post(RequestBody.create(out, MEDIA_TYPE_JSON));
         OK_HTTP_CLIENT.newCall(requestBuilder.build()).enqueue(new Callback() {
             @Override
-            public void onFailure(@NonNullDecl Call call, @NonNullDecl IOException e) {
+            public void onFailure(@Nonnull Call call, @Nonnull IOException e) {
                 settableInputStreamFuture.setException(e);
             }
 
             @Override
-            public void onResponse(@NonNullDecl Call call, @NonNullDecl Response response) throws IOException {
+            public void onResponse(@Nonnull Call call, @Nonnull Response response) throws IOException {
                 final int code = response.code();
                 if (code == 404) {
                     settableInputStreamFuture.setException(

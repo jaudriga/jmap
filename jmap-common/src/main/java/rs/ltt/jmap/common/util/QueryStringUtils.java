@@ -24,13 +24,13 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.Comparator;
 
-public class IndexableStringUtils {
+public class QueryStringUtils {
 
     public static final InstantComparator INSTANT_COMPARATOR = new InstantComparator();
     public static final StringArrayComparator STRING_ARRAY_COMPARATOR = new StringArrayComparator();
     public static final BooleanComparator BOOLEAN_COMPARATOR = new BooleanComparator();
 
-    public static String toIndexableString(char a, char b, Object... objects) {
+    public static String toQueryString(char a, char b, Object... objects) {
         final StringBuilder builder = new StringBuilder();
         for (int i = 0; i < objects.length; ++i) {
             Object o = objects[i];

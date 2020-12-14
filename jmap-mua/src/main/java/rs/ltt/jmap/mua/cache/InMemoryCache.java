@@ -17,7 +17,6 @@
 package rs.ltt.jmap.mua.cache;
 
 import com.google.common.collect.ImmutableList;
-import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rs.ltt.jmap.common.entity.Thread;
@@ -26,6 +25,7 @@ import rs.ltt.jmap.mua.cache.exception.*;
 import rs.ltt.jmap.mua.util.QueryResult;
 import rs.ltt.jmap.mua.util.QueryResultItem;
 
+import javax.annotation.Nonnull;
 import java.lang.reflect.Field;
 import java.util.*;
 
@@ -52,10 +52,9 @@ public class InMemoryCache implements Cache {
     public String getMailboxState() {
         return mailboxState;
     }
-
-
+    
     @Override
-    @NonNullDecl
+    @Nonnull
     public QueryStateWrapper getQueryState(String query) {
         synchronized (this.queryResults) {
             final String mailboxState = this.mailboxState;
@@ -80,7 +79,7 @@ public class InMemoryCache implements Cache {
         }
     }
 
-    @NonNullDecl
+    @Nonnull
     @Override
     public ObjectsState getObjectsState() {
         return new ObjectsState(mailboxState, threadState, emailState);

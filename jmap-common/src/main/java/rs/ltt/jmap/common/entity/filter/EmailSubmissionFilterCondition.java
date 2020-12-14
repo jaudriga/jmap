@@ -19,11 +19,11 @@ package rs.ltt.jmap.common.entity.filter;
 import com.google.common.collect.ComparisonChain;
 import lombok.Builder;
 import lombok.Getter;
-import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 import rs.ltt.jmap.common.entity.EmailSubmission;
 import rs.ltt.jmap.common.entity.UndoStatus;
-import rs.ltt.jmap.common.util.IndexableStringUtils;
+import rs.ltt.jmap.common.util.QueryStringUtils;
 
+import javax.annotation.Nonnull;
 import java.time.Instant;
 
 @Getter
@@ -43,16 +43,16 @@ public class EmailSubmissionFilterCondition implements FilterCondition<EmailSubm
     private Instant after;
 
     @Override
-    public int compareTo(@NonNullDecl Filter<EmailSubmission> filter) {
+    public int compareTo(@Nonnull Filter<EmailSubmission> filter) {
         if (filter instanceof EmailSubmissionFilterCondition) {
-            EmailSubmissionFilterCondition other = (EmailSubmissionFilterCondition) filter;
+            final EmailSubmissionFilterCondition other = (EmailSubmissionFilterCondition) filter;
             return ComparisonChain.start()
-                    .compare(identityIds, other.identityIds, IndexableStringUtils.STRING_ARRAY_COMPARATOR)
-                    .compare(emailIds, other.emailIds, IndexableStringUtils.STRING_ARRAY_COMPARATOR)
-                    .compare(threadIds, other.threadIds, IndexableStringUtils.STRING_ARRAY_COMPARATOR)
-                    .compare(IndexableStringUtils.nullToEmpty(undoStatus), IndexableStringUtils.nullToEmpty(other.undoStatus))
+                    .compare(identityIds, other.identityIds, QueryStringUtils.STRING_ARRAY_COMPARATOR)
+                    .compare(emailIds, other.emailIds, QueryStringUtils.STRING_ARRAY_COMPARATOR)
+                    .compare(threadIds, other.threadIds, QueryStringUtils.STRING_ARRAY_COMPARATOR)
+                    .compare(QueryStringUtils.nullToEmpty(undoStatus), QueryStringUtils.nullToEmpty(other.undoStatus))
                     .compare(before, other.before)
-                    .compare(after, other.after, IndexableStringUtils.INSTANT_COMPARATOR)
+                    .compare(after, other.after, QueryStringUtils.INSTANT_COMPARATOR)
                     .result();
         } else {
             return 1;
@@ -61,7 +61,7 @@ public class EmailSubmissionFilterCondition implements FilterCondition<EmailSubm
 
     @Override
     public String toQueryString() {
-        return IndexableStringUtils.toIndexableString(L3_DIVIDER, L4_DIVIDER, identityIds, emailIds, threadIds, undoStatus, before, after);
+        return QueryStringUtils.toQueryString(L3_DIVIDER, L4_DIVIDER, identityIds, emailIds, threadIds, undoStatus, before, after);
     }
 
 }

@@ -19,8 +19,6 @@ package rs.ltt.jmap.mua.service;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
-import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
-import org.jetbrains.annotations.Nullable;
 import rs.ltt.jmap.client.JmapClient;
 import rs.ltt.jmap.client.MethodResponses;
 import rs.ltt.jmap.client.api.MethodErrorResponseException;
@@ -30,6 +28,8 @@ import rs.ltt.jmap.mua.cache.Cache;
 import rs.ltt.jmap.mua.cache.ObjectsState;
 import rs.ltt.jmap.mua.util.UpdateUtil;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.concurrent.ExecutionException;
 
 public abstract class MuaService {
@@ -68,7 +68,7 @@ public abstract class MuaService {
             }
 
             @Override
-            public void onFailure(@NonNullDecl Throwable throwable) {
+            public void onFailure(@Nonnull Throwable throwable) {
                 if (MethodErrorResponseException.matches(throwable, CannotCalculateChangesMethodErrorResponse.class)) {
                     runnable.run();
                 }

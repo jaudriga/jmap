@@ -17,17 +17,17 @@
 package rs.ltt.jmap.mua.util;
 
 import com.google.common.base.CaseFormat;
-import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 import rs.ltt.jmap.common.entity.IdentifiableEmailWithMailboxIds;
 import rs.ltt.jmap.common.entity.IdentifiableMailboxWithRole;
 import rs.ltt.jmap.common.entity.Mailbox;
 import rs.ltt.jmap.common.entity.Role;
 
+import javax.annotation.Nullable;
 import java.util.Collection;
 
 public class MailboxUtil {
 
-    public static @NullableDecl
+    public static @Nullable
     IdentifiableMailboxWithRole find(Collection<? extends IdentifiableMailboxWithRole> mailboxes, Role role) {
         for (IdentifiableMailboxWithRole mailbox : mailboxes) {
             if (mailbox.getRole() == role) {

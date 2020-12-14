@@ -26,7 +26,6 @@ import okhttp3.Credentials;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.RecordedRequest;
-import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 import rs.ltt.jmap.common.*;
 import rs.ltt.jmap.common.entity.Account;
 import rs.ltt.jmap.common.entity.ErrorType;
@@ -35,6 +34,8 @@ import rs.ltt.jmap.common.entity.capability.MailAccountCapability;
 import rs.ltt.jmap.common.method.MethodCall;
 import rs.ltt.jmap.common.method.MethodResponse;
 import rs.ltt.jmap.gson.JmapAdapters;
+
+import javax.annotation.Nonnull;
 
 
 public abstract class JmapDispatcher extends Dispatcher {
@@ -54,7 +55,7 @@ public abstract class JmapDispatcher extends Dispatcher {
 
     private int sessionState = 0;
 
-    @NonNullDecl
+    @Nonnull
     @Override
     public MockResponse dispatch(final RecordedRequest request) {
         switch (Strings.nullToEmpty(request.getPath())) {

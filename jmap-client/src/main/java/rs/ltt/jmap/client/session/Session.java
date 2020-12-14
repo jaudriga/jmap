@@ -20,7 +20,6 @@ import com.damnhandy.uri.template.UriTemplate;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import okhttp3.HttpUrl;
-import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 import rs.ltt.jmap.client.event.CloseAfter;
 import rs.ltt.jmap.common.SessionResource;
 import rs.ltt.jmap.common.entity.AbstractIdentifiableEntity;
@@ -28,6 +27,7 @@ import rs.ltt.jmap.common.entity.Account;
 import rs.ltt.jmap.common.entity.AccountCapability;
 import rs.ltt.jmap.common.entity.Capability;
 
+import javax.annotation.Nonnull;
 import java.util.Collection;
 import java.util.Locale;
 import java.util.Map;
@@ -38,7 +38,7 @@ public class Session {
 
     private final SessionResource sessionResource;
 
-    public Session(@NonNullDecl HttpUrl base, @NonNullDecl SessionResource sessionResource) {
+    public Session(@Nonnull HttpUrl base, @Nonnull SessionResource sessionResource) {
         Preconditions.checkNotNull(base, "Base URL for session must not be null");
         Preconditions.checkNotNull(sessionResource, "Session Resource must not be null");
         this.base = base;
