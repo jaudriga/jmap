@@ -115,7 +115,7 @@ public class QueryService extends MuaService {
     }
 
     public ListenableFuture<Status> query(@Nonnull final EmailQuery query) {
-        final ListenableFuture<QueryStateWrapper> queryStateFuture = ioExecutorService.submit(() -> cache.getQueryState(query.toQueryString()));
+        final ListenableFuture<QueryStateWrapper> queryStateFuture = ioExecutorService.submit(() -> cache.getQueryState(query.asHash()));
 
         return Futures.transformAsync(queryStateFuture, queryStateWrapper -> {
             Preconditions.checkNotNull(queryStateWrapper, "QueryStateWrapper can not be null");
@@ -131,7 +131,7 @@ public class QueryService extends MuaService {
     }
 
     public ListenableFuture<Status> query(@Nonnull final EmailQuery query, final String afterEmailId) {
-        final ListenableFuture<QueryStateWrapper> queryStateFuture = ioExecutorService.submit(() -> cache.getQueryState(query.toQueryString()));
+        final ListenableFuture<QueryStateWrapper> queryStateFuture = ioExecutorService.submit(() -> cache.getQueryState(query.asHash()));
         return Futures.transformAsync(
                 queryStateFuture,
                 queryStateWrapper -> query(query, afterEmailId, queryStateWrapper),
@@ -199,7 +199,7 @@ public class QueryService extends MuaService {
 
                 addQueryResult(query, afterEmailId, queryResult);
 
-                fetchMissing(query.toQueryString()).addListener(
+                fetchMissing(query.asHash()).addListener(
                         () -> settableFuture.set(queryResult.items.length > 0 ? Status.UPDATED : Status.UNCHANGED),
                         MoreExecutors.directExecutor()
                 );
@@ -216,10 +216,10 @@ public class QueryService extends MuaService {
 
     private void addQueryResult(final EmailQuery query, String afterEmailId, final QueryResult queryResult) throws CacheWriteException {
         try {
-            cache.addQueryResult(query.toQueryString(), afterEmailId, queryResult);
+            cache.addQueryResult(query.asHash(), afterEmailId, queryResult);
         } catch (final CorruptCacheException e) {
             LOGGER.info("Invalidating query result cache after cache corruption", e);
-            cache.invalidateQueryResult(query.toQueryString());
+            cache.invalidateQueryResult(query.asHash());
             throw e;
         }
     }
@@ -235,7 +235,7 @@ public class QueryService extends MuaService {
             if (methodError instanceof AnchorNotFoundMethodErrorResponse) {
                 if (queryRefreshFuture == null || Status.unchanged(queryRefreshFuture)) {
                     LOGGER.info("Invalidating query result cache after receiving AnchorNotFound response");
-                    cache.invalidateQueryResult(query.toQueryString());
+                    cache.invalidateQueryResult(query.asHash());
                 } else {
                     LOGGER.info(
                             "Holding back on invaliding query result cache despite AnchorNotFound response because query refresh had changes"
@@ -295,7 +295,7 @@ public class QueryService extends MuaService {
             Status queryUpdateStatus = Status.of(queryUpdate);
 
             if (queryUpdate.hasChanges()) {
-                cache.updateQueryResults(query.toQueryString(), queryUpdate, getThreadIdsResponse.getTypedState());
+                cache.updateQueryResults(query.asHash(), queryUpdate, getThreadIdsResponse.getTypedState());
             }
 
 
@@ -303,7 +303,7 @@ public class QueryService extends MuaService {
             list.add(Futures.immediateFuture(piggybackStatus));
             list.add(Futures.immediateFuture(queryUpdateStatus));
             //it might be that a previous fetchMissing() has failed. so better safe than sorry
-            list.add(fetchMissing(query.toQueryString()));
+            list.add(fetchMissing(query.asHash()));
             return transform(list);
         }, ioExecutorService);
     }
@@ -318,7 +318,7 @@ public class QueryService extends MuaService {
             @Override
             public void onFailure(@Nonnull Throwable throwable) {
                 if (MethodErrorResponseException.matches(throwable, CannotCalculateChangesMethodErrorResponse.class)) {
-                    cache.invalidateQueryResult(query.toQueryString());
+                    cache.invalidateQueryResult(query.asHash());
                 }
             }
         }, ioExecutorService);
@@ -408,14 +408,14 @@ public class QueryService extends MuaService {
                 throw new IllegalStateException("Server reported position " + queryResult.position + " in response to initial query. We expected 0");
             }
 
-            cache.setQueryResult(query.toQueryString(), queryResult);
+            cache.setQueryResult(query.asHash(), queryResult);
 
             if (getThreadsResponsesFuture != null && getEmailResponsesFuture != null) {
                 return Futures.immediateFuture(Status.UPDATED);
             } else {
                 List<ListenableFuture<Status>> list = new ArrayList<>();
                 list.add(Futures.immediateFuture(Status.UPDATED));
-                list.add(fetchMissing(query.toQueryString()));
+                list.add(fetchMissing(query.asHash()));
                 return transform(list);
             }
         }, ioExecutorService);
