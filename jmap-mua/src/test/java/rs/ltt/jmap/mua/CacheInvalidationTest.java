@@ -73,7 +73,11 @@ public class CacheInvalidationTest {
 
         @Override
         public void invalidateQueryResult(final String queryString) {
-            super.invalidateQueryResult(queryString);
+            synchronized (this.queryResults) {
+                if (this.queryResults.remove(queryString) == null) {
+                    throw new IllegalStateException(String.format("Unable to find cached query result for %s", queryString));
+                }
+            }
             this.queryCacheInvalidationTriggered.set(true);
         }
 
