@@ -1,3 +1,8 @@
+### 0.5.4 (2020-12-15)
+
+* Define some common queries in jmap-mua-util
+* Change Cache API to use a hashed query string instead of query string
+
 ### 0.5.3 (2020-12-09)
 
 * add core namespace to all requests
