@@ -22,7 +22,7 @@ import rs.ltt.jmap.common.entity.Role;
 
 import java.io.Serializable;
 
-public class KeywordLabel implements Label, Serializable {
+public class KeywordLabel implements LabelWithCount, Serializable {
 
     private final String keyword;
     private final Role role;

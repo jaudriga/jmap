@@ -25,7 +25,7 @@ import java.util.*;
 
 public class LabelUtil {
 
-    private static final Comparator<? super Label> COMPARATOR = (Comparator<Label>) (a, b) -> ComparisonChain.start()
+    public static final Comparator<? super Label> COMPARATOR = (Comparator<Label>) (a, b) -> ComparisonChain.start()
             .compare(order(a.getRole()), (order(b.getRole())))
             .compare(Strings.nullToEmpty(a.getName()), Strings.nullToEmpty(b.getName()))
             .result();
@@ -33,8 +33,8 @@ public class LabelUtil {
             KeywordUtil.KEYWORD_ROLE.entrySet(),
             entry -> new KeywordLabel(entry.getKey(), entry.getValue()));
 
-    public static List<Label> fillUpAndSort(List<? extends Label> mailboxes) {
-        final ArrayList<Label> labels = new ArrayList<>(mailboxes);
+    public static List<LabelWithCount> fillUpAndSort(List<? extends LabelWithCount> mailboxes) {
+        final ArrayList<LabelWithCount> labels = new ArrayList<>(mailboxes);
         for (final KeywordLabel keywordLabel : KEYWORD_LABELS) {
             if (!anyIsRole(mailboxes, keywordLabel.getRole())) {
                 labels.add(keywordLabel);
