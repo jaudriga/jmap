@@ -512,6 +512,12 @@ public class EmailService extends MuaService {
         return applyEmailPatches(patches, objectsState);
     }
 
+    public ListenableFuture<Boolean> modifyLabels(final Collection<? extends IdentifiableEmailWithMailboxIds> emails,
+                                                  final Collection<? extends IdentifiableMailboxWithRoleAndName> additions,
+                                                  final Collection<? extends IdentifiableMailboxWithRoleAndName> removals) {
+        return Futures.immediateFuture(false);
+    }
+
     public ListenableFuture<Boolean> moveToInbox(final Collection<? extends IdentifiableEmailWithMailboxIds> emails) {
         return Futures.transformAsync(getService(MailboxService.class).getMailboxes(), mailboxes -> {
             Preconditions.checkNotNull(mailboxes, "SpecialMailboxes collection must not be null but can be empty");

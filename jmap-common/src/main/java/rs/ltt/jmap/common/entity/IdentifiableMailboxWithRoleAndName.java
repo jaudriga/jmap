@@ -16,7 +16,27 @@
 
 package rs.ltt.jmap.common.entity;
 
+import java.util.Collection;
+import java.util.Objects;
+
 public interface IdentifiableMailboxWithRoleAndName extends IdentifiableMailboxWithRole {
 
     String getName();
+
+    default boolean matches(final IdentifiableMailboxWithRoleAndName mailbox) {
+        if (getId() == null) {
+            return Objects.equals(getName(), mailbox.getName()) && Objects.equals(getRole(), mailbox.getRole());
+        } else {
+            return getId().equals(mailbox.getId());
+        }
+    }
+
+    default boolean matchesAny(final Collection<? extends IdentifiableMailboxWithRoleAndName> mailboxes) {
+        for (IdentifiableMailboxWithRoleAndName mailbox : mailboxes) {
+            if (matches(mailbox)) {
+                return true;
+            }
+        }
+        return false;
+    }
 }
