@@ -23,9 +23,21 @@ import rs.ltt.jmap.common.entity.Mailbox;
 import rs.ltt.jmap.common.entity.Role;
 
 import javax.annotation.Nullable;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class MailboxUtil {
+
+    /**
+     * when auto creating mailboxes we pick a 'human readable' version of the role as the name. Since mailbox
+     * names have to be unique it is not advisable (although not prohibited by the standard) to use those names
+     * when creating 'labels'
+     */
+    public static List<String> RESERVED_MAILBOX_NAMES = Arrays.stream(Role.values())
+            .map(MailboxUtil::humanReadable)
+            .collect(Collectors.toList());
 
     public static @Nullable
     IdentifiableMailboxWithRole find(Collection<? extends IdentifiableMailboxWithRole> mailboxes, Role role) {
