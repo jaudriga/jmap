@@ -50,6 +50,8 @@ public interface Cache {
 
     IdentifiableMailboxWithRoleAndName getMailboxByNameAndParent(final String name, final String parentId) throws NotSynchronizedException;
 
+    Collection<? extends IdentifiableMailboxWithRoleAndName> getMailboxesByNames(final String[] names);
+
     void setThreadsAndEmails(TypedState<Thread> threadState, Thread[] threads, TypedState<Email> emailState, Email[] emails);
 
     void addThreadsAndEmail(TypedState<Thread> threadState, Thread[] threads, TypedState<Email> emailState, Email[] emails);

@@ -27,7 +27,11 @@ public class CreateUtil {
     public static final String EMAIL_CREATION_ID_REFERENCE = "#" + EMAIL_CREATION_ID;
 
     public static String createIdReference(Role role) {
-        return "#" + createId(role);
+        return createIdReference(createId(role));
+    }
+
+    public static String createIdReference(String id) {
+        return "#"+id;
     }
 
     public static String createId(Role role) {

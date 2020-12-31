@@ -17,13 +17,17 @@
 package rs.ltt.jmap.mua.service;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.util.concurrent.*;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rs.ltt.jmap.client.JmapClient;
 import rs.ltt.jmap.client.MethodResponses;
 import rs.ltt.jmap.common.entity.IdentifiableMailboxWithRole;
+import rs.ltt.jmap.common.entity.IdentifiableMailboxWithRoleAndName;
 import rs.ltt.jmap.common.entity.Mailbox;
 import rs.ltt.jmap.common.entity.Role;
 import rs.ltt.jmap.common.method.call.mailbox.GetMailboxMethodCall;
@@ -44,8 +48,7 @@ import rs.ltt.jmap.mua.util.UpdateUtil;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class MailboxService extends MuaService {
@@ -150,10 +153,14 @@ public class MailboxService extends MuaService {
      * @return
      */
     protected ListenableFuture<MethodResponses> createMailbox(@Nonnull final Role role, @Nullable ObjectsState objectsState, final JmapClient.MultiCall multiCall) {
+        return createMailboxes(ImmutableMap.of(CreateUtil.createId(role), MailboxUtil.create(role)), objectsState, multiCall);
+    }
+
+    protected ListenableFuture<MethodResponses> createMailboxes(@Nonnull Map<String, Mailbox> mailboxes, @Nullable ObjectsState objectsState, final JmapClient.MultiCall multiCall) {
         final SetMailboxMethodCall setMailboxMethodCall = SetMailboxMethodCall.builder()
                 .accountId(this.accountId)
                 .ifInState(objectsState == null ? null : objectsState.mailboxState)
-                .create(ImmutableMap.of(CreateUtil.createId(role), MailboxUtil.create(role)))
+                .create(mailboxes)
                 .build();
         final ListenableFuture<MethodResponses> future = multiCall.call(setMailboxMethodCall).getMethodResponses();
         if (objectsState != null && objectsState.mailboxState != null) {
@@ -162,17 +169,17 @@ public class MailboxService extends MuaService {
         return future;
     }
 
+    protected ListenableFuture<Void> ensureNoPreexistingMailbox(final List<Role> roles) {
+        final List<ListenableFuture<Void>> futures = roles.stream().map(this::ensureNoPreexistingMailbox).collect(Collectors.toList());
+        return Futures.transform(Futures.allAsList(futures), voids -> null, MoreExecutors.directExecutor());
+    }
+
     protected ListenableFuture<Void> ensureNoPreexistingMailbox(@Nonnull final Role role) {
         return Futures.transform(
                 ioExecutorService.submit(() -> cache.getMailboxByNameAndParent(MailboxUtil.create(role).getName(), null)),
                 mb -> PreexistingMailboxException.throwIfNotNull(mb, role),
                 MoreExecutors.directExecutor()
         );
-    }
-
-    protected ListenableFuture<Void> ensureNoPreexistingMailbox(final List<Role> roles) {
-        final List<ListenableFuture<Void>> futures = roles.stream().map(this::ensureNoPreexistingMailbox).collect(Collectors.toList());
-        return Futures.transform(Futures.allAsList(futures), voids -> null, MoreExecutors.directExecutor());
     }
 
     public ListenableFuture<Boolean> setRole(final IdentifiableMailboxWithRole mailbox, final Role role) {
@@ -192,5 +199,54 @@ public class MailboxService extends MuaService {
             SetMailboxException.throwIfFailed(setMailboxMethodResponse);
             return Futures.immediateFuture(setMailboxMethodResponse.getUpdatedCreatedCount() > 0);
         }, ioExecutorService);
+    }
+
+    public ListenableFuture<List<String>> resolveMailboxes(final Collection<? extends IdentifiableMailboxWithRoleAndName> additions,
+                                                           final IdentifiableMailboxWithRole archive,
+                                                           final ObjectsState objectsState,
+                                                           final JmapClient.MultiCall multiCall) {
+        if (archive != null) {
+            Preconditions.checkArgument(archive.getRole() == Role.ARCHIVE);
+        }
+        final String[] unidentifiableMailboxes = additions.stream()
+                .filter(m -> Objects.isNull(m.getId()))
+                .map(IdentifiableMailboxWithRoleAndName::getName)
+                .toArray(String[]::new);
+
+        return Futures.transform(
+                ioExecutorService.submit(() -> cache.getMailboxesByNames(unidentifiableMailboxes)),
+                mailboxes -> {
+                    final Map<String, List<IdentifiableMailboxWithRoleAndName>> nameToMailboxes = mailboxes.stream()
+                            .collect(Collectors.groupingBy(IdentifiableMailboxWithRoleAndName::getName));
+                    final ImmutableMap.Builder<String, Mailbox> mailboxCreationsBuilder = ImmutableMap.builder();
+                    final ImmutableList.Builder<String> mailboxIdBuilder = new ImmutableList.Builder<>();
+                    if (archive == null) {
+                        mailboxCreationsBuilder.put(CreateUtil.createId(Role.ARCHIVE), MailboxUtil.create(Role.ARCHIVE));
+                    }
+                    for (IdentifiableMailboxWithRoleAndName mailbox : additions) {
+                        if (Objects.isNull(mailbox.getId())) {
+                            final Optional<IdentifiableMailboxWithRoleAndName> optionalMailbox = nameToMailboxes
+                                    .getOrDefault(mailbox.getName(), Collections.emptyList()).stream().findFirst();
+                            if (optionalMailbox.isPresent()) {
+                                mailboxIdBuilder.add(optionalMailbox.get().getId());
+                            } else {
+                                final UUID uuid = UUID.randomUUID();
+                                mailboxCreationsBuilder.put(uuid.toString(), Mailbox.builder().name(mailbox.getName()).build());
+                            }
+                        } else {
+                            mailboxIdBuilder.add(mailbox.getId());
+                        }
+                    }
+                    final ImmutableMap<String, Mailbox> mailboxCreations = mailboxCreationsBuilder.build();
+                    if (mailboxCreations.size() > 0) {
+                        createMailboxes(mailboxCreations, objectsState, multiCall);
+                        mailboxIdBuilder.addAll(mailboxCreations.keySet().stream()
+                                .map(CreateUtil::createIdReference)
+                                .collect(Collectors.toList()));
+                    }
+                    return mailboxIdBuilder.build();
+                },
+                MoreExecutors.directExecutor()
+        );
     }
 }

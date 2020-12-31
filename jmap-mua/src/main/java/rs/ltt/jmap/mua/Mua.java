@@ -17,6 +17,7 @@
 package rs.ltt.jmap.mua;
 
 import com.google.common.base.Preconditions;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import okhttp3.HttpUrl;
 import org.slf4j.Logger;
@@ -179,6 +180,13 @@ public class Mua extends MuaSession {
     public ListenableFuture<Boolean> copyToMailbox(final Collection<? extends IdentifiableEmailWithMailboxIds> emails,
                                                    final IdentifiableMailboxWithRole mailbox) {
         return getService(EmailService.class).copyToMailbox(emails, mailbox);
+    }
+
+
+    public ListenableFuture<Boolean> modifyLabels(final Collection<? extends IdentifiableEmailWithMailboxIds> emails,
+                                                  final Collection<? extends IdentifiableMailboxWithRoleAndName> additions,
+                                                  final Collection<? extends IdentifiableMailboxWithRoleAndName> removals) {
+        return getService(EmailService.class).modifyLabels(emails, additions, removals);
     }
 
     /**

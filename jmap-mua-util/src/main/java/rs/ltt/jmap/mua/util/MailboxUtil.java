@@ -49,6 +49,15 @@ public class MailboxUtil {
         return null;
     }
 
+    public static boolean anyWithRole(Collection<? extends IdentifiableMailboxWithRole> mailboxes, Role role) {
+        for(final IdentifiableMailboxWithRole mailbox : mailboxes) {
+            if (mailbox.getRole() == role) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static Mailbox create(final Role role) {
         return Mailbox.builder().role(role).name(humanReadable(role)).build();
     }

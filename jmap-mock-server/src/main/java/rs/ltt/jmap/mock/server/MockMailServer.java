@@ -223,6 +223,7 @@ public class MockMailServer extends StubMailServer {
 
     @Override
     protected MethodResponse[] execute(SetEmailMethodCall methodCall, ListMultimap<String, Response.Invocation> previousResponses) {
+        System.out.println("setEmailMethodCall "+methodCall.toString());
         final Map<String, Map<String, Object>> update = methodCall.getUpdate();
         final Map<String, Email> create = methodCall.getCreate();
         final String[] destroy = methodCall.getDestroy();

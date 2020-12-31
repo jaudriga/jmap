@@ -42,4 +42,8 @@ class MyInMemoryCache extends InMemoryCache {
     public Mailbox getMailbox(final Role role) {
         return (Mailbox) MailboxUtil.find(this.mailboxes.values(), role);
     }
+
+    public Collection<Mailbox> getMailboxes() {
+        return mailboxes.values();
+    }
 }

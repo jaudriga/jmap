@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import rs.ltt.jmap.client.JmapClient;
 import rs.ltt.jmap.client.MethodResponses;
 import rs.ltt.jmap.client.api.MethodErrorResponseException;
+import rs.ltt.jmap.common.entity.IdentifiableMailboxWithRoleAndName;
 import rs.ltt.jmap.common.method.error.CannotCalculateChangesMethodErrorResponse;
 import rs.ltt.jmap.mua.MuaSession;
 import rs.ltt.jmap.mua.cache.Cache;
@@ -30,6 +31,7 @@ import rs.ltt.jmap.mua.util.UpdateUtil;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.Collection;
 import java.util.concurrent.ExecutionException;
 
 public abstract class MuaService {
@@ -85,5 +87,4 @@ public abstract class MuaService {
         }
         return exception;
     }
-
 }

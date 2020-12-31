@@ -28,6 +28,7 @@ import rs.ltt.jmap.mua.util.QueryResultItem;
 import javax.annotation.Nonnull;
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class InMemoryCache implements Cache {
 
@@ -148,6 +149,14 @@ public class InMemoryCache implements Cache {
                     .findFirst()
                     .orElse(null);
         }
+    }
+
+    @Override
+    public Collection<IdentifiableMailboxWithRoleAndName> getMailboxesByNames(final String[] names) {
+        final List<String> filter = Arrays.asList(names);
+        return this.mailboxes.values().stream()
+                    .filter(mailbox -> filter.contains(mailbox.getName()))
+                    .collect(Collectors.toList());
     }
 
     private static boolean matches(final String a, final String b) {

@@ -48,15 +48,14 @@ import rs.ltt.jmap.mua.service.exception.SetEmailException;
 import rs.ltt.jmap.mua.service.exception.SetEmailSubmissionException;
 import rs.ltt.jmap.mua.service.exception.SetMailboxException;
 import rs.ltt.jmap.mua.util.CreateUtil;
+import rs.ltt.jmap.mua.util.MailboxPreconditions;
 import rs.ltt.jmap.mua.util.MailboxUtil;
 import rs.ltt.jmap.mua.util.UpdateUtil;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @SuppressWarnings("UnstableApiUsage")
 public class EmailService extends MuaService {
@@ -140,36 +139,6 @@ public class EmailService extends MuaService {
             Preconditions.checkArgument(mailbox.getRole() == role);
             return callable.call();
         }
-    }
-
-    private <O> ListenableFuture<O> ensureNoPreexistingMailbox(final IdentifiableMailboxWithRole mb0,
-                                                               final Role r0,
-                                                               final IdentifiableMailboxWithRole mb1,
-                                                               final Role r1,
-                                                               AsyncCallable<O> callable) {
-        return Futures.transformAsync(
-                getService(MailboxService.class).ensureNoPreexistingMailbox(rolesInNeedOfConflictCheck(mb0, r0, mb1, r1)),
-                unused -> callable.call(),
-                MoreExecutors.directExecutor()
-        );
-    }
-
-    private static List<Role> rolesInNeedOfConflictCheck(final IdentifiableMailboxWithRole mb0,
-                                                         final Role r0,
-                                                         final IdentifiableMailboxWithRole mb1,
-                                                         final Role r1) {
-        final ImmutableList.Builder<Role> roleBuilder = ImmutableList.builder();
-        if (mb0 == null) {
-            roleBuilder.add(r0);
-        } else {
-            Preconditions.checkArgument(mb0.getRole() == r0);
-        }
-        if (mb1 == null) {
-            roleBuilder.add(r1);
-        } else {
-            Preconditions.checkArgument(mb1.getRole() == r1);
-        }
-        return roleBuilder.build();
     }
 
     public ListenableFuture<Boolean> submit(final Email email, final Identity identity) {
@@ -270,6 +239,36 @@ public class EmailService extends MuaService {
             final IdentifiableMailboxWithRole sent = MailboxUtil.find(mailboxes, Role.SENT);
             return ensureNoPreexistingMailbox(sent, Role.SENT, drafts, Role.DRAFTS, () -> send(email, identity, drafts, sent));
         }, MoreExecutors.directExecutor());
+    }
+
+    private <O> ListenableFuture<O> ensureNoPreexistingMailbox(final IdentifiableMailboxWithRole mb0,
+                                                               final Role r0,
+                                                               final IdentifiableMailboxWithRole mb1,
+                                                               final Role r1,
+                                                               AsyncCallable<O> callable) {
+        return Futures.transformAsync(
+                getService(MailboxService.class).ensureNoPreexistingMailbox(rolesInNeedOfConflictCheck(mb0, r0, mb1, r1)),
+                unused -> callable.call(),
+                MoreExecutors.directExecutor()
+        );
+    }
+
+    private static List<Role> rolesInNeedOfConflictCheck(final IdentifiableMailboxWithRole mb0,
+                                                         final Role r0,
+                                                         final IdentifiableMailboxWithRole mb1,
+                                                         final Role r1) {
+        final ImmutableList.Builder<Role> roleBuilder = ImmutableList.builder();
+        if (mb0 == null) {
+            roleBuilder.add(r0);
+        } else {
+            Preconditions.checkArgument(mb0.getRole() == r0);
+        }
+        if (mb1 == null) {
+            roleBuilder.add(r1);
+        } else {
+            Preconditions.checkArgument(mb1.getRole() == r1);
+        }
+        return roleBuilder.build();
     }
 
     private ListenableFuture<String> send(final Email email,
@@ -515,7 +514,113 @@ public class EmailService extends MuaService {
     public ListenableFuture<Boolean> modifyLabels(final Collection<? extends IdentifiableEmailWithMailboxIds> emails,
                                                   final Collection<? extends IdentifiableMailboxWithRoleAndName> additions,
                                                   final Collection<? extends IdentifiableMailboxWithRoleAndName> removals) {
-        return Futures.immediateFuture(false);
+        MailboxPreconditions.checkNonMatches(additions, removals);
+        MailboxPreconditions.checkAllIdentifiable(removals, "Only identifiable (id != null) mailboxes can be removed");
+        return Futures.transformAsync(getService(MailboxService.class).getMailboxes(), mailboxes -> {
+            Preconditions.checkNotNull(mailboxes, "SpecialMailboxes collection must not be null but can be empty");
+            final IdentifiableMailboxWithRole archive = MailboxUtil.find(mailboxes, Role.ARCHIVE);
+            final IdentifiableMailboxWithRole trash = MailboxUtil.find(mailboxes, Role.TRASH);
+            return ensureNoPreexistingMailbox(
+                    archive,
+                    Role.ARCHIVE,
+                    () -> modifyLabels(emails, additions, removals, archive, trash)
+            );
+        }, MoreExecutors.directExecutor());
+    }
+
+    private ListenableFuture<Boolean> modifyLabels(final Collection<? extends IdentifiableEmailWithMailboxIds> emails,
+                                                   final Collection<? extends IdentifiableMailboxWithRoleAndName> additions,
+                                                   final Collection<? extends IdentifiableMailboxWithRoleAndName> removals,
+                                                   final IdentifiableMailboxWithRole archive,
+                                                   final IdentifiableMailboxWithRole trash) {
+        return Futures.transformAsync(
+                getObjectsState(), objectsState -> modifyLabels(emails, additions, removals, archive, trash, objectsState),
+                MoreExecutors.directExecutor()
+        );
+    }
+
+    private ListenableFuture<Boolean> modifyLabels(final Collection<? extends IdentifiableEmailWithMailboxIds> emails,
+                                                   final Collection<? extends IdentifiableMailboxWithRoleAndName> additions,
+                                                   final Collection<? extends IdentifiableMailboxWithRoleAndName> removals,
+                                                   final IdentifiableMailboxWithRole archive,
+                                                   final IdentifiableMailboxWithRole trash,
+                                                   final ObjectsState objectsState) {
+        final JmapClient.MultiCall multiCall = jmapClient.newMultiCall();
+        final List<? extends IdentifiableMailboxWithRoleAndName> mailboxes = additions.stream().filter(m -> Objects.isNull(m.getRole())).collect(Collectors.toList());
+        return Futures.transformAsync(
+                getService(MailboxService.class).resolveMailboxes(mailboxes, archive, objectsState, multiCall),
+                mailboxIds -> {
+                    final ListenableFuture<Boolean> labelModification = modifyLabels(
+                            emails,
+                            additions,
+                            removals,
+                            archive,
+                            trash,
+                            objectsState,
+                            mailboxIds,
+                            multiCall
+                    );
+                    multiCall.execute();
+                    return labelModification;
+                },
+                MoreExecutors.directExecutor()
+        );
+    }
+
+    private ListenableFuture<Boolean> modifyLabels(final Collection<? extends IdentifiableEmailWithMailboxIds> emails,
+                                                   final Collection<? extends IdentifiableMailboxWithRoleAndName> additions,
+                                                   final Collection<? extends IdentifiableMailboxWithRoleAndName> removals,
+                                                   final IdentifiableMailboxWithRole archive,
+                                                   final IdentifiableMailboxWithRole trash,
+                                                   final ObjectsState objectsState,
+                                                   final Collection<String> additionIds,
+                                                   final JmapClient.MultiCall multiCall) {
+        final IdentifiableMailboxWithRole inbox = MailboxUtil.find(additions, Role.INBOX);
+        final boolean moveToInbox = inbox != null;
+        final boolean moveToArchive = MailboxUtil.anyWithRole(removals, Role.INBOX);
+        final List<String> removalIds = removals.stream().map(Identifiable::getId).collect(Collectors.toList());
+        final boolean removeFromTrash = additions.size() > 0;
+        if (moveToInbox || moveToArchive) {
+            Preconditions.checkArgument(
+                    moveToInbox != moveToArchive,
+                    "A mailbox with role of INBOX appears in both additions and removals"
+            );
+        }
+        final ImmutableMap.Builder<String, Map<String, Object>> emailPatchObjectMapBuilder = ImmutableMap.builder();
+        for (final IdentifiableEmailWithMailboxIds email : emails) {
+            final Map<String, Boolean> mailboxIds = new HashMap<>(email.getMailboxIds());
+            if (moveToInbox) {
+                mailboxIds.put(inbox.getId(), true);
+                if (archive != null) {
+                    mailboxIds.remove(archive.getId());
+                }
+            }
+            if (removeFromTrash && trash != null) {
+                mailboxIds.remove(trash.getId());
+            }
+            for (final String id : removalIds) {
+                mailboxIds.remove(id);
+            }
+            for (final String id : additionIds) {
+                mailboxIds.put(id, true);
+            }
+            if (mailboxIds.size() == 0) {
+                if (archive == null) {
+                    mailboxIds.put(CreateUtil.createIdReference(Role.ARCHIVE), true);
+                } else {
+                    mailboxIds.put(archive.getId(), true);
+                }
+            }
+            emailPatchObjectMapBuilder.put(email.getId(), Patches.set("mailboxIds", mailboxIds));
+        }
+        final ImmutableMap<String, Map<String, Object>> patches = emailPatchObjectMapBuilder.build();
+        final boolean ifInState = archive == null || additionIds.stream().anyMatch(id -> id.startsWith("#"));
+        return applyEmailPatches(
+                patches,
+                objectsState,
+                ifInState,
+                multiCall
+        );
     }
 
     public ListenableFuture<Boolean> moveToInbox(final Collection<? extends IdentifiableEmailWithMailboxIds> emails) {
