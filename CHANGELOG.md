@@ -1,3 +1,7 @@
+### 0.5.5 (2021-01-01)
+
+* Add modifyLabels(…) method to jmap-mua
+
 ### 0.5.4 (2020-12-15)
 
 * Define some common queries in jmap-mua-util
