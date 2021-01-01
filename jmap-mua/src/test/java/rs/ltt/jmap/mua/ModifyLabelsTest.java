@@ -24,12 +24,10 @@ import rs.ltt.jmap.common.entity.*;
 import rs.ltt.jmap.common.entity.query.EmailQuery;
 import rs.ltt.jmap.mock.server.JmapDispatcher;
 import rs.ltt.jmap.mock.server.MockMailServer;
-import rs.ltt.jmap.mua.cache.exception.NotSynchronizedException;
 import rs.ltt.jmap.mua.util.MailboxUtil;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.io.IOException;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 public class ModifyLabelsTest {
@@ -133,7 +131,7 @@ public class ModifyLabelsTest {
     }
 
     @Test
-    public void copyToLabelJmap() throws ExecutionException, InterruptedException {
+    public void addToLabelJmap() throws ExecutionException, InterruptedException {
         final MockWebServer server = new MockWebServer();
         final MockMailServer mailServer = new MockMailServer(2);
         server.setDispatcher(mailServer);
@@ -170,6 +168,52 @@ public class ModifyLabelsTest {
             Assertions.assertEquals(1, jmap.getTotalThreads());
 
 
+        }
+    }
+
+    @Test
+    public void addToExistingJmapLabel() throws ExecutionException, InterruptedException, IOException {
+        final MockWebServer server = new MockWebServer();
+        final MockMailServer mailServer = new MockMailServer(2) {
+            @Override
+            protected List<MailboxInfo> generateMailboxes() {
+                return Arrays.asList(
+                        new MailboxInfo(UUID.randomUUID().toString(), "Inbox", Role.INBOX),
+                        new MailboxInfo(UUID.randomUUID().toString(), "JMAP", null)
+                );
+            }
+        };
+        server.setDispatcher(mailServer);
+        final MyInMemoryCache cache = new MyInMemoryCache();
+        try (final Mua mua = Mua.builder()
+                .cache(cache)
+                .sessionResource(server.url(JmapDispatcher.WELL_KNOWN_PATH))
+                .username(JmapDispatcher.USERNAME)
+                .password(JmapDispatcher.PASSWORD)
+                .accountId(JmapDispatcher.ACCOUNT_ID)
+                .build()) {
+            mua.query(EmailQuery.unfiltered()).get();
+            //just reconfirming that mock server is setup correctly
+            final Mailbox inbox = cache.getMailbox(Role.INBOX);
+            Assertions.assertNotNull(inbox);
+            Assertions.assertEquals(2, inbox.getUnreadThreads());
+            Assertions.assertEquals(3, inbox.getTotalEmails());
+
+            final List<CachedEmail> threadT1 = cache.getEmails("T1");
+
+            mua.modifyLabels(threadT1, ImmutableList.of(JMAP, inbox), Collections.emptyList()).get();
+
+            Assertions.assertEquals(Status.HAS_MORE, mua.refresh().get());
+            Assertions.assertEquals(Status.UPDATED, mua.refresh().get());
+
+            final Mailbox jmap = cache.getMailboxes().stream().filter(mailbox -> mailbox.getName().equals("JMAP")).findFirst().orElse(null);
+            Assertions.assertNotNull(jmap);
+
+            Assertions.assertEquals(1, jmap.getTotalThreads());
+
+
+        } finally {
+            server.shutdown();
         }
     }
 

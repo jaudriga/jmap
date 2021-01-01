@@ -604,7 +604,7 @@ public class EmailService extends MuaService {
             for (final String id : additionIds) {
                 mailboxIds.put(id, true);
             }
-            if (mailboxIds.size() == 0) {
+            if (moveToArchive || mailboxIds.size() == 0) {
                 if (archive == null) {
                     mailboxIds.put(CreateUtil.createIdReference(Role.ARCHIVE), true);
                 } else {

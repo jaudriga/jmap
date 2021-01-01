@@ -230,8 +230,9 @@ public class MailboxService extends MuaService {
                             if (optionalMailbox.isPresent()) {
                                 mailboxIdBuilder.add(optionalMailbox.get().getId());
                             } else {
-                                final UUID uuid = UUID.randomUUID();
-                                mailboxCreationsBuilder.put(uuid.toString(), Mailbox.builder().name(mailbox.getName()).build());
+                                final String uuid = UUID.randomUUID().toString();
+                                mailboxCreationsBuilder.put(uuid, Mailbox.builder().name(mailbox.getName()).build());
+                                mailboxIdBuilder.add(CreateUtil.createIdReference(uuid));
                             }
                         } else {
                             mailboxIdBuilder.add(mailbox.getId());
@@ -240,9 +241,6 @@ public class MailboxService extends MuaService {
                     final ImmutableMap<String, Mailbox> mailboxCreations = mailboxCreationsBuilder.build();
                     if (mailboxCreations.size() > 0) {
                         createMailboxes(mailboxCreations, objectsState, multiCall);
-                        mailboxIdBuilder.addAll(mailboxCreations.keySet().stream()
-                                .map(CreateUtil::createIdReference)
-                                .collect(Collectors.toList()));
                     }
                     return mailboxIdBuilder.build();
                 },

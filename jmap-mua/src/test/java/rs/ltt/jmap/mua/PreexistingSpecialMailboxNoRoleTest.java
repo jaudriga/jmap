@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import rs.ltt.jmap.common.entity.Email;
 import rs.ltt.jmap.common.entity.Identity;
+import rs.ltt.jmap.common.entity.Mailbox;
 import rs.ltt.jmap.common.entity.Role;
 import rs.ltt.jmap.common.entity.query.EmailQuery;
 import rs.ltt.jmap.mock.server.EmailGenerator;
@@ -33,6 +34,7 @@ import rs.ltt.jmap.mua.util.MailboxUtil;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -73,6 +75,43 @@ public class PreexistingSpecialMailboxNoRoleTest {
             Assertions.assertEquals(Status.UPDATED, mua.refresh().get());
             Assertions.assertNotNull(cache.getMailbox(Role.ARCHIVE));
             mua.archive(threadT1).get();
+        } finally {
+            server.shutdown();
+        }
+    }
+
+    @Test
+    public void modifyLabelsRemoveInbox() throws ExecutionException, InterruptedException, IOException {
+        final MockWebServer server = new MockWebServer();
+        final MockMailServer mailServer = new MockMailServer(2) {
+            @Override
+            protected List<MailboxInfo> generateMailboxes() {
+                return Arrays.asList(
+                        new MailboxInfo(UUID.randomUUID().toString(), "Inbox", Role.INBOX),
+                        new MailboxInfo(UUID.randomUUID().toString(), "Archive", null)
+                );
+            }
+        };
+        server.setDispatcher(mailServer);
+        final MyInMemoryCache cache = new MyInMemoryCache();
+        try (final Mua mua = Mua.builder()
+                .cache(cache)
+                .sessionResource(server.url(JmapDispatcher.WELL_KNOWN_PATH))
+                .username(JmapDispatcher.USERNAME)
+                .password(JmapDispatcher.PASSWORD)
+                .accountId(JmapDispatcher.ACCOUNT_ID)
+                .build()) {
+            mua.query(EmailQuery.unfiltered()).get();
+            //just reconfirming that mock server is setup correctly
+
+            final Mailbox inbox = cache.getMailbox(Role.INBOX);
+            Assertions.assertNotNull(inbox);
+            Assertions.assertNull(cache.getMailbox(Role.ARCHIVE));
+            final List<CachedEmail> threadT1 = cache.getEmails("T1");
+            final ExecutionException executionException = Assertions.assertThrows(ExecutionException.class, () -> {
+                mua.modifyLabels(threadT1, Collections.emptyList(), Collections.singleton(inbox)).get();
+            });
+            MatcherAssert.assertThat(executionException.getCause(), CoreMatchers.instanceOf(PreexistingMailboxException.class));
         } finally {
             server.shutdown();
         }
