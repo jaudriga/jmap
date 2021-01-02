@@ -34,6 +34,7 @@ import rs.ltt.jmap.common.method.call.thread.ChangesThreadMethodCall;
 import rs.ltt.jmap.common.method.call.thread.GetThreadMethodCall;
 import rs.ltt.jmap.common.method.error.CannotCalculateChangesMethodErrorResponse;
 import rs.ltt.jmap.common.method.error.InvalidResultReferenceMethodErrorResponse;
+import rs.ltt.jmap.common.method.error.StateMismatchMethodErrorResponse;
 import rs.ltt.jmap.common.method.error.UnknownMethodMethodErrorResponse;
 import rs.ltt.jmap.common.method.response.email.*;
 import rs.ltt.jmap.common.method.response.identity.GetIdentityMethodResponse;
@@ -223,6 +224,7 @@ public class MockMailServer extends StubMailServer {
 
     @Override
     protected MethodResponse[] execute(SetEmailMethodCall methodCall, ListMultimap<String, Response.Invocation> previousResponses) {
+        final String ifInState = methodCall.getIfInState();
         final Map<String, Map<String, Object>> update = methodCall.getUpdate();
         final Map<String, Email> create = methodCall.getCreate();
         final String[] destroy = methodCall.getDestroy();
@@ -230,8 +232,12 @@ public class MockMailServer extends StubMailServer {
             throw new IllegalStateException("MockMailServer does not know how to create and destroy");
         }
         final SetEmailMethodResponse.SetEmailMethodResponseBuilder responseBuilder = SetEmailMethodResponse.builder();
-        //TODO verify ifInState
         final String oldState = getState();
+        if (ifInState != null) {
+            if (!ifInState.equals(oldState)) {
+                return new MethodResponse[]{new StateMismatchMethodErrorResponse()};
+            }
+        }
         if (update != null) {
             final List<Email> modifiedEmails = new ArrayList<>();
             for (final Map.Entry<String, Map<String, Object>> entry : update.entrySet()) {
@@ -376,19 +382,26 @@ public class MockMailServer extends StubMailServer {
     }
 
     protected MethodResponse[] execute(final SetMailboxMethodCall methodCall, ListMultimap<String, Response.Invocation> previousResponses) {
+        final String ifInState = methodCall.getIfInState();
         final SetMailboxMethodResponse.SetMailboxMethodResponseBuilder responseBuilder = SetMailboxMethodResponse.builder();
         final Map<String, Mailbox> create = methodCall.getCreate();
         final Map<String, Map<String, Object>> update = methodCall.getUpdate();
+        final String oldState = getState();
+        if (ifInState != null) {
+            if (!ifInState.equals(oldState)) {
+                return new MethodResponse[]{new StateMismatchMethodErrorResponse()};
+            }
+        }
+
         if (create != null && create.size() > 0) {
             processCreateMailbox(create, responseBuilder);
         }
         if (update != null && update.size() > 0) {
             processUpdateMailbox(update, responseBuilder, previousResponses);
         }
-        final String oldVersion = getState();
         incrementState();
         final SetMailboxMethodResponse setMailboxResponse = responseBuilder.build();
-        updates.put(oldVersion, Update.of(setMailboxResponse, getState()));
+        updates.put(oldState, Update.of(setMailboxResponse, getState()));
         return new MethodResponse[]{
                 setMailboxResponse
         };

@@ -614,7 +614,7 @@ public class EmailService extends MuaService {
             emailPatchObjectMapBuilder.put(email.getId(), Patches.set("mailboxIds", mailboxIds));
         }
         final ImmutableMap<String, Map<String, Object>> patches = emailPatchObjectMapBuilder.build();
-        final boolean ifInState = archive == null || additionIds.stream().anyMatch(id -> id.startsWith("#"));
+        final boolean ifInState = archive != null && additionIds.stream().noneMatch(id -> id.startsWith("#"));
         return applyEmailPatches(
                 patches,
                 objectsState,
