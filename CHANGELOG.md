@@ -1,3 +1,7 @@
+### 0.5.6 (2021-01-03)
+
+* Fix improper ifInState usage in modifyLabels() call
+
 ### 0.5.5 (2021-01-01)
 
 * Add modifyLabels(…) method to jmap-mua
