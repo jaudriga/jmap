@@ -35,7 +35,6 @@ import rs.ltt.jmap.common.method.call.thread.GetThreadMethodCall;
 import rs.ltt.jmap.common.method.error.CannotCalculateChangesMethodErrorResponse;
 import rs.ltt.jmap.common.method.error.InvalidResultReferenceMethodErrorResponse;
 import rs.ltt.jmap.common.method.error.StateMismatchMethodErrorResponse;
-import rs.ltt.jmap.common.method.error.UnknownMethodMethodErrorResponse;
 import rs.ltt.jmap.common.method.response.email.*;
 import rs.ltt.jmap.common.method.response.identity.GetIdentityMethodResponse;
 import rs.ltt.jmap.common.method.response.mailbox.ChangesMailboxMethodResponse;
@@ -71,7 +70,7 @@ public class MockMailServer extends StubMailServer {
     }
 
     protected List<MailboxInfo> generateMailboxes() {
-        return Arrays.asList(
+        return Collections.singletonList(
                 new MailboxInfo(UUID.randomUUID().toString(), "Inbox", Role.INBOX)
         );
     }
@@ -510,7 +509,7 @@ public class MockMailServer extends StubMailServer {
         } else {
             ids = Arrays.asList(methodCall.getIds());
         }
-        Thread[] threads = ids.stream()
+        final Thread[] threads = ids.stream()
                 .map(threadId -> Thread.builder()
                         .id(threadId)
                         .emailIds(emails.values().stream()
